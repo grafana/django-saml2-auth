@@ -1,0 +1,34 @@
+language: python
+python:
+- 3.6
+- 3.7
+- 3.8
+cache:
+  pip: true
+env:
+  global:
+    - PIP_INDEX_URL: https://packages:yD0Ly86v1DEVvieO08v4Dp0pVOp7wtzO@index.pydist.com/simple/
+  jobs:
+    - DJANGO_VERSION='Django~=1.11'
+    - DJANGO_VERSION='Django~=2.2'
+    - DJANGO_VERSION='Django~=3.0'
+jobs:
+  fast_finish: true
+  exclude:
+  - python: 2.7
+    env: DJANGO_VERSION='Django~=2.2'
+  - python: 2.7
+    env: DJANGO_VERSION='Django~=3.0'
+install:
+- pip install -U pip setuptools
+- pip install $DJANGO_VERSION
+- pip install .
+scripts: echo no-tests
+deploy:
+  provider: pypi
+  server: https://index.pydist.com/simple/
+  user: packaging
+  password: yD0Ly86v1DEVvieO08v4Dp0pVOp7wtzO
+  skip_existing: true
+  on:
+    tags: true

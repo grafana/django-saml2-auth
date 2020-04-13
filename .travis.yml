@@ -27,7 +27,7 @@ scripts: echo no-tests
 deploy:
   provider: pypi
   server: https://index.pydist.com/simple/
-  user: packaging
+  user: packages
   password: yD0Ly86v1DEVvieO08v4Dp0pVOp7wtzO
   skip_existing: true
   on:

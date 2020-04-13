@@ -63,3 +63,6 @@ target/
 
 # IDEs
 .vscode/
+
+# VirtualEnv
+.venv/

@@ -209,8 +209,7 @@ def acs(r):
             target_user = User.objects.get(
                 **{User.USERNAME_FIELD: user_name})
         else:
-            target_user = User.objects.get(
-                {"{}__iexact".format(User.USERNAME_FIELD): user_name})
+            target_user = User.objects.get(**{"{}__iexact".format(User.USERNAME_FIELD): user_name})
     except User.DoesNotExist:
         new_user_should_be_created = settings.SAML2_AUTH.get(
             'CREATE_USER', True)
@@ -259,8 +258,7 @@ def acs(r):
         target_user = User.objects.get(
             **{User.USERNAME_FIELD: user_name})
     else:
-        target_user = User.objects.get(
-            {"{}__iexact".format(User.USERNAME_FIELD): user_name})
+        target_user = User.objects.get(**{"{}__iexact".format(User.USERNAME_FIELD): user_name})
 
     if settings.SAML2_AUTH.get('USE_JWT') is True and target_user.is_active:
         # We use JWT auth send token to frontend

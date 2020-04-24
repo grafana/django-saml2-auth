@@ -6,19 +6,8 @@ python:
 cache:
   pip: true
 env:
-  global:
-    - PIP_INDEX_URL: https://packaging:yD0Ly86v1DEVvieO08v4Dp0pVOp7wtzO@index.pydist.com/simple/
   jobs:
-    - DJANGO_VERSION='Django~=1.11'
     - DJANGO_VERSION='Django~=2.2'
-    - DJANGO_VERSION='Django~=3.0'
-jobs:
-  fast_finish: true
-  exclude:
-  - python: 2.7
-    env: DJANGO_VERSION='Django~=2.2'
-  - python: 2.7
-    env: DJANGO_VERSION='Django~=3.0'
 install:
 - pip install -U pip setuptools
 - pip install $DJANGO_VERSION
@@ -26,9 +15,9 @@ install:
 scripts: echo no-tests
 deploy:
   provider: pypi
-  server: https://index.pydist.com/
-  user: packaging
-  password: yD0Ly86v1DEVvieO08v4Dp0pVOp7wtzO
+  server: https://nexus.fool.com/repository/fool-python/
+  username: 0RLgWU5S
+  password: 6lSoJ2Ic_pSS81YujMXTvuXf1CLhWg_HadlfFN3er3WX
   skip_existing: true
   on:
     tags: true

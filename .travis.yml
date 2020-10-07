@@ -16,8 +16,8 @@ scripts: echo no-tests
 deploy:
   provider: pypi
   server: https://nexus.fool.com/repository/fool-python/
-  username: 0RLgWU5S
-  password: 6lSoJ2Ic_pSS81YujMXTvuXf1CLhWg_HadlfFN3er3WX
+  username: $PYPI_USERNAME
+  password: $PYPI_PASSWORD
   skip_existing: true
   on:
     tags: true

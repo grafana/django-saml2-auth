@@ -363,6 +363,7 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
 
     Raises:
         SAMLAuthError: No token specified.
+        SAMLAuthError: No username or email provided.
 
     Returns:
         Dict[str, Optional[Any]]: Cleaned user information plus user_identity
@@ -383,6 +384,14 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
 
     # For backwards compatibility
     user["user_identity"] = user_identity
+
+    if not user["user_name"] or not user["email"]:
+        raise SAMLAuthError("No username or email provided.", extra={
+            "exc_type": ValueError,
+            "error_code": NO_USERNAME_OR_EMAIL_SPECIFIED,
+            "reason": "Username or email must be configured on the SAML app before logging in.",
+            "status_code": 422
+        })
 
     if not user["token"]:
         raise SAMLAuthError("No token specified.", extra={

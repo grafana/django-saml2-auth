@@ -497,6 +497,9 @@ def create_jwt_token(user_email: str) -> str:
     Args:
         user_email (str): User's email
 
+    Raises:
+        SAMLAuthError: Cannot create JWT token. Specify secret and algorithm.
+
     Returns:
         str: JWT token
     """
@@ -508,6 +511,15 @@ def create_jwt_token(user_email: str) -> str:
         "exp": (datetime.utcnow() +
                 timedelta(seconds=jwt_expiration)).timestamp()
     }
+
+    if not jwt_secret or not jwt_algorithm:
+        raise SAMLAuthError("Cannot create JWT token. Specify secret and algorithm.", extra={
+            "exc_type": Exception,
+            "error_code": NO_JWT_SECRET_OR_ALGORITHM,
+            "reason": "Cannot create JWT token for login.",
+            "status_code": 500
+        })
+
     jwt_token = jwt.encode(payload, jwt_secret, algorithm=jwt_algorithm)
     return jwt_token
 

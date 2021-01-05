@@ -242,6 +242,13 @@ def get_saml_client(domain: str, acs: Callable[..., HttpResponse]) -> Optional[S
     """
     acs_url = domain + get_reverse([acs, "acs", "django_saml2_auth:acs"])
     metadata = get_metadata()
+    if not metadata:
+        raise SAMLAuthError("Metadata URL is missing", extra={
+            "exc_type": type(NoReverseMatch),
+            "error_code": NO_METADATA_URL,
+            "reason": "There was an error processing your request.",
+            "status_code": 500
+        })
 
     saml_settings = {
         "metadata": metadata,

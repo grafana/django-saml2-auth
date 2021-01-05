@@ -76,7 +76,7 @@ def acs(request: HttpRequest):
 
     use_jwt = settings.SAML2_AUTH.get("USE_JWT", False)
     if use_jwt and target_user.is_active:
-        jwt_token = create_jwt_token(target_user)
+        jwt_token = create_jwt_token(target_user.email)
         # Use JWT auth to send token to frontend
         query = f"?token={jwt_token}"
 

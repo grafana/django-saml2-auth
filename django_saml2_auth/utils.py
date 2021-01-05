@@ -491,11 +491,11 @@ def get_or_create_user(user: Dict[str, Any]) -> Tuple[bool, Type[Model]]:
     return (created, target_user)
 
 
-def create_jwt_token(target_user: Type[Model]) -> str:
+def create_jwt_token(user_email: str) -> str:
     """Create a new JWT token
 
     Args:
-        target_user (Type[Model]): A user object queried from DB
+        user_email (str): User's email
 
     Returns:
         str: JWT token
@@ -504,7 +504,7 @@ def create_jwt_token(target_user: Type[Model]) -> str:
     jwt_algorithm = settings.SAML2_AUTH.get("JWT_ALGORITHM")
     jwt_expiration = settings.SAML2_AUTH.get("JWT_EXP", 60)  # default: 1 minute
     payload = {
-        "email": target_user.email,
+        "email": user_email,
         "exp": (datetime.utcnow() +
                 timedelta(seconds=jwt_expiration)).timestamp()
     }

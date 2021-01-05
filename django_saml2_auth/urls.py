@@ -1,3 +1,5 @@
+"""Django URL mappings"""
+
 from django.urls import path
 from . import views
 

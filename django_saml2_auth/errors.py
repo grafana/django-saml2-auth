@@ -1,3 +1,5 @@
+"""Error codes used for reporting errors to user."""
+
 EMPTY_FUNCTION_PATH = 5000
 PATH_ERROR = 5001
 IMPORT_ERROR = 5002

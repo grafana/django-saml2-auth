@@ -1,3 +1,6 @@
+"""Custom exception class for handling extra arguments."""
+
+
 class SAMLAuthError(Exception):
     extra = None
 

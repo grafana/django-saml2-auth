@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
+"""Endpoints for SAML SSO login"""
+
 import urllib.parse as urlparse
 from urllib.parse import unquote
 

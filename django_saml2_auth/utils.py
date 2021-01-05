@@ -1,3 +1,7 @@
+"""Utility functions for dealing with various parts of the library.
+E.g. creating SAML client, creating user, exception handling, etc.
+"""
+
 import logging
 from datetime import datetime, timedelta
 from functools import wraps

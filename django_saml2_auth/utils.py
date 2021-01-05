@@ -319,8 +319,15 @@ def decode_saml_response(
         extracting user identity from.
     """
     saml_client = get_saml_client(get_assertion_url(request), acs)
-    response = request.POST.get("SAMLResponse") or None
+    if not saml_client:
+        raise SAMLAuthError("There was an error creating the SAML client.", extra={
+            "exc_type": ValueError,
+            "error_code": NO_SAML_CLIENT,
+            "reason": "There was an error processing your request.",
+            "status_code": 500
+        })
 
+    response = request.POST.get("SAMLResponse") or None
     if not response:
         raise SAMLAuthError("There was no response from SAML client.", extra={
             "exc_type": ValueError,

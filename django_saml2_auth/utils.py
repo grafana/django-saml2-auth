@@ -71,6 +71,7 @@ def run_hook(function_path: str,
         result = getattr(cls, path[-1])(*args, **kwargs)
     except ImportError as exc:
         raise SAMLAuthError(str(exc), extra={
+            "exc": exc,
             "exc_type": ImportError,
             "error_code": IMPORT_ERROR,
             "reason": "There was an error processing your request.",
@@ -78,6 +79,7 @@ def run_hook(function_path: str,
         })
     except Exception as exc:
         raise SAMLAuthError(str(exc), extra={
+            "exc": exc,
             "exc_type": type(exc),
             "error_code": GENERAL_EXCEPTION,
             "reason": "There was an error processing your request.",
@@ -279,6 +281,7 @@ def get_saml_client(domain: str, acs: Callable[..., HttpResponse]) -> Optional[S
         return saml_client
     except Exception as exc:
         raise SAMLAuthError(str(exc), extra={
+            "exc": exc,
             "exc_type": type(exc),
             "error_code": ERROR_CREATING_SAML_CONFIG_OR_CLIENT,
             "reason": "There was an error processing your request.",

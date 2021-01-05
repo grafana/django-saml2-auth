@@ -508,10 +508,13 @@ def exception_handler(function: Callable[..., HttpResponse]) -> Callable[..., Ht
         logger = logging.getLogger(__name__)
         logger.debug(exc)
 
+        context = exc.extra if isinstance(exc, SAMLAuthError) else {}
+        status = exc.extra.get("status_code") if isinstance(exc, SAMLAuthError) else 500
+
         return render(request,
                       "django_saml2_auth/error.html",
-                      context=exc.extra,
-                      status=exc.extra["status_code"])
+                      context=context,
+                      status=status)
 
     @wraps(function)
     def wrapper(request: HttpRequest) -> HttpResponse:
@@ -526,7 +529,7 @@ def exception_handler(function: Callable[..., HttpResponse]) -> Callable[..., Ht
         result = None
         try:
             result = function(request)
-        except SAMLAuthError as exc:
+        except (SAMLAuthError, Exception) as exc:
             result = handle_exception(exc, request)
         return result
     return wrapper

@@ -398,7 +398,7 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
 
     user = {}
     user["email"] = dictor(user_identity, f"{email_field}/0", pathsep="/")  # Path includes "."
-    user["user_name"] = dictor(user_identity, f"{username_field}/0", pathsep="/")
+    user["username"] = dictor(user_identity, f"{username_field}/0", pathsep="/")
     user["first_name"] = dictor(user_identity, f"{firstname_field}/0", pathsep="/")
     user["last_name"] = dictor(user_identity, f"{lastname_field}/0", pathsep=" /")
     user["token"] = dictor(user_identity, f"{token_field}.0")
@@ -406,7 +406,7 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
     # For backwards compatibility
     user["user_identity"] = user_identity
 
-    if not user["user_name"] or not user["email"]:
+    if not user["username"] or not user["email"]:
         raise SAMLAuthError("No username or email provided.", extra={
             "exc_type": ValueError,
             "error_code": NO_USERNAME_OR_EMAIL_SPECIFIED,
@@ -439,7 +439,7 @@ def get_or_create_user(user: Dict[str, Any]) -> Tuple[bool, Type[Model]]:
     """
     user_model = get_user_model()
     created = False
-    user_id = user["email"] if user_model.USERNAME_FIELD == "email" else user["user_name"]
+    user_id = user["email"] if user_model.USERNAME_FIELD == "email" else user["username"]
     # Should email be case-sensitive or not. Default is False (case-insensitive).
     login_case_sensitive = settings.SAML2_AUTH.get("LOGIN_CASE_SENSITIVE", False)
     id_field = (

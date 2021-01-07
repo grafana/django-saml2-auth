@@ -1,5 +1,4 @@
-This project is written and maintained by Mostafa Moradian and
-various contributors:
+This project is maintained by Mostafa Moradian and various contributors:
 
 
 Django Saml2 Auth

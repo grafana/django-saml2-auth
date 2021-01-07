@@ -16,15 +16,18 @@ with open(path.join(here, "README.rst"), encoding="utf-8") as f:
 setup(
     name="django_saml2_auth",
 
-    version="2.3.5",
+    version="3.0.0",
 
-    description="Django SAML2 Authentication Made Easy. Easily integrate with SAML2 SSO identity providers like Okta",
+    description="Django SAML2 Authentication Made Easy.",
     long_description=long_description,
 
     url="https://github.com/loadimpact/django-saml2-auth",
 
     author="Fang Li",
     author_email="surivlee+djsaml2auth@gmail.com",
+
+    maintainer="Mostafa Moradian",
+    maintainer_email="mostafa@k6.io",
 
     license="Apache 2.0",
 
@@ -49,7 +52,15 @@ setup(
         "Programming Language :: Python :: 3.7",
     ],
 
-    keywords="Django SAML2 Authentication Made Easy, integrate with SAML2 SSO such as Okta easily",
+    keywords=(
+        "django",
+        "saml",
+        "saml2"
+        "sso",
+        "authentication",
+        "okta",
+        "standard"
+    ),
 
     packages=find_packages(),
 

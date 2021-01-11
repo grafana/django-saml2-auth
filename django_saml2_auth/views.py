@@ -9,21 +9,22 @@ from urllib.parse import unquote
 from dictor import dictor
 from django import get_version
 from django.conf import settings
-from django.contrib.auth import get_user_model, login, logout
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import render
 from django.template import TemplateDoesNotExist
 from django.utils.http import is_safe_url
 from django.views.decorators.csrf import csrf_exempt
-from pkg_resources import parse_version
-
-from django_saml2_auth.errors import *
+from django_saml2_auth.errors import INACTIVE_USER
 from django_saml2_auth.exceptions import SAMLAuthError
-from django_saml2_auth.utils import (create_jwt_token, decode_saml_response, exception_handler,
-                                     extract_user_identity, get_assertion_url,
-                                     get_default_next_url, get_or_create_user, get_reverse,
-                                     get_saml_client, run_hook)
+from django_saml2_auth.saml import (decode_saml_response,
+                                    extract_user_identity, get_assertion_url,
+                                    get_default_next_url, get_saml_client)
+from django_saml2_auth.user import get_or_create_user
+from django_saml2_auth.utils import (create_jwt_token, exception_handler,
+                                     get_reverse, run_hook)
+from pkg_resources import parse_version
 
 
 @login_required
@@ -50,8 +51,6 @@ def acs(request: HttpRequest):
         request (HttpRequest): Incoming request from identity provider (IdP) for authentication
 
     Exceptions:
-        SAMLAuthError: No token specified.
-        SAMLAuthError: Cannot create user.
         SAMLAuthError: The target user is inactive.
 
     Returns:

@@ -13,6 +13,8 @@ from django_saml2_auth.utils import get_reverse, run_hook
 from saml2 import BINDING_HTTP_POST, BINDING_HTTP_REDIRECT, entity
 from saml2.client import Saml2Client
 from saml2.config import Config as Saml2Config
+from saml2.httpbase import HTTPBase
+from saml2.mdstore import MetaDataExtern
 from saml2.response import AuthnResponse
 
 
@@ -50,6 +52,25 @@ def get_default_next_url() -> Optional[str]:
     return get_reverse("admin:index")
 
 
+def validate_metadata_url(url: str) -> bool:
+    """Validates metadata URL
+
+    Args:
+        url (str): Metadata URL
+
+    Returns:
+        bool: Wether the metadata URL is valid or not
+    """
+    http_client = HTTPBase()
+    metadata = MetaDataExtern(None, url=url, http=http_client)
+    try:
+        metadata.load()
+    except:
+        return False
+
+    return True
+
+
 def get_metadata() -> Mapping[str, Any]:
     """Returns metadata information, either by running the GET_METADATA_AUTO_CONF_URLS hook function
     if available, or by checking and returning a local file path or the METADATA_AUTO_CONF_URL.
@@ -60,14 +81,25 @@ def get_metadata() -> Mapping[str, Any]:
     get_metadata_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.GET_METADATA_AUTO_CONF_URLS")
     if get_metadata_trigger:
         metadata_urls = run_hook(get_metadata_trigger)
-        return {"remote": metadata_urls}
+        # Filter invalid metadata URLs
+        filtered_metadata_urls = list(
+            filter(lambda md: validate_metadata_url(md["url"]), metadata_urls))
+        return {"remote": filtered_metadata_urls}
 
     metadata_local_file_path = settings.SAML2_AUTH.get("METADATA_LOCAL_FILE_PATH")
     if metadata_local_file_path:
         return {"local": [metadata_local_file_path]}
     else:
         single_metadata_url = settings.SAML2_AUTH.get("METADATA_AUTO_CONF_URL")
-        return {"remote": [{"url": single_metadata_url}]}
+        if validate_metadata_url(single_metadata_url):
+            return {"remote": [{"url": single_metadata_url}]}
+        else:
+            raise SAMLAuthError("Invalid metadata URL",  extra={
+                "exc_type": ValueError,
+                "error_code": INVALID_METADATA_URL,
+                "reason": "There was an error processing your request.",
+                "status_code": 500
+            })
 
 
 def get_saml_client(domain: str, acs: Callable[..., HttpResponse]) -> Optional[Saml2Client]:
@@ -88,7 +120,7 @@ def get_saml_client(domain: str, acs: Callable[..., HttpResponse]) -> Optional[S
     metadata = get_metadata()
     if not metadata:
         raise SAMLAuthError("Metadata URL is missing", extra={
-            "exc_type": type(NoReverseMatch),
+            "exc_type": NoReverseMatch,
             "error_code": NO_METADATA_URL,
             "reason": "There was an error processing your request.",
             "status_code": 500

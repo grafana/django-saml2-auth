@@ -246,7 +246,7 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
     # For backwards compatibility
     user["user_identity"] = user_identity
 
-    if not user["username"] or not user["email"]:
+    if not user["email"] and not user["username"]:
         raise SAMLAuthError("No username or email provided.", extra={
             "exc_type": ValueError,
             "error_code": NO_USERNAME_OR_EMAIL_SPECIFIED,

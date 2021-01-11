@@ -18,12 +18,12 @@ from django.utils.http import is_safe_url
 from django.views.decorators.csrf import csrf_exempt
 from pkg_resources import parse_version
 
-from .errors import *
-from .exceptions import SAMLAuthError
-from .utils import (create_jwt_token, decode_saml_response, exception_handler,
-                    extract_user_identity, get_assertion_url,
-                    get_default_next_url, get_or_create_user, get_reverse,
-                    get_saml_client, run_hook)
+from django_saml2_auth.errors import *
+from django_saml2_auth.exceptions import SAMLAuthError
+from django_saml2_auth.utils import (create_jwt_token, decode_saml_response, exception_handler,
+                                     extract_user_identity, get_assertion_url,
+                                     get_default_next_url, get_or_create_user, get_reverse,
+                                     get_saml_client, run_hook)
 
 
 @login_required

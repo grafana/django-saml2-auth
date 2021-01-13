@@ -5,6 +5,7 @@
 
 import urllib.parse as urlparse
 from urllib.parse import unquote
+import json
 
 from dictor import dictor
 from django import get_version
@@ -16,14 +17,13 @@ from django.shortcuts import render
 from django.template import TemplateDoesNotExist
 from django.utils.http import is_safe_url
 from django.views.decorators.csrf import csrf_exempt
-from django_saml2_auth.errors import INACTIVE_USER
+from django_saml2_auth.errors import INACTIVE_USER, INVALID_REQUEST_METHOD
 from django_saml2_auth.exceptions import SAMLAuthError
 from django_saml2_auth.saml import (decode_saml_response,
                                     extract_user_identity, get_assertion_url,
                                     get_default_next_url, get_saml_client)
-from django_saml2_auth.user import get_or_create_user
-from django_saml2_auth.utils import (create_jwt_token, exception_handler,
-                                     get_reverse, run_hook)
+from django_saml2_auth.user import get_or_create_user, create_jwt_token, decode_jwt_token
+from django_saml2_auth.utils import exception_handler, get_reverse, run_hook
 from pkg_resources import parse_version
 
 
@@ -107,6 +107,29 @@ def acs(request: HttpRequest):
             return HttpResponseRedirect(next_url)
     else:
         return HttpResponseRedirect(next_url)
+
+
+@exception_handler
+def sp_initiated_login(request: HttpRequest) -> HttpResponseRedirect:
+    # User must be created first by the IdP-initiated SSO (acs)
+    if request.method == "GET":
+        if request.GET.get("token"):
+            user_id = decode_jwt_token(request.GET.get("token"))
+            saml_client = get_saml_client(get_assertion_url(request), acs, user_id)
+            _, info = saml_client.prepare_for_authenticate(sign=False)
+            redirect_url = ""
+            for header in info["headers"]:
+                if header[0] == "Location":
+                    redirect_url = header[1]
+                    break
+            return HttpResponseRedirect(redirect_url)
+    else:
+        raise SAMLAuthError("Request method is not supported.", extra={
+            "exc_type": Exception,
+            "error_code": INVALID_REQUEST_METHOD,
+            "reason": "Request method is not supported.",
+            "status_code": 404
+        })
 
 
 @exception_handler

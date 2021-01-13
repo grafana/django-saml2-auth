@@ -3,12 +3,9 @@ E.g. creating SAML client, creating user, exception handling, etc.
 """
 
 import logging
-from datetime import datetime, timedelta
 from functools import wraps
 from typing import Any, Callable, Iterable, Mapping, Optional, Tuple, Union
 
-import jwt
-from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import NoReverseMatch, reverse
@@ -103,44 +100,11 @@ def get_reverse(objects: Union[Any, Iterable[Any]]) -> Optional[str]:
         except NoReverseMatch:
             pass
     raise SAMLAuthError(f"We got a URL reverse issue: {str(objects)}", extra={
-        "exc_type": type(NoReverseMatch),
+        "exc_type": NoReverseMatch,
         "error_code": NO_REVERSE_MATCH,
         "reason": "There was an error processing your request.",
         "status_code": 500
     })
-
-
-def create_jwt_token(user_email: str) -> str:
-    """Create a new JWT token
-
-    Args:
-        user_email (str): User's email
-
-    Raises:
-        SAMLAuthError: Cannot create JWT token. Specify secret and algorithm.
-
-    Returns:
-        str: JWT token
-    """
-    jwt_secret = settings.SAML2_AUTH.get("JWT_SECRET")
-    jwt_algorithm = settings.SAML2_AUTH.get("JWT_ALGORITHM")
-    jwt_expiration = settings.SAML2_AUTH.get("JWT_EXP", 60)  # default: 1 minute
-    payload = {
-        "email": user_email,
-        "exp": (datetime.utcnow() +
-                timedelta(seconds=jwt_expiration)).timestamp()
-    }
-
-    if not jwt_secret or not jwt_algorithm:
-        raise SAMLAuthError("Cannot create JWT token. Specify secret and algorithm.", extra={
-            "exc_type": Exception,
-            "error_code": NO_JWT_SECRET_OR_ALGORITHM,
-            "reason": "Cannot create JWT token for login.",
-            "status_code": 500
-        })
-
-    jwt_token = jwt.encode(payload, jwt_secret, algorithm=jwt_algorithm)
-    return jwt_token
 
 
 def exception_handler(function: Callable[..., HttpResponse]) -> Callable[..., HttpResponse]:

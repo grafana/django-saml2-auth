@@ -1,17 +1,22 @@
 """Utility functions for getting or creating user accounts
 """
 
-from typing import Any, Dict, Tuple, Type
+from datetime import datetime, timedelta
+from typing import Any, Dict, Tuple, Type, Union, Optional
 
+import jwt
 from dictor import dictor
 from django import get_version
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db.models import Model
-from django_saml2_auth.errors import CREATE_USER_ERROR, GROUP_JOIN_ERROR, SHOULD_NOT_CREATE_USER
+from django_saml2_auth.errors import (CREATE_USER_ERROR, GROUP_JOIN_ERROR,
+                                      SHOULD_NOT_CREATE_USER, NO_JWT_SECRET_OR_ALGORITHM,
+                                      CANNOT_DECODE_JWT_TOKEN)
 from django_saml2_auth.exceptions import SAMLAuthError
 from django_saml2_auth.utils import run_hook
+from jwt.exceptions import PyJWTError
 from pkg_resources import parse_version
 
 
@@ -84,16 +89,9 @@ def get_or_create_user(user: Dict[str, Any]) -> Tuple[bool, Type[Model]]:
     """
     user_model = get_user_model()
     created = False
-    user_id = user["email"] if user_model.USERNAME_FIELD == "email" else user["username"]
-    # Should email be case-sensitive or not. Default is False (case-insensitive).
-    login_case_sensitive = settings.SAML2_AUTH.get("LOGIN_CASE_SENSITIVE", False)
-    id_field = (
-        user_model.USERNAME_FIELD
-        if login_case_sensitive
-        else f"{user_model.USERNAME_FIELD}__iexact")
 
     try:
-        target_user = user_model.objects.get(**{id_field: user_id})
+        target_user = get_user(user)
     except user_model.DoesNotExist:
         should_create_new_user = settings.SAML2_AUTH.get("CREATE_USER", True)
         if should_create_new_user:
@@ -138,3 +136,73 @@ def get_or_create_user(user: Dict[str, Any]) -> Tuple[bool, Type[Model]]:
             target_user.groups = groups
 
     return (created, target_user)
+
+
+def get_user(user: Union[str, Dict[str, str]]) -> Type[Model]:
+    user_model = get_user_model()
+    user_id = None
+
+    if isinstance(user, dict):
+        user_id = user["email"] if user_model.USERNAME_FIELD == "email" else user["username"]
+
+    if isinstance(user, str):
+        user_id = user
+
+    # Should email be case-sensitive or not. Default is False (case-insensitive).
+    login_case_sensitive = settings.SAML2_AUTH.get("LOGIN_CASE_SENSITIVE", False)
+    id_field = (
+        user_model.USERNAME_FIELD
+        if login_case_sensitive
+        else f"{user_model.USERNAME_FIELD}__iexact")
+    return user_model.objects.get(**{id_field: user_id})
+
+
+def create_jwt_token(user_email: str) -> Optional[str]:
+    """Create a new JWT token
+
+    Args:
+        user_email (str): User's email
+
+    Raises:
+        SAMLAuthError: Cannot create JWT token. Specify secret and algorithm.
+
+    Returns:
+        str: JWT token
+    """
+    jwt_secret = settings.SAML2_AUTH.get("JWT_SECRET")
+    jwt_algorithm = settings.SAML2_AUTH.get("JWT_ALGORITHM")
+    jwt_expiration = settings.SAML2_AUTH.get("JWT_EXP", 60)  # default: 1 minute
+    payload = {
+        "email": user_email,
+        "exp": (datetime.utcnow() +
+                timedelta(seconds=jwt_expiration)).timestamp()
+    }
+
+    if not jwt_secret or not jwt_algorithm:
+        raise SAMLAuthError("Cannot create JWT token. Specify secret and algorithm.", extra={
+            "exc_type": Exception,
+            "error_code": NO_JWT_SECRET_OR_ALGORITHM,
+            "reason": "Cannot create JWT token for login.",
+            "status_code": 500
+        })
+
+    jwt_token = jwt.encode(payload, jwt_secret, algorithm=jwt_algorithm)
+    return jwt_token
+
+
+def decode_jwt_token(jwt_token: str) -> Optional[str]:
+    jwt_secret = settings.SAML2_AUTH.get("JWT_SECRET")
+    jwt_algorithm = settings.SAML2_AUTH.get("JWT_ALGORITHM")
+
+    try:
+        data = jwt.decode(jwt_token, jwt_secret, algorithms=jwt_algorithm)
+        user_model = get_user_model()
+        return data[user_model.USERNAME_FIELD]
+    except PyJWTError as exc:
+        raise SAMLAuthError("Cannot decode JWT token.", extra={
+            "exc": exc,
+            "exc_type": type(exc),
+            "error_code": CANNOT_DECODE_JWT_TOKEN,
+            "reason": "Cannot decode JWT token.",
+            "status_code": 500
+        })

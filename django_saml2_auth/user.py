@@ -140,7 +140,15 @@ def get_or_create_user(user: Dict[str, Any]) -> Tuple[bool, Type[Model]]:
     return (created, target_user)
 
 
-def get_user_id(user: Dict[str, str]) -> str:
+def get_user_id(user: Dict[str, str]) -> Optional[str]:
+    """Get user_id (username or email) from user object
+
+    Args:
+        user (Dict[str, str]): A cleaned user info object
+
+    Returns:
+        Optional[str]: user_id, which is either email or username
+    """
     user_model = get_user_model()
     user_id = None
 
@@ -154,6 +162,14 @@ def get_user_id(user: Dict[str, str]) -> str:
 
 
 def get_user(user: Union[str, Dict[str, str]]) -> Type[Model]:
+    """Get user from database given a cleaned user info object or a user_id
+
+    Args:
+        user (Union[str, Dict[str, str]]): Either a user_id (as str) or a cleaned user info object
+
+    Returns:
+        Type[Model]: An instance of the User model
+    """
     user_model = get_user_model()
     user_id = get_user_id(user)
 
@@ -176,7 +192,7 @@ def create_jwt_token(user_email: str) -> Optional[str]:
         SAMLAuthError: Cannot create JWT token. Specify secret and algorithm.
 
     Returns:
-        str: JWT token
+        Optional[str]: JWT token
     """
     jwt_secret = settings.SAML2_AUTH.get("JWT_SECRET")
     jwt_algorithm = settings.SAML2_AUTH.get("JWT_ALGORITHM")
@@ -200,6 +216,17 @@ def create_jwt_token(user_email: str) -> Optional[str]:
 
 
 def decode_jwt_token(jwt_token: str) -> Optional[str]:
+    """Decode a JWT token
+
+    Args:
+        jwt_token (str): The token to decode
+
+    Raises:
+        SAMLAuthError: Cannot decode JWT token.
+
+    Returns:
+        Optional[str]: A user_id as str or None.
+    """
     jwt_secret = settings.SAML2_AUTH.get("JWT_SECRET")
     jwt_algorithm = settings.SAML2_AUTH.get("JWT_ALGORITHM")
 

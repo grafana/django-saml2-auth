@@ -17,12 +17,13 @@ from django.shortcuts import render
 from django.template import TemplateDoesNotExist
 from django.utils.http import is_safe_url
 from django.views.decorators.csrf import csrf_exempt
-from django_saml2_auth.errors import INACTIVE_USER, INVALID_REQUEST_METHOD
+from django_saml2_auth.errors import INACTIVE_USER, INVALID_REQUEST_METHOD, USER_MISMATCH
 from django_saml2_auth.exceptions import SAMLAuthError
 from django_saml2_auth.saml import (decode_saml_response,
                                     extract_user_identity, get_assertion_url,
                                     get_default_next_url, get_saml_client)
-from django_saml2_auth.user import get_or_create_user, create_jwt_token, decode_jwt_token
+from django_saml2_auth.user import (
+    get_or_create_user, create_jwt_token, decode_jwt_token, get_user_id)
 from django_saml2_auth.utils import exception_handler, get_reverse, run_hook
 from pkg_resources import parse_version
 
@@ -64,8 +65,23 @@ def acs(request: HttpRequest):
     user = extract_user_identity(authn_response.get_identity())
 
     next_url = request.session.get("login_next_url") or get_default_next_url()
-    # If relayState params is passed, use that else consider the previous "next_url"
-    next_url = request.POST.get("RelayState") or next_url
+
+    # If RelayState params is passed, it is a JWT token that identifies the user trying to login
+    # via sp_initiated_login endpoint
+    relay_state = request.POST.get("RelayState")
+    redirected_user_id = None
+    saml_resp_user_id = get_user_id(user)
+    if relay_state:
+        redirected_user_id = decode_jwt_token(relay_state)
+
+    # This prevents users from entering an email on the SP, but use a different email on IdP
+    if saml_resp_user_id != redirected_user_id:
+        raise SAMLAuthError("The user identifier doesn't match.", extra={
+            "exc_type": ValueError,
+            "error_code": USER_MISMATCH,
+            "reason": "User identifier mismatch.",
+            "status_code": 403
+        })
 
     is_new_user, target_user = get_or_create_user(user)
 
@@ -77,6 +93,7 @@ def acs(request: HttpRequest):
 
     use_jwt = settings.SAML2_AUTH.get("USE_JWT", False)
     if use_jwt and target_user.is_active:
+        # Create a new JWT token for IdP-initiated login (acs)
         jwt_token = create_jwt_token(target_user.email)
         # Use JWT auth to send token to frontend
         query = f"?token={jwt_token}"
@@ -116,7 +133,8 @@ def sp_initiated_login(request: HttpRequest) -> HttpResponseRedirect:
         if request.GET.get("token"):
             user_id = decode_jwt_token(request.GET.get("token"))
             saml_client = get_saml_client(get_assertion_url(request), acs, user_id)
-            _, info = saml_client.prepare_for_authenticate(sign=False)
+            jwt_token = create_jwt_token(user_id)
+            _, info = saml_client.prepare_for_authenticate(sign=False, relay_state=jwt_token)
             redirect_url = ""
             for header in info["headers"]:
                 if header[0] == "Location":

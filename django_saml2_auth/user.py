@@ -140,7 +140,7 @@ def get_or_create_user(user: Dict[str, Any]) -> Tuple[bool, Type[Model]]:
     return (created, target_user)
 
 
-def get_user(user: Union[str, Dict[str, str]]) -> Type[Model]:
+def get_user_id(user: Dict[str, str]) -> str:
     user_model = get_user_model()
     user_id = None
 
@@ -149,6 +149,13 @@ def get_user(user: Union[str, Dict[str, str]]) -> Type[Model]:
 
     if isinstance(user, str):
         user_id = user
+
+    return user_id
+
+
+def get_user(user: Union[str, Dict[str, str]]) -> Type[Model]:
+    user_model = get_user_model()
+    user_id = get_user_id(user)
 
     # Should email be case-sensitive or not. Default is False (case-insensitive).
     login_case_sensitive = settings.SAML2_AUTH.get("LOGIN_CASE_SENSITIVE", False)

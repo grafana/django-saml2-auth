@@ -43,9 +43,11 @@ def create_new_user(email: str, firstname: str, lastname: str) -> Type[Model]:
     user_groups = dictor(settings.SAML2_AUTH, "NEW_USER_PROFILE.USER_GROUPS", default=[])
 
     try:
-        user = user_model.objects.create_user(
-            email, first_name=firstname, last_name=lastname,
-            is_active=is_active, is_staff=is_staff, is_superuser=is_superuser)
+        user = user_model.objects.create_user(email, first_name=firstname, last_name=lastname)
+        user.is_active = is_active
+        user.is_staff = is_staff
+        user.is_superuser = is_superuser
+        user.save()
     except Exception as exc:
         raise SAMLAuthError("There was an error creating the new user.", extra={
             "exc_type": type(exc),

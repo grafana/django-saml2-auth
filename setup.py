@@ -52,7 +52,7 @@ setup(
         "Programming Language :: Python :: 3.7",
     ],
 
-    keywords=(
+    keywords=[
         "django",
         "saml",
         "saml2"
@@ -60,7 +60,7 @@ setup(
         "authentication",
         "okta",
         "standard"
-    ),
+    ],
 
     packages=find_packages(),
 

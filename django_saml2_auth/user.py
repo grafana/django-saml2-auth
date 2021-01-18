@@ -50,6 +50,7 @@ def create_new_user(email: str, firstname: str, lastname: str) -> Type[Model]:
         user.save()
     except Exception as exc:
         raise SAMLAuthError("There was an error creating the new user.", extra={
+            "exc": exc,
             "exc_type": type(exc),
             "error_code": CREATE_USER_ERROR,
             "reason": "There was an error processing your request.",
@@ -65,6 +66,7 @@ def create_new_user(email: str, firstname: str, lastname: str) -> Type[Model]:
                 user.groups.set(groups)
     except Exception as exc:
         raise SAMLAuthError("There was an error joining the user to the group.", extra={
+            "exc": exc,
             "exc_type": type(exc),
             "error_code": GROUP_JOIN_ERROR,
             "reason": "There was an error processing your request.",
@@ -97,12 +99,13 @@ def get_or_create_user(user: Dict[str, Any]) -> Tuple[bool, Type[Model]]:
     except user_model.DoesNotExist:
         should_create_new_user = settings.SAML2_AUTH.get("CREATE_USER", True)
         if should_create_new_user:
-            target_user = create_new_user(user["email"], user["first_name"], user["last_name"])
+            target_user = create_new_user(get_user_id(user), user["first_name"], user["last_name"])
 
             create_user_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.CREATE_USER")
             if create_user_trigger:
                 run_hook(create_user_trigger, user)
 
+            target_user.refresh_from_db()
             created = True
         else:
             raise SAMLAuthError("Cannot create user.", extra={
@@ -182,11 +185,11 @@ def get_user(user: Union[str, Dict[str, str]]) -> Type[Model]:
     return user_model.objects.get(**{id_field: user_id})
 
 
-def create_jwt_token(user_email: str) -> Optional[str]:
+def create_jwt_token(user_id: str) -> Optional[str]:
     """Create a new JWT token
 
     Args:
-        user_email (str): User's email
+        user_id (str): User's username or email based on User.USERNAME_FIELD
 
     Raises:
         SAMLAuthError: Cannot create JWT token. Specify secret and algorithm.
@@ -194,11 +197,13 @@ def create_jwt_token(user_email: str) -> Optional[str]:
     Returns:
         Optional[str]: JWT token
     """
+    user_model = get_user_model()
+
     jwt_secret = settings.SAML2_AUTH.get("JWT_SECRET")
     jwt_algorithm = settings.SAML2_AUTH.get("JWT_ALGORITHM")
     jwt_expiration = settings.SAML2_AUTH.get("JWT_EXP", 60)  # default: 1 minute
     payload = {
-        "email": user_email,
+        user_model.USERNAME_FIELD: user_id,
         "exp": (datetime.utcnow() +
                 timedelta(seconds=jwt_expiration)).timestamp()
     }

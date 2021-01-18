@@ -59,10 +59,10 @@ def run_hook(function_path: str,
     try:
         cls = import_string(module_path)
         result = getattr(cls, path[-1])(*args, **kwargs)
-    except ImportError as exc:
+    except (ImportError, AttributeError) as exc:
         raise SAMLAuthError(str(exc), extra={
             "exc": exc,
-            "exc_type": ImportError,
+            "exc_type": type(exc),
             "error_code": IMPORT_ERROR,
             "reason": "There was an error processing your request.",
             "status_code": 500

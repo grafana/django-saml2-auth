@@ -61,9 +61,9 @@ def validate_metadata_url(url: str) -> bool:
     Returns:
         bool: Wether the metadata URL is valid or not
     """
-    http_client = HTTPBase()
-    metadata = MetaDataExtern(None, url=url, http=http_client)
     try:
+        http_client = HTTPBase()
+        metadata = MetaDataExtern(None, url=url, http=http_client)
         metadata.load()
     except:
         return False
@@ -140,10 +140,11 @@ def get_saml_client(domain: str,
     """
     acs_url = domain + get_reverse([acs, "acs", "django_saml2_auth:acs"])
     metadata = get_metadata(user_id)
-    if not metadata:
-        raise SAMLAuthError("Metadata URL is missing", extra={
+    if (("local" in metadata and not metadata["local"]) or
+            ("remote" in metadata and not metadata["remote"])):
+        raise SAMLAuthError("Metadata URL/file is missing.", extra={
             "exc_type": NoReverseMatch,
-            "error_code": NO_METADATA_URL,
+            "error_code": NO_METADATA_URL_OR_FILE,
             "reason": "There was an error processing your request.",
             "status_code": 500
         })

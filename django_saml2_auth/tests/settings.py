@@ -67,8 +67,7 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 SAML2_AUTH = {
-    "DEFAULT_NEXT_URL": os.getenv("SAML2_AUTH_DEFAULT_NEXT_URL",
-                                  "http://app.example.com/account/login"),
+    "DEFAULT_NEXT_URL": "http://app.example.com/account/login",
     "CREATE_USER": True,
     "NEW_USER_PROFILE": {
         "USER_GROUPS": [],
@@ -85,7 +84,7 @@ SAML2_AUTH = {
     },
     "TRIGGER": {
         "BEFORE_LOGIN": "django_saml2_auth.tests.test_user.saml_user_setup",
-        "GET_METADATA_AUTO_CONF_URLS": "django_saml2_auth.tests.test_user.get_metadata_auto_conf_urls"
+        "GET_METADATA_AUTO_CONF_URLS": "django_saml2_auth.tests.test_saml.get_metadata_auto_conf_urls"
     },
     "ASSERTION_URL": "https://api.example.com",
     "ENTITY_ID": "https://api.example.com/sso/acs/",

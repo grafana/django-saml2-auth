@@ -1,0 +1,257 @@
+import pytest
+import responses
+from django.test.client import RequestFactory
+from django_saml2_auth.saml import *
+from django_saml2_auth.views import acs
+
+GET_METADATA_AUTO_CONF_URLS = "django_saml2_auth.tests.test_saml.get_metadata_auto_conf_urls"
+METADATA_URL1 = "https://testserver1.com/saml/sso/metadata"
+METADATA_URL2 = "https://testserver2.com/saml/sso/metadata"
+# Ref: https://en.wikipedia.org/wiki/SAML_metadata#Entity_metadata
+METADATA1 = b"""
+<md:EntityDescriptor entityID="https://testserver1.com/entity" validUntil="2025-08-30T19:10:29Z"
+    xmlns:md="urn:oasis:names:tc:SAML:2.0:METADATA1"
+    xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+    xmlns:mdrpi="urn:oasis:names:tc:SAML:METADATA1:rpi"
+    xmlns:mdattr="urn:oasis:names:tc:SAML:METADATA1:attribute"
+    xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <!-- insert ds:Signature element (omitted) -->
+    <md:Extensions>
+    <mdrpi:RegistrationInfo registrationAuthority="https://testserver1.com/"/>
+    <mdrpi:PublicationInfo creationInstant="2025-08-16T19:10:29Z" publisher="https://testserver1.com/"/>
+    <mdattr:EntityAttributes>
+        <saml:Attribute Name="https://testserver1.com/entity-category" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+        <saml:AttributeValue>https://testserver1.com/category/self-certified</saml:AttributeValue>
+        </saml:Attribute>
+    </mdattr:EntityAttributes>
+    </md:Extensions>
+    <!-- insert one or more concrete instances of the md:RoleDescriptor abstract type (see below) -->
+    <md:Organization>
+    <md:OrganizationName xml:lang="en">...</md:OrganizationName>
+    <md:OrganizationDisplayName xml:lang="en">...</md:OrganizationDisplayName>
+    <md:OrganizationURL xml:lang="en">https://testserver1.com/</md:OrganizationURL>
+    </md:Organization>
+    <md:ContactPerson contactType="technical">
+    <md:SurName>SAML Technical Support</md:SurName>
+    <md:EmailAddress>mailto:technical-support@example.info</md:EmailAddress>
+    </md:ContactPerson>
+</md:EntityDescriptor>"""
+METADATA2 = b"""
+<md:EntityDescriptor entityID="https://testserver2.com/entity" validUntil="2025-08-30T19:10:29Z"
+    xmlns:md="urn:oasis:names:tc:SAML:2.0:METADATA1"
+    xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+    xmlns:mdrpi="urn:oasis:names:tc:SAML:METADATA1:rpi"
+    xmlns:mdattr="urn:oasis:names:tc:SAML:METADATA1:attribute"
+    xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <!-- insert ds:Signature element (omitted) -->
+    <md:Extensions>
+    <mdrpi:RegistrationInfo registrationAuthority="https://testserver2.com/"/>
+    <mdrpi:PublicationInfo creationInstant="2025-08-16T19:10:29Z" publisher="https://testserver2.com/"/>
+    <mdattr:EntityAttributes>
+        <saml:Attribute Name="https://testserver2.com/entity-category" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+        <saml:AttributeValue>https://testserver2.com/category/self-certified</saml:AttributeValue>
+        </saml:Attribute>
+    </mdattr:EntityAttributes>
+    </md:Extensions>
+    <!-- insert one or more concrete instances of the md:RoleDescriptor abstract type (see below) -->
+    <md:Organization>
+    <md:OrganizationName xml:lang="en">...</md:OrganizationName>
+    <md:OrganizationDisplayName xml:lang="en">...</md:OrganizationDisplayName>
+    <md:OrganizationURL xml:lang="en">https://testserver2.com/</md:OrganizationURL>
+    </md:Organization>
+    <md:ContactPerson contactType="technical">
+    <md:SurName>SAML Technical Support</md:SurName>
+    <md:EmailAddress>mailto:technical-support@example.info</md:EmailAddress>
+    </md:ContactPerson>
+</md:EntityDescriptor>"""
+
+
+def get_metadata_auto_conf_urls(user_id: Optional[str] = None):
+    if user_id == "nonexistent_user@example.com":
+        return []
+    if user_id == "test@example.com":
+        return [{"url": METADATA_URL1}]
+    return [{"url": METADATA_URL1}, {"url": METADATA_URL2}]
+
+
+def get_user_identity():
+    return {
+        "user.username": ["test@example.com"],
+        "user.email": ["test@example.com"],
+        "user.first_name": ["John"],
+        "user.last_name": ["Doe"],
+        "token": ["TOKEN"]
+    }
+
+
+def mock_parse_authn_request_response(self, response, binding):
+    class MockAuthnRequest:
+        name_id = "Username"
+
+        @staticmethod
+        def issuer():
+            return METADATA_URL1
+
+        @staticmethod
+        def get_identity():
+            return get_user_identity()
+
+    return MockAuthnRequest()
+
+
+def test_get_assertion_url_success():
+    assertion_url = get_assertion_url(HttpRequest())
+
+    assert assertion_url == "https://api.example.com"
+
+
+def test_get_assertion_url_no_assertion_url(settings):
+    settings.SAML2_AUTH["ASSERTION_URL"] = None
+    get_request = RequestFactory().get("/acs/")
+    assertion_url = get_assertion_url(get_request)
+
+    assert assertion_url == "http://testserver"
+
+
+def test_get_default_next_url_success():
+    default_next_url = get_default_next_url()
+    assert default_next_url == "http://app.example.com/account/login"
+
+
+def test_get_default_next_url_no_default_next_url(settings):
+    settings.SAML2_AUTH["DEFAULT_NEXT_URL"] = None
+    with pytest.raises(SAMLAuthError) as exc_info:
+        get_default_next_url()
+
+    # This doesn't happen on a real instance, unless you don't have "admin:index" route
+    assert str(exc_info.value) == "We got a URL reverse issue: ['admin:index']"
+    assert issubclass(exc_info.value.extra["exc_type"], NoReverseMatch)
+
+
+@responses.activate
+def test_validate_metadata_url_success():
+    responses.add(responses.GET, METADATA_URL1, body=METADATA1)
+    result = validate_metadata_url(METADATA_URL1)
+    assert result
+
+
+@responses.activate
+def test_validate_metadata_url_failure():
+    responses.add(responses.GET, METADATA_URL1)
+    result = validate_metadata_url(METADATA_URL1)
+    assert result == False
+
+
+@responses.activate
+def test_get_metadata_success_with_single_metadata_url(settings):
+    settings.SAML2_AUTH["METADATA_AUTO_CONF_URL"] = METADATA_URL1
+    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = None
+    responses.add(responses.GET, METADATA_URL1, body=METADATA1)
+
+    result = get_metadata()
+    assert result == {"remote": [{"url": METADATA_URL1}]}
+
+
+def test_get_metadata_failure_with_invalid_metadata_url(settings):
+    # HTTP Responses are not mocked, so this will fail.
+    settings.SAML2_AUTH["METADATA_AUTO_CONF_URL"] = METADATA_URL1
+    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = None
+
+    with pytest.raises(SAMLAuthError) as exc_info:
+        get_metadata()
+
+    assert str(exc_info.value) == "Invalid metadata URL."
+
+
+@responses.activate
+def test_get_metadata_success_with_multiple_metadata_urls(settings):
+    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
+    responses.add(responses.GET, METADATA_URL1, body=METADATA1)
+    responses.add(responses.GET, METADATA_URL2, body=METADATA2)
+
+    result = get_metadata()
+    assert result == {"remote": [{"url": METADATA_URL1}, {"url": METADATA_URL2}]}
+
+
+@responses.activate
+def test_get_metadata_success_with_user_id(settings):
+    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
+    responses.add(responses.GET, METADATA_URL1, body=METADATA1)
+
+    result = get_metadata("test@example.com")
+    assert result == {"remote": [{"url": METADATA_URL1}]}
+
+
+def test_get_metadata_failure_with_nonexistent_user_id(settings):
+    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
+
+    with pytest.raises(SAMLAuthError) as exc_info:
+        get_metadata("nonexistent_user@example.com")
+    assert str(exc_info.value) == "No metadata URL associated with the given user identifier."
+
+
+def test_get_metadata_success_with_local_file(settings):
+    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = None
+    settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "/absolute/path/to/metadata.xml"
+
+    result = get_metadata()
+    assert result == {"local": ["/absolute/path/to/metadata.xml"]}
+
+
+def test_get_saml_client_success(settings):
+    settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "django_saml2_auth/tests/metadata.xml"
+    result = get_saml_client("example.com", acs)
+    assert isinstance(result, Saml2Client)
+
+
+@responses.activate
+def test_get_saml_client_success_with_user_id(settings):
+    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
+    responses.add(responses.GET, METADATA_URL1, body=METADATA1)
+
+    result = get_saml_client("example.com", acs, "test@example.com")
+    assert isinstance(result, Saml2Client)
+
+
+def test_get_saml_client_failure_with_missing_metadata_url(settings):
+    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
+
+    with pytest.raises(SAMLAuthError) as exc_info:
+        get_saml_client("example.com", acs, "test@example.com")
+
+    assert str(exc_info.value) == "Metadata URL/file is missing."
+
+
+def test_get_saml_client_failure_with_invalid_file(settings):
+    settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "/invalid/metadata.xml"
+    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = None
+
+    with pytest.raises(SAMLAuthError) as exc_info:
+        get_saml_client("example.com", acs)
+
+    assert str(exc_info.value) == "[Errno 2] No such file or directory: '/invalid/metadata.xml'"
+    assert isinstance(exc_info.value.extra["exc"], FileNotFoundError)
+
+
+@responses.activate
+def test_decode_saml_response_success(settings, monkeypatch):
+    responses.add(responses.GET, METADATA_URL1, body=METADATA1)
+    settings.SAML2_AUTH["ASSERTION_URL"] = "https://api.example.com"
+    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
+
+    post_request = RequestFactory().post(METADATA_URL1, {"SAMLResponse": "SAML RESPONSE"})
+    monkeypatch.setattr(Saml2Client,
+                        "parse_authn_request_response",
+                        mock_parse_authn_request_response)
+    result = decode_saml_response(post_request, acs)
+    assert len(result.get_identity()) > 0
+
+
+def test_extract_user_identity_success():
+    result = extract_user_identity(get_user_identity())
+    assert len(result) == 6
+    assert result["username"] == result["email"] == "test@example.com"
+    assert result["first_name"] == "John"
+    assert result["last_name"] == "Doe"
+    assert result["token"] == "TOKEN"
+    assert result["user_identity"] == get_user_identity()

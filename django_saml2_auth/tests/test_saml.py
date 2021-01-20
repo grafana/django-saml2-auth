@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List, Mapping
 
 import pytest
 import responses
@@ -11,7 +11,9 @@ from django_saml2_auth.saml import (decode_saml_response,
                                     get_default_next_url, get_metadata,
                                     get_saml_client, validate_metadata_url)
 from django_saml2_auth.views import acs
+from pytest_django.fixtures import SettingsWrapper
 from saml2.client import Saml2Client
+from saml2.response import AuthnResponse
 
 GET_METADATA_AUTO_CONF_URLS = "django_saml2_auth.tests.test_saml.get_metadata_auto_conf_urls"
 METADATA_URL1 = "https://testserver1.com/saml/sso/metadata"
@@ -75,7 +77,15 @@ METADATA2 = b"""
 </md:EntityDescriptor>"""
 
 
-def get_metadata_auto_conf_urls(user_id: Optional[str] = None):
+def get_metadata_auto_conf_urls(user_id: Optional[str] = None) -> List[Optional[Mapping[str, str]]]:
+    """Fixture for returning metadata autoconf URL(s) based on the user_id.
+
+    Args:
+        user_id (str, optional): User identifier: username or email. Defaults to None.
+
+    Returns:
+        list: Either an empty list or a list of valid metadata URL(s)
+    """
     if user_id == "nonexistent_user@example.com":
         return []
     if user_id == "test@example.com":
@@ -83,7 +93,12 @@ def get_metadata_auto_conf_urls(user_id: Optional[str] = None):
     return [{"url": METADATA_URL1}, {"url": METADATA_URL2}]
 
 
-def get_user_identity():
+def get_user_identity() -> Mapping[str, List[str]]:
+    """Fixture for returning user identity produced by pysaml2.
+
+    Returns:
+        dict: keys are SAML attributes and values are lists of attribute values
+    """
     return {
         "user.username": ["test@example.com"],
         "user.email": ["test@example.com"],
@@ -93,7 +108,13 @@ def get_user_identity():
     }
 
 
-def mock_parse_authn_request_response(self, response, binding):
+def mock_parse_authn_request_response(
+        self: Saml2Client, response: AuthnResponse, binding: str) -> "MockAuthnResponse":
+    """Mock function to return an mocked instance of AuthnResponse.
+
+    Returns:
+        MockAuthnResponse: A mocked instance of AuthnResponse
+    """
     class MockAuthnRequest:
         name_id = "Username"
 
@@ -109,25 +130,38 @@ def mock_parse_authn_request_response(self, response, binding):
 
 
 def test_get_assertion_url_success():
+    """Test get_assertion_url function to verify if it correctly returns the default assertion URL.
+    """
     assertion_url = get_assertion_url(HttpRequest())
-
     assert assertion_url == "https://api.example.com"
 
 
-def test_get_assertion_url_no_assertion_url(settings):
+def test_get_assertion_url_no_assertion_url(settings: SettingsWrapper):
+    """Test get_assertion_url function to verify if it correctly returns the server's assertion URL
+    based on the incoming request.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
     settings.SAML2_AUTH["ASSERTION_URL"] = None
     get_request = RequestFactory().get("/acs/")
     assertion_url = get_assertion_url(get_request)
-
     assert assertion_url == "http://testserver"
 
 
 def test_get_default_next_url_success():
+    """Test get_default_next_url to verify if it returns the correct default next URL."""
     default_next_url = get_default_next_url()
     assert default_next_url == "http://app.example.com/account/login"
 
 
-def test_get_default_next_url_no_default_next_url(settings):
+def test_get_default_next_url_no_default_next_url(settings: SettingsWrapper):
+    """Test get_default_next_url function with no default next url for redirection to see if it
+    returns the admin:index route.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
     settings.SAML2_AUTH["DEFAULT_NEXT_URL"] = None
     with pytest.raises(SAMLAuthError) as exc_info:
         get_default_next_url()
@@ -139,6 +173,7 @@ def test_get_default_next_url_no_default_next_url(settings):
 
 @responses.activate
 def test_validate_metadata_url_success():
+    """Test validate_metadata_url function to verify a valid metadata URL."""
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
     result = validate_metadata_url(METADATA_URL1)
     assert result
@@ -146,13 +181,21 @@ def test_validate_metadata_url_success():
 
 @responses.activate
 def test_validate_metadata_url_failure():
+    """Test validate_metadata_url function to verify if it correctly identifies an invalid metadata
+    URL."""
     responses.add(responses.GET, METADATA_URL1)
     result = validate_metadata_url(METADATA_URL1)
     assert result == False
 
 
 @responses.activate
-def test_get_metadata_success_with_single_metadata_url(settings):
+def test_get_metadata_success_with_single_metadata_url(settings: SettingsWrapper):
+    """Test get_metadata function to verify if it returns a valid metadata URL with a correct
+    format.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
     settings.SAML2_AUTH["METADATA_AUTO_CONF_URL"] = METADATA_URL1
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = None
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
@@ -161,7 +204,12 @@ def test_get_metadata_success_with_single_metadata_url(settings):
     assert result == {"remote": [{"url": METADATA_URL1}]}
 
 
-def test_get_metadata_failure_with_invalid_metadata_url(settings):
+def test_get_metadata_failure_with_invalid_metadata_url(settings: SettingsWrapper):
+    """Test get_metadata function to verify if it fails with invalid metadata information.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
     # HTTP Responses are not mocked, so this will fail.
     settings.SAML2_AUTH["METADATA_AUTO_CONF_URL"] = METADATA_URL1
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = None
@@ -173,7 +221,13 @@ def test_get_metadata_failure_with_invalid_metadata_url(settings):
 
 
 @responses.activate
-def test_get_metadata_success_with_multiple_metadata_urls(settings):
+def test_get_metadata_success_with_multiple_metadata_urls(settings: SettingsWrapper):
+    """Test get_metadata function to verify if it returns multiple metadata URLs if the user_id is
+    unknown.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
     responses.add(responses.GET, METADATA_URL2, body=METADATA2)
@@ -183,7 +237,12 @@ def test_get_metadata_success_with_multiple_metadata_urls(settings):
 
 
 @responses.activate
-def test_get_metadata_success_with_user_id(settings):
+def test_get_metadata_success_with_user_id(settings: SettingsWrapper):
+    """Test get_metadata function to verify if it returns a valid metadata URLs given the user_id.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
 
@@ -191,7 +250,12 @@ def test_get_metadata_success_with_user_id(settings):
     assert result == {"remote": [{"url": METADATA_URL1}]}
 
 
-def test_get_metadata_failure_with_nonexistent_user_id(settings):
+def test_get_metadata_failure_with_nonexistent_user_id(settings: SettingsWrapper):
+    """Test get_metadata function to verify if it raises an exception given a nonexistent user_id.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
 
     with pytest.raises(SAMLAuthError) as exc_info:
@@ -199,7 +263,12 @@ def test_get_metadata_failure_with_nonexistent_user_id(settings):
     assert str(exc_info.value) == "No metadata URL associated with the given user identifier."
 
 
-def test_get_metadata_success_with_local_file(settings):
+def test_get_metadata_success_with_local_file(settings: SettingsWrapper):
+    """Test get_metadata function to verify if correctly returns path to local metadata file.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = None
     settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "/absolute/path/to/metadata.xml"
 
@@ -207,14 +276,26 @@ def test_get_metadata_success_with_local_file(settings):
     assert result == {"local": ["/absolute/path/to/metadata.xml"]}
 
 
-def test_get_saml_client_success(settings):
+def test_get_saml_client_success(settings: SettingsWrapper):
+    """Test get_saml_client function to verify if it is correctly instantiated with local metadata
+    file.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
     settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "django_saml2_auth/tests/metadata.xml"
     result = get_saml_client("example.com", acs)
     assert isinstance(result, Saml2Client)
 
 
 @responses.activate
-def test_get_saml_client_success_with_user_id(settings):
+def test_get_saml_client_success_with_user_id(settings: SettingsWrapper):
+    """Test get_saml_client function to verify if it is correctly instantiated with remote metadata
+    URL and valid user_id.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
 
@@ -222,7 +303,13 @@ def test_get_saml_client_success_with_user_id(settings):
     assert isinstance(result, Saml2Client)
 
 
-def test_get_saml_client_failure_with_missing_metadata_url(settings):
+def test_get_saml_client_failure_with_missing_metadata_url(settings: SettingsWrapper):
+    """Test get_saml_client function to verify if it raises an exception given a missing non-mocked
+    metadata URL.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
 
     with pytest.raises(SAMLAuthError) as exc_info:
@@ -231,7 +318,13 @@ def test_get_saml_client_failure_with_missing_metadata_url(settings):
     assert str(exc_info.value) == "Metadata URL/file is missing."
 
 
-def test_get_saml_client_failure_with_invalid_file(settings):
+def test_get_saml_client_failure_with_invalid_file(settings: SettingsWrapper):
+    """Test get_saml_client function to verify if it raises an exception given an invalid path to
+    metadata file.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
     settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "/invalid/metadata.xml"
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = None
 
@@ -243,7 +336,13 @@ def test_get_saml_client_failure_with_invalid_file(settings):
 
 
 @responses.activate
-def test_decode_saml_response_success(settings, monkeypatch):
+def test_decode_saml_response_success(settings: SettingsWrapper, monkeypatch: "MonkeyPatch"):
+    """Test decode_saml_response function to verify if it correctly decodes the SAML response.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+        monkeypatch (MonkeyPatch): PyTest monkeypatch fixture
+    """
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
     settings.SAML2_AUTH["ASSERTION_URL"] = "https://api.example.com"
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
@@ -257,6 +356,8 @@ def test_decode_saml_response_success(settings, monkeypatch):
 
 
 def test_extract_user_identity_success():
+    """Test extract_user_identity function to verify if it correctly extracts user identity
+    information from a (pysaml2) parsed SAML response."""
     result = extract_user_identity(get_user_identity())
     assert len(result) == 6
     assert result["username"] == result["email"] == "test@example.com"

@@ -214,11 +214,6 @@ def acs(r):
         'ATTRIBUTES_MAP', {}).get('first_name', 'FirstName')), 0)
     user_last_name = _safe_get_index(user_identity.get(settings.SAML2_AUTH.get(
         'ATTRIBUTES_MAP', {}).get('last_name', 'LastName')), 0)
-    token = _safe_get_index(user_identity.get(settings.SAML2_AUTH.get(
-        'ATTRIBUTES_MAP', {}).get('token', 'Token')), 0)
-
-    if not token:
-        return HttpResponseRedirect(get_reverse([denied, 'denied', 'django_saml2_auth:denied']))
 
     target_user = None
     is_new_user = False
@@ -359,8 +354,10 @@ def signin(r):
 
     redirect_url = None
 
-    if 'Location' in info['headers']:
-        redirect_url = info['headers']['Location']
+    # info['headers'] is a list of tuples
+    for item in info['headers']:
+        if 'Location' in item:
+            redirect_url = item[1]
 
     return HttpResponseRedirect(redirect_url)
 

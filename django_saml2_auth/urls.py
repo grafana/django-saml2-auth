@@ -1,7 +1,7 @@
 """Django URL mappings"""
 
 from django.urls import path
-from . import views
+from django_saml2_auth import views
 
 app_name = "django_saml2_auth"
 

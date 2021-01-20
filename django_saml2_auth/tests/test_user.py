@@ -1,6 +1,12 @@
+from typing import Any, Dict
+
 import pytest
-from django_saml2_auth.user import *
 from django.contrib.auth.models import Group
+from django_saml2_auth.exceptions import SAMLAuthError
+from django_saml2_auth.user import (create_jwt_token, create_new_user,
+                                    decode_jwt_token, get_or_create_user,
+                                    get_user, get_user_id)
+from jwt.exceptions import PyJWTError
 
 
 def trigger_change_first_name(user: Dict[str, Any]) -> None:

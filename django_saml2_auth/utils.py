@@ -11,8 +11,8 @@ from django.shortcuts import render
 from django.urls import NoReverseMatch, reverse
 from django.utils.module_loading import import_string
 
-from .errors import *
-from .exceptions import SAMLAuthError
+from django_saml2_auth.errors import *
+from django_saml2_auth.exceptions import SAMLAuthError
 
 
 def run_hook(function_path: str,

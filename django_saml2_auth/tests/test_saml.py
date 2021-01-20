@@ -1,8 +1,17 @@
+from typing import Optional
+
 import pytest
 import responses
+from django.http import HttpRequest
 from django.test.client import RequestFactory
-from django_saml2_auth.saml import *
+from django.urls import NoReverseMatch
+from django_saml2_auth.exceptions import SAMLAuthError
+from django_saml2_auth.saml import (decode_saml_response,
+                                    extract_user_identity, get_assertion_url,
+                                    get_default_next_url, get_metadata,
+                                    get_saml_client, validate_metadata_url)
 from django_saml2_auth.views import acs
+from saml2.client import Saml2Client
 
 GET_METADATA_AUTO_CONF_URLS = "django_saml2_auth.tests.test_saml.get_metadata_auto_conf_urls"
 METADATA_URL1 = "https://testserver1.com/saml/sso/metadata"

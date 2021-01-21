@@ -28,7 +28,7 @@ The supports to new versions of django are still welcome and I'll make best effo
 Donate
 ======
 
-We accept your donations by clicking the awesome |star| instead of any physical transfer.
+We accept donations, but not in the form of money! If you want to support us, make sure to give us a nice, shiny |star|!
 
 .. |star| image:: https://img.shields.io/github/stars/loadimpact/django-saml2-auth.svg?style=social&label=Star&maxAge=86400
 

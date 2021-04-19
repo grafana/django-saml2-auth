@@ -1,0 +1,25 @@
+# This workflow integrates ShiftLeft NG SAST with GitHub
+# Visit https://docs.shiftleft.io for help
+name: Analyze with ShiftLeft NG SAST
+
+on:
+  push:
+    branches:
+      - master
+  pull_request: # include to analyze when you create a pull request
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  NGSAST:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Download ShiftLeft cli
+      run: |
+        curl https://cdn.shiftleft.io/download/sl > ${GITHUB_WORKSPACE}/sl && chmod a+rx ${GITHUB_WORKSPACE}/sl
+    - name: Python
+      run: ${GITHUB_WORKSPACE}/sl analyze --verbose --app django-saml2-auth --tag branch=${GITHUB_REF} --python $(pwd)
+      env:
+        SHIFTLEFT_ACCESS_TOKEN: ${{ secrets.SHIFTLEFT_ACCESS_TOKEN }}

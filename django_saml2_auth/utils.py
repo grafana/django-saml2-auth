@@ -6,6 +6,7 @@ import logging
 from functools import wraps
 from typing import Any, Callable, Iterable, Mapping, Optional, Tuple, Union
 
+from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import NoReverseMatch, reverse
@@ -154,6 +155,8 @@ def exception_handler(function: Callable[..., HttpResponse]) -> Callable[..., Ht
         try:
             result = function(request)
         except (SAMLAuthError, Exception) as exc:
+            if getattr(settings, 'DEBUG', False):
+                raise
             result = handle_exception(exc, request)
         return result
     return wrapper

@@ -285,11 +285,11 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
         Dict[str, Optional[Any]]: Cleaned user information plus user_identity
             for backwards compatibility
     """
-    email_field = dictor(settings, "ATTRIBUTES_MAP.email", default="user.email")
-    username_field = dictor(settings, "ATTRIBUTES_MAP.username", default="user.username")
-    firstname_field = dictor(settings, "ATTRIBUTES_MAP.first_name", default="user.first_name")
-    lastname_field = dictor(settings, "ATTRIBUTES_MAP.last_name", default="user.last_name")
-    token_field = dictor(settings, "ATTRIBUTES_MAP.token", default="token")
+    email_field = dictor(settings.SAML2_AUTH, "ATTRIBUTES_MAP.email", default="user.email")
+    username_field = dictor(settings.SAML2_AUTH, "ATTRIBUTES_MAP.username", default="user.username")
+    firstname_field = dictor(settings.SAML2_AUTH, "ATTRIBUTES_MAP.first_name", default="user.first_name")
+    lastname_field = dictor(settings.SAML2_AUTH, "ATTRIBUTES_MAP.last_name", default="user.last_name")
+    token_field = dictor(settings.SAML2_AUTH, "ATTRIBUTES_MAP.token", default="token")
 
     user = {}
     user["email"] = dictor(user_identity, f"{email_field}/0", pathsep="/")  # Path includes "."

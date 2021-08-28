@@ -1,5 +1,6 @@
 from typing import Any, Dict
 
+import mock
 import pytest
 from django.contrib.auth.models import Group
 from django_saml2_auth.exceptions import SAMLAuthError
@@ -94,7 +95,8 @@ def test_get_or_create_user_success(settings: SettingsWrapper):
     }
 
     Group.objects.create(name="users")
-    created, user = get_or_create_user({
+    request = mock.Mock()
+    created, user = get_or_create_user(request, {
         "username": "test@example.com",
         "first_name": "John",
         "last_name": "Doe",
@@ -104,7 +106,7 @@ def test_get_or_create_user_success(settings: SettingsWrapper):
             "user.last_name": "Doe",
             "groups": ["consumers"]
         }
-    })
+    }, None)
     assert created
     assert user.username == "test@example.com"
     assert user.is_active == True
@@ -126,12 +128,13 @@ def test_get_or_create_user_trigger_error(settings: SettingsWrapper):
         }
     }
 
+    request = mock.Mock()
     with pytest.raises(SAMLAuthError) as exc_info:
-        get_or_create_user({
+        get_or_create_user(request, {
             "username": "test@example.com",
             "first_name": "John",
             "last_name": "Doe"
-        })
+        }, None)
 
     assert str(exc_info.value) == (
         "module 'django_saml2_auth.tests.test_user' has no attribute 'nonexistent_trigger'")
@@ -152,11 +155,12 @@ def test_get_or_create_user_trigger_change_first_name(settings: SettingsWrapper)
         }
     }
 
-    created, user = get_or_create_user({
+    request = mock.Mock()
+    created, user = get_or_create_user(request, {
         "username": "test@example.com",
         "first_name": "John",
         "last_name": "Doe"
-    })
+    }, None)
 
     assert created
     assert user.username == "test@example.com"
@@ -177,12 +181,13 @@ def test_get_or_create_user_should_not_create_user(settings: SettingsWrapper):
         "CREATE_USER": False,
     }
 
+    request = mock.Mock()
     with pytest.raises(SAMLAuthError) as exc_info:
-        get_or_create_user({
+        get_or_create_user(request, {
             "username": "test@example.com",
             "first_name": "John",
             "last_name": "Doe"
-        })
+        }, None)
 
     assert str(exc_info.value) == "Cannot create user."
     assert exc_info.value.extra["reason"] == (
@@ -238,9 +243,19 @@ def test_decode_jwt_token_success():
     """Test decode_jwt_token function by verifying if the newly created JWT token using
     create_jwt_token function is valid."""
     jwt_token = create_jwt_token("test@example.com")
-    user_id = decode_jwt_token(jwt_token)
+    user_id, _ = decode_jwt_token(jwt_token)
 
     assert user_id == "test@example.com"
+
+
+def test_decode_jwt_token_success_extra_data():
+    """Test decode_jwt_token function by verifying if the newly created JWT token using
+    create_jwt_token function is valid."""
+    jwt_token = create_jwt_token("test@example.com", foo='bar', baz='bam')
+    user_id, extra_data = decode_jwt_token(jwt_token)
+
+    assert user_id == "test@example.com"
+    assert extra_data == {"foo": "bar", "baz": "bam"}
 
 
 def test_decode_jwt_token_failure():

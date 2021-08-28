@@ -18,7 +18,7 @@ from django.shortcuts import render
 from django.template import TemplateDoesNotExist
 from django.utils.http import is_safe_url
 from django.views.decorators.csrf import csrf_exempt
-from django_saml2_auth.errors import INACTIVE_USER, INVALID_REQUEST_METHOD, USER_MISMATCH
+from django_saml2_auth.errors import INACTIVE_USER, INVALID_REQUEST_METHOD, USER_MISMATCH, BEFORE_LOGIN_TRIGGER_FAILURE
 from django_saml2_auth.exceptions import SAMLAuthError
 from django_saml2_auth.saml import (decode_saml_response,
                                     extract_user_identity, get_assertion_url,
@@ -69,12 +69,13 @@ def acs(request: HttpRequest):
     user = extract_user_identity(authn_response.get_identity())
 
     next_url = request.session.get("login_next_url") or get_default_next_url()
+    extra_data = None
 
     # If RelayState params is passed, it is a JWT token that identifies the user trying to login
     # via sp_initiated_login endpoint
     relay_state = request.POST.get("RelayState")
     if relay_state:
-        redirected_user_id = decode_jwt_token(relay_state)
+        redirected_user_id, extra_data = decode_jwt_token(relay_state)
 
         # This prevents users from entering an email on the SP, but use a different email on IdP
         logger.debug('get_user_id vs redirected_user_id: %s %s', get_user_id(user), redirected_user_id)
@@ -87,11 +88,18 @@ def acs(request: HttpRequest):
                 "status_code": 403
             })
 
-    is_new_user, target_user = get_or_create_user(request, user)
+    is_new_user, target_user = get_or_create_user(request, user, extra_data)
 
     before_login_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.BEFORE_LOGIN")
     if before_login_trigger:
-        run_hook(before_login_trigger, request, user, target_user)
+        hook_value = run_hook(before_login_trigger, request, user, target_user, is_new_user, extra_data)
+        if hook_value is False:
+            raise SAMLAuthError("The before login trigger returned False.", extra={
+                "exc_type": ValueError,
+                "error_code": BEFORE_LOGIN_TRIGGER_FAILURE,
+                "reason": "Before login trigger returned False.",
+                "status_code": 403
+            })
 
     request.session.flush()
 
@@ -135,10 +143,10 @@ def sp_initiated_login(request: HttpRequest) -> HttpResponseRedirect:
     # User must be created first by the IdP-initiated SSO (acs)
     if request.method == "GET":
         if request.GET.get("token"):
-            user_id = decode_jwt_token(request.GET.get("token"))
+            user_id, extra_data = decode_jwt_token(request.GET.get("token"))
             saml_client = get_saml_client(get_assertion_url(request), acs, request, user_id)
-            jwt_token = create_jwt_token(user_id)
-            logger.debug('Created JWT token for user_id %s', user_id)
+            jwt_token = create_jwt_token(user_id, **extra_data)
+            logger.debug('Created JWT token with extra data %s for user_id %s', extra_data, user_id)
             _, info = saml_client.prepare_for_authenticate(sign=False, relay_state=jwt_token)
             redirect_url = dict(info["headers"]).get("Location", "")
             if not redirect_url:

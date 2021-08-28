@@ -4,6 +4,7 @@
 """Endpoints for SAML SSO login"""
 
 import urllib.parse as urlparse
+import logging
 from urllib.parse import unquote
 import json
 
@@ -26,6 +27,9 @@ from django_saml2_auth.user import (
     get_or_create_user, create_jwt_token, decode_jwt_token, get_user_id)
 from django_saml2_auth.utils import exception_handler, get_reverse, run_hook
 from pkg_resources import parse_version
+
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -73,6 +77,8 @@ def acs(request: HttpRequest):
         redirected_user_id = decode_jwt_token(relay_state)
 
         # This prevents users from entering an email on the SP, but use a different email on IdP
+        logger.debug('get_user_id vs redirected_user_id: %s %s', get_user_id(user), redirected_user_id)
+
         if get_user_id(user) != redirected_user_id:
             raise SAMLAuthError("The user identifier doesn't match.", extra={
                 "exc_type": ValueError,

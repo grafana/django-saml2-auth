@@ -107,12 +107,12 @@ def acs(request: HttpRequest):
         return HttpResponseRedirect(frontend_url + query)
 
     if target_user.is_active:
-        model_backend = "django.contrib.auth.backends.ModelBackend"
-        login(request, target_user, model_backend)
-
         after_login_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.AFTER_LOGIN")
         if after_login_trigger:
             run_hook(after_login_trigger, request, user, target_user)
+        else:
+            model_backend = "django.contrib.auth.backends.ModelBackend"
+            login(request, target_user, model_backend)
     else:
         raise SAMLAuthError("The target user is inactive.", extra={
             "exc_type": Exception,
@@ -138,6 +138,7 @@ def sp_initiated_login(request: HttpRequest) -> HttpResponseRedirect:
             user_id = decode_jwt_token(request.GET.get("token"))
             saml_client = get_saml_client(get_assertion_url(request), acs, request, user_id)
             jwt_token = create_jwt_token(user_id)
+            logger.debug('Created JWT token for user_id %s', user_id)
             _, info = saml_client.prepare_for_authenticate(sign=False, relay_state=jwt_token)
             redirect_url = dict(info["headers"]).get("Location", "")
             if not redirect_url:

@@ -11,6 +11,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db.models import Model
+from django.http import HttpRequest
 from django_saml2_auth.errors import (CREATE_USER_ERROR, GROUP_JOIN_ERROR,
                                       SHOULD_NOT_CREATE_USER, NO_JWT_SECRET_OR_ALGORITHM,
                                       CANNOT_DECODE_JWT_TOKEN)
@@ -79,7 +80,7 @@ def create_new_user(email: str, firstname: str, lastname: str) -> Type[Model]:
     return user
 
 
-def get_or_create_user(user: Dict[str, Any]) -> Tuple[bool, Type[Model]]:
+def get_or_create_user(request: HttpRequest, user: Dict[str, Any]) -> Tuple[bool, Type[Model]]:
     """Get or create a new user and optionally add it to one or more group(s)
 
     Args:
@@ -103,7 +104,7 @@ def get_or_create_user(user: Dict[str, Any]) -> Tuple[bool, Type[Model]]:
 
             create_user_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.CREATE_USER")
             if create_user_trigger:
-                run_hook(create_user_trigger, user)
+                run_hook(create_user_trigger, request, user, target_user)
 
             target_user.refresh_from_db()
             created = True

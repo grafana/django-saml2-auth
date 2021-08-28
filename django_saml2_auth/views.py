@@ -81,11 +81,11 @@ def acs(request: HttpRequest):
                 "status_code": 403
             })
 
-    is_new_user, target_user = get_or_create_user(user)
+    is_new_user, target_user = get_or_create_user(request, user)
 
     before_login_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.BEFORE_LOGIN")
     if before_login_trigger:
-        run_hook(before_login_trigger, user)
+        run_hook(before_login_trigger, request, user, target_user)
 
     request.session.flush()
 
@@ -106,7 +106,7 @@ def acs(request: HttpRequest):
 
         after_login_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.AFTER_LOGIN")
         if after_login_trigger:
-            run_hook(after_login_trigger, request.session, user)
+            run_hook(after_login_trigger, request, user, target_user)
     else:
         raise SAMLAuthError("The target user is inactive.", extra={
             "exc_type": Exception,
@@ -130,7 +130,7 @@ def sp_initiated_login(request: HttpRequest) -> HttpResponseRedirect:
     if request.method == "GET":
         if request.GET.get("token"):
             user_id = decode_jwt_token(request.GET.get("token"))
-            saml_client = get_saml_client(get_assertion_url(request), acs, user_id)
+            saml_client = get_saml_client(get_assertion_url(request), acs, request, user_id)
             jwt_token = create_jwt_token(user_id)
             _, info = saml_client.prepare_for_authenticate(sign=False, relay_state=jwt_token)
             redirect_url = dict(info["headers"]).get("Location", "")
@@ -169,7 +169,7 @@ def signin(request: HttpRequest):
 
     request.session["login_next_url"] = next_url
 
-    saml_client = get_saml_client(get_assertion_url(request), acs)
+    saml_client = get_saml_client(get_assertion_url(request), acs, request)
     _, info = saml_client.prepare_for_authenticate(relay_state=next_url)
 
     redirect_url = None

@@ -118,6 +118,7 @@ def acs(request: HttpRequest):
         after_login_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.AFTER_LOGIN")
         if after_login_trigger:
             run_hook(after_login_trigger, request, user, target_user)
+            logger.warning('request session %s', dict(request.session))
         else:
             model_backend = "django.contrib.auth.backends.ModelBackend"
             login(request, target_user, model_backend)

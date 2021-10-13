@@ -178,6 +178,10 @@ def get_user(user: Union[str, Dict[str, str]]) -> Type[Model]:
     user_model = get_user_model()
     user_id = get_user_id(user)
 
+    get_user_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.GET_USER")
+    if get_user_trigger:
+        return run_hook(get_user_trigger, user_id)
+
     # Should email be case-sensitive or not. Default is False (case-insensitive).
     login_case_sensitive = settings.SAML2_AUTH.get("LOGIN_CASE_SENSITIVE", False)
     id_field = (

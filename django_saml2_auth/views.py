@@ -88,11 +88,14 @@ def acs(request: HttpRequest):
                 "status_code": 403
             })
 
+    is_new_user, target_user = get_or_create_user(request, user, extra_data)
+
     get_next_url_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.GET_NEXT_URL")
     if get_next_url_trigger:
+        logger.debug('running next url trigger')
         next_url = run_hook(get_next_url_trigger, target_user, extra_data)
 
-    is_new_user, target_user = get_or_create_user(request, user, extra_data)
+    logger.debug('next url %s', next_url)
 
     before_login_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.BEFORE_LOGIN")
     if before_login_trigger:

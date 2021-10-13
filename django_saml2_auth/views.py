@@ -90,7 +90,7 @@ def acs(request: HttpRequest):
 
     get_next_url_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.GET_NEXT_URL")
     if get_next_url_trigger:
-        next_url = get_next_url_trigger(get_user_id(user), extra_data)
+        next_url = run_hook(get_next_url_trigger, target_user, extra_data)
 
     is_new_user, target_user = get_or_create_user(request, user, extra_data)
 

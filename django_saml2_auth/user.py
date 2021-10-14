@@ -54,6 +54,7 @@ def create_new_user(email: str, firstname: str, lastname: str) -> Type[Model]:
         user.is_superuser = is_superuser
         user.save()
     except Exception as exc:
+        logger.exception('There was an error creating the new user.')
         raise SAMLAuthError("There was an error creating the new user.", extra={
             "exc": exc,
             "exc_type": type(exc),
@@ -70,6 +71,7 @@ def create_new_user(email: str, firstname: str, lastname: str) -> Type[Model]:
             else:
                 user.groups.set(groups)
     except Exception as exc:
+        logger.exception('There was an error joining the user to the group.')
         raise SAMLAuthError("There was an error joining the user to the group.", extra={
             "exc": exc,
             "exc_type": type(exc),

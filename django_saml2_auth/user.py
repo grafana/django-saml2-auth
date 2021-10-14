@@ -2,6 +2,7 @@
 """
 
 from datetime import datetime, timedelta
+import logging
 from typing import Any, Dict, Tuple, Type, Union, Optional
 import copy
 
@@ -20,6 +21,8 @@ from django_saml2_auth.exceptions import SAMLAuthError
 from django_saml2_auth.utils import run_hook
 from jwt.exceptions import PyJWTError
 from pkg_resources import parse_version
+
+logger = logging.getLogger(__name__)
 
 
 def create_new_user(email: str, firstname: str, lastname: str) -> Type[Model]:

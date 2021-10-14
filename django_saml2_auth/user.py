@@ -180,6 +180,7 @@ def get_user(user: Union[str, Dict[str, str]]) -> Type[Model]:
 
     get_user_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.GET_USER")
     if get_user_trigger:
+        logger.debug('Calling get_user trigger %s', user_id)
         return run_hook(get_user_trigger, user_id)
 
     # Should email be case-sensitive or not. Default is False (case-insensitive).

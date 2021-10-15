@@ -80,7 +80,8 @@ def acs(request: HttpRequest):
         # This prevents users from entering an email on the SP, but use a different email on IdP
         logger.debug('get_user_id vs redirected_user_id: %s %s', get_user_id(user), redirected_user_id)
 
-        if get_user_id(user) != redirected_user_id:
+        check_user_id = dictor(settings.SAML2_AUTH, "ASSERT_SP_VERSUS_IDP_USER_ID", default=True)
+        if check_user_id and get_user_id(user) != redirected_user_id:
             raise SAMLAuthError("The user identifier doesn't match.", extra={
                 "exc_type": ValueError,
                 "error_code": USER_MISMATCH,

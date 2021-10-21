@@ -143,7 +143,8 @@ def get_or_create_user(request: HttpRequest, user: Dict[str, Any], extra_data: O
                 pass
 
         if parse_version(get_version()) >= parse_version("2.0"):
-            target_user.groups.set(groups)
+            for group in groups:
+                target_user.groups.add(group)
         else:
             target_user.groups = groups
 

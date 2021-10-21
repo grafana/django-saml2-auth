@@ -71,7 +71,7 @@ def validate_metadata_url(url: str) -> bool:
     return True
 
 
-def get_metadata(request: HttpRequest, user_id: Optional[str] = None) -> Mapping[str, Any]:
+def get_metadata(request: HttpRequest, user_id: Optional[str] = None, **extra_data) -> Mapping[str, Any]:
     """Returns metadata information, either by running the GET_METADATA_AUTO_CONF_URLS hook function
     if available, or by checking and returning a local file path or the METADATA_AUTO_CONF_URL. URLs
     are always validated and invalid URLs will be either filtered or raise a SAMLAuthError
@@ -91,7 +91,7 @@ def get_metadata(request: HttpRequest, user_id: Optional[str] = None) -> Mapping
     """
     get_metadata_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.GET_METADATA_AUTO_CONF_URLS")
     if get_metadata_trigger:
-        metadata_urls = run_hook(get_metadata_trigger, request, user_id)
+        metadata_urls = run_hook(get_metadata_trigger, request, user_id, **extra_data)
         if metadata_urls:
             # Filter invalid metadata URLs
             filtered_metadata_urls = list(
@@ -125,7 +125,8 @@ def get_metadata(request: HttpRequest, user_id: Optional[str] = None) -> Mapping
 def get_saml_client(domain: str,
                     acs: Callable[..., HttpResponse],
                     request: HttpRequest,
-                    user_id: str = None) -> Optional[Saml2Client]:
+                    user_id: str = None,
+                    **extra_data) -> Optional[Saml2Client]:
     """Create a new Saml2Config object with the given config and return an initialized Saml2Client
     using the config object. The settings are read from django settings key: SAML2_AUTH.
 
@@ -140,7 +141,7 @@ def get_saml_client(domain: str,
         Optional[Saml2Client]: A Saml2Client or None
     """
     acs_url = domain + get_reverse([acs, "acs", "django_saml2_auth:acs"])
-    metadata = get_metadata(request, user_id)
+    metadata = get_metadata(request, user_id, **extra_data)
     if (("local" in metadata and not metadata["local"]) or
             ("remote" in metadata and not metadata["remote"])):
         raise SAMLAuthError("Metadata URL/file is missing.", extra={

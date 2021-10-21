@@ -156,7 +156,7 @@ def sp_initiated_login(request: HttpRequest) -> HttpResponseRedirect:
     if request.method == "GET":
         if request.GET.get("token"):
             user_id, extra_data = decode_jwt_token(request.GET.get("token"))
-            saml_client = get_saml_client(get_assertion_url(request), acs, request, user_id)
+            saml_client = get_saml_client(get_assertion_url(request), acs, request, user_id, **extra_data)
             jwt_token = create_jwt_token(user_id, **extra_data)
             logger.debug('Created JWT token with extra data %s for user_id %s', extra_data, user_id)
             _, info = saml_client.prepare_for_authenticate(sign=False, relay_state=jwt_token)

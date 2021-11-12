@@ -111,6 +111,9 @@ def acs(request: HttpRequest):
                 "reason": "Before login trigger returned False.",
                 "status_code": 403
             })
+        elif isinstance(hook_value, HttpResponseRedirect):
+            # allow to redirect to some informative page
+            return hook_value
 
     request.session.flush()
 

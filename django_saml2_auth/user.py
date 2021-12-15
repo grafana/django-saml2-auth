@@ -190,6 +190,7 @@ def get_user(user: Union[str, Dict[str, str]]) -> Type[Model]:
         user = run_hook(get_user_trigger, user_id)
         if user is None:
             raise user_model.DoesNotExist
+        return user
 
     # Should email be case-sensitive or not. Default is False (case-insensitive).
     login_case_sensitive = settings.SAML2_AUTH.get("LOGIN_CASE_SENSITIVE", False)

@@ -308,8 +308,8 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
     user["first_name"] = dictor(user_identity, f"{firstname_field}/0", pathsep="/")
     user["last_name"] = dictor(user_identity, f"{lastname_field}/0", pathsep="/")
 
-    require_token = dictor(saml2_auth_settings, "REQUIRE_TOKEN", default=True)
-    if require_token:
+    TOKEN_REQUIRED = dictor(saml2_auth_settings, "TOKEN_REQUIRED", default=True)
+    if TOKEN_REQUIRED:
         token_field = dictor(saml2_auth_settings, "ATTRIBUTES_MAP.token", default="token")
         user["token"] = dictor(user_identity, f"{token_field}.0")
 
@@ -329,7 +329,7 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
             "status_code": 422
         })
 
-    if require_token and not user.get("token"):
+    if TOKEN_REQUIRED and not user.get("token"):
         raise SAMLAuthError("No token specified.", extra={
             "exc_type": ValueError,
             "error_code": NO_TOKEN_SPECIFIED,

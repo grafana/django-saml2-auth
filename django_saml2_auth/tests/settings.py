@@ -100,5 +100,5 @@ SAML2_AUTH = {
     "ALLOWED_REDIRECT_HOSTS": ["https://app.example.com",
                                "https://api.example.com",
                                "https://example.com"],
-    "REQUIRE_TOKEN": True
+    "TOKEN_REQUIRED": True
 }

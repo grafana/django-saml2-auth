@@ -7,7 +7,6 @@ from typing import Any, Dict, Tuple, Type, Union, Optional
 import jwt
 from jwt.algorithms import has_crypto
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.backends import default_backend
 from dictor import dictor
 from django import get_version
 from django.conf import settings
@@ -241,13 +240,18 @@ def create_jwt_token(user_id: str) -> Optional[str]:
             "status_code": 500
         })
 
+    # If a passphrase is specified, we need to use a PEM-encoded private key
+    # to decrypt the private key in order to encode the JWT token.
     if jwt_private_key_passphrase:
-        # If a passphrase is specified, we need to use a PEM-encoded private key
-        # to decrypt the private key in order to encode the JWT token.
+        if isinstance(jwt_private_key, str):
+            jwt_private_key = jwt_private_key.encode()
+        if isinstance(jwt_private_key_passphrase, str):
+            jwt_private_key_passphrase = jwt_private_key_passphrase.encode()
+
+        # load_pem_private_key requires data and password to be in bytes
         jwt_private_key = serialization.load_pem_private_key(
-            jwt_private_key.encode(),
-            password=jwt_private_key_passphrase.encode(),
-            backend=default_backend()
+            data=jwt_private_key,
+            password=jwt_private_key_passphrase
         )
 
     # PKI is the preferred way to encode a JWT token

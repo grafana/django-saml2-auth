@@ -264,10 +264,10 @@ def validate_public_key(jwt_algorithm: str, jwt_public_key: str) -> None:
         SAMLAuthError: Cannot create JWT token. Specify a public key.
     """
     if (jwt_algorithm in requires_cryptography and has_crypto) and not jwt_public_key:
-        raise SAMLAuthError("Cannot create JWT token. Specify a public key.", extra={
+        raise SAMLAuthError("Cannot decode JWT token. Specify a public key.", extra={
             "exc_type": Exception,
             "error_code": NO_JWT_PUBLIC_KEY,
-            "reason": "Cannot create JWT token for login.",
+            "reason": "Cannot decode JWT token for login.",
             "status_code": 500
         })
 

@@ -254,8 +254,9 @@ def create_jwt_token(user_id: str) -> Optional[str]:
             password=jwt_private_key_passphrase
         )
 
-    # PKI is the preferred way to encode a JWT token
-    secret = jwt_private_key if jwt_private_key else jwt_secret
+    secret = jwt_secret if (
+        jwt_secret and
+        jwt_algorithm in ["HS256", "HS384", "HS512"]) else jwt_private_key
     jwt_token = jwt.encode(payload, secret, algorithm=jwt_algorithm)
     return jwt_token
 
@@ -304,8 +305,9 @@ def decode_jwt_token(jwt_token: str) -> Optional[str]:
             "status_code": 500
         })
 
-    # PKI is the preferred way to decode a JWT token
-    secret = jwt_public_key if jwt_public_key else jwt_secret
+    secret = jwt_secret if (
+        jwt_secret and
+        jwt_algorithm in ["HS256", "HS384", "HS512"]) else jwt_public_key
 
     try:
         data = jwt.decode(jwt_token, secret, algorithms=jwt_algorithm)

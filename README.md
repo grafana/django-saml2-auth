@@ -200,11 +200,7 @@ For IdP-initiated SSO, the user will be created if it doesn't exist, but for SP-
 
 ## PKI for JWT
 
-If you want to use your PKI key-pair to sign JWT tokens, you might need to install the cryptography package first and then use these fields instead:
-
-```bash
-pip install pip install git+https://github.com/loadimpact/django-saml2-auth.git@master#egg=django-saml2-auth[cryptography]
-```
+If you want to use your PKI key-pair to sign JWT tokens, you might use these fields instead `JWT_SECRET`:
 
 ```python
 {
@@ -217,6 +213,8 @@ pip install pip install git+https://github.com/loadimpact/django-saml2-auth.git@
     ...
 }
 ```
+
+Note: If both PKI fields and `JWT_SECRET` are defined, the `JWT_ALGORITHM` decides which method to use for signing tokens.
 
 ## Customize
 

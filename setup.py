@@ -16,7 +16,7 @@ with open(path.join(here, "README.rst"), encoding="utf-8") as f:
 setup(
     name="django_saml2_auth",
 
-    version="3.2.0",
+    version="3.3.0",
 
     description="Django SAML2 Authentication Made Easy.",
     long_description=long_description,
@@ -64,8 +64,19 @@ setup(
 
     packages=find_packages(),
 
-    install_requires=["pysaml2==7.1.0",
-                      "PyJWT==2.3.0",
-                      "dictor==0.1.7"],
+    install_requires=[
+        "pysaml2==7.1.0",
+        "PyJWT==2.3.0",
+        "dictor==0.1.7"
+    ],
+    extras_require={
+        "all": [
+            "pysaml2==7.1.0",
+            "PyJWT==2.3.0",
+            "cryptography==36.0.1",
+            "dictor==0.1.7"
+        ],
+        "cryptography": ["cryptography==36.0.1"],
+    },
     include_package_data=True,
 )

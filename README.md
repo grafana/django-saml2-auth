@@ -189,16 +189,44 @@ For IdP-initiated SSO, the user will be created if it doesn't exist, but for SP-
 | **ACCEPTED\_TIME\_DIFF**                    | Sets the [accepted time diff](https://pysaml2.readthedocs.io/en/latest/howto/config.html#accepted-time-diff) in seconds                                                                                                                                                                                                                                                                                                                                     | `int` or `None`  | `None`                                                                                                                                   |                                                          |
 | **ALLOWED\_REDIRECT\_HOSTS**                | Allowed hosts to redirect to using the `?next=` parameter                                                                                                                                                                                                                                                                                                                                                                                                   | `list`           | `[]`                                                                                                                                     | `['https://app.example.com', 'https://api.exmaple.com']` |
 
+## JWT Signing Algorithm and Settings
 
-## PKI for JWT
+Both symmetric and asymmetric signing functions are [supported](https://pyjwt.readthedocs.io/en/stable/algorithms.html). If you want to use symmetric signing using a secret key, use either of the following algorithms plus a secret key:
 
-If you want to use your PKI key-pair to sign JWT tokens, you might use these fields instead `JWT_SECRET`:
+- HS256
+- HS384
+- HS512
 
 ```python
 {
     ...
     'USE_JWT': True,
-    'JWT_ALGORITHM': 'RSA256',
+    'JWT_ALGORITHM': 'HS256',
+    'JWT_SECRET': 'YOU.ULTRA.SECURE.SECRET',
+    ...
+}
+```
+
+Otherwise if you want to use your PKI key-pair to sign JWT tokens, use either of the following algorithms and then set the following fields:
+
+- RS256
+- RS384
+- RS512
+- ES256
+- ES256K
+- ES384
+- ES521
+- ES512
+- PS256
+- PS384
+- PS512
+- EdDSA
+
+```python
+{
+    ...
+    'USE_JWT': True,
+    'JWT_ALGORITHM': 'RS256',
     'JWT_PRIVATE_KEY': '--- YOUR PRIVATE KEY ---',
     'JWT_PRIVATE_KEY_PASSPHRASE': 'your.passphrase',  # Optional, if your private key is encrypted
     'JWT_PUBLIC_KEY': '--- YOUR PUBLIC KEY ---',
@@ -206,7 +234,7 @@ If you want to use your PKI key-pair to sign JWT tokens, you might use these fie
 }
 ```
 
-Note: If both PKI fields and `JWT_SECRET` are defined, the `JWT_ALGORITHM` decides which method to use for signing tokens.
+*Note:* If both PKI fields and `JWT_SECRET` are defined, the `JWT_ALGORITHM` decides which method to use for signing tokens.
 
 ## Customize
 

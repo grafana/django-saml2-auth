@@ -69,14 +69,5 @@ setup(
         "PyJWT==2.3.0",
         "dictor==0.1.7"
     ],
-    extras_require={
-        "all": [
-            "pysaml2==7.1.0",
-            "PyJWT==2.3.0",
-            "cryptography==36.0.1",
-            "dictor==0.1.7"
-        ],
-        "cryptography": ["cryptography==36.0.1"],
-    },
     include_package_data=True,
 )

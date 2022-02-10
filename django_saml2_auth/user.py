@@ -196,10 +196,11 @@ def validate_jwt_algorithm(jwt_algorithm: str) -> None:
         jwt_algorithm (str): JWT algorithm
 
     Raises:
-        SAMLAuthError: Cannot create JWT token. Specify an algorithm.
+        SAMLAuthError: Cannot encode/decode JWT token. Specify an algorithm.
+        SAMLAuthError: Cannot encode/decode JWT token. Specify a valid algorithm.
     """
     if not jwt_algorithm:
-        raise SAMLAuthError("Cannot create JWT token. Specify an algorithm.", extra={
+        raise SAMLAuthError("Cannot encode/decode JWT token. Specify an algorithm.", extra={
             "exc_type": Exception,
             "error_code": NO_JWT_ALGORITHM,
             "reason": "Cannot create JWT token for login.",
@@ -207,10 +208,10 @@ def validate_jwt_algorithm(jwt_algorithm: str) -> None:
         })
 
     if jwt_algorithm not in list(get_default_algorithms()):
-        raise SAMLAuthError("Cannot create JWT token. Invalid algorithm.", extra={
+        raise SAMLAuthError("Cannot encode/decode JWT token. Specify a valid algorithm.", extra={
             "exc_type": Exception,
             "error_code": INVALID_JWT_ALGORITHM,
-            "reason": "Cannot create JWT token for login.",
+            "reason": "Cannot encode/decode JWT token for login.",
             "status_code": 500
         })
 
@@ -223,13 +224,13 @@ def validate_secret(jwt_algorithm: str, jwt_secret: str) -> None:
         jwt_secret (str): JWT secret
 
     Raises:
-        SAMLAuthError: Cannot create JWT token. Specify a secret.
+        SAMLAuthError: Cannot encode/decode JWT token. Specify a secret.
     """
     if jwt_algorithm not in requires_cryptography and not jwt_secret:
-        raise SAMLAuthError("Cannot create JWT token. Specify a secret.", extra={
+        raise SAMLAuthError("Cannot encode/decode JWT token. Specify a secret.", extra={
             "exc_type": Exception,
             "error_code": NO_JWT_SECRET,
-            "reason": "Cannot create JWT token for login.",
+            "reason": "Cannot encode/decode JWT token for login.",
             "status_code": 500
         })
 
@@ -242,13 +243,13 @@ def validate_private_key(jwt_algorithm: str, jwt_private_key: str) -> None:
         jwt_private_key (str): JWT private key
 
     Raises:
-        SAMLAuthError: Cannot create JWT token. Specify a private key.
+        SAMLAuthError: Cannot encode/decode JWT token. Specify a private key.
     """
     if (jwt_algorithm in requires_cryptography and has_crypto) and not jwt_private_key:
-        raise SAMLAuthError("Cannot create JWT token. Specify a private key.", extra={
+        raise SAMLAuthError("Cannot encode/decode JWT token. Specify a private key.", extra={
             "exc_type": Exception,
             "error_code": NO_JWT_PRIVATE_KEY,
-            "reason": "Cannot create JWT token for login.",
+            "reason": "Cannot encode/decode JWT token for login.",
             "status_code": 500
         })
 
@@ -261,13 +262,13 @@ def validate_public_key(jwt_algorithm: str, jwt_public_key: str) -> None:
         jwt_public_key (str): JWT public key
 
     Raises:
-        SAMLAuthError: Cannot create JWT token. Specify a public key.
+        SAMLAuthError: Cannot encode/decode JWT token. Specify a public key.
     """
     if (jwt_algorithm in requires_cryptography and has_crypto) and not jwt_public_key:
-        raise SAMLAuthError("Cannot decode JWT token. Specify a public key.", extra={
+        raise SAMLAuthError("Cannot encode/decode JWT token. Specify a public key.", extra={
             "exc_type": Exception,
             "error_code": NO_JWT_PUBLIC_KEY,
-            "reason": "Cannot decode JWT token for login.",
+            "reason": "Cannot encode/decode JWT token for login.",
             "status_code": 500
         })
 
@@ -277,11 +278,6 @@ def create_jwt_token(user_id: str) -> Optional[str]:
 
     Args:
         user_id (str): User's username or email based on User.USERNAME_FIELD
-
-    Raises:
-        SAMLAuthError: Cannot create JWT token. Specify an algorithm.
-        SAMLAuthError: Cannot create JWT token. Specify a secret.
-        SAMLAuthError: Cannot create JWT token. Specify a private key.
 
     Returns:
         Optional[str]: JWT token
@@ -333,9 +329,6 @@ def decode_jwt_token(jwt_token: str) -> Optional[str]:
         jwt_token (str): The token to decode
 
     Raises:
-        SAMLAuthError: Cannot decode JWT token. Specify an algorithm.
-        SAMLAuthError: Cannot decode JWT token. Specify a secret.
-        SAMLAuthError: Cannot decode JWT token. Specify a public key.
         SAMLAuthError: Cannot decode JWT token.
 
     Returns:
@@ -349,14 +342,6 @@ def decode_jwt_token(jwt_token: str) -> Optional[str]:
 
     jwt_public_key = settings.SAML2_AUTH.get("JWT_PUBLIC_KEY")
     validate_public_key(jwt_algorithm, jwt_public_key)
-
-    if not jwt_algorithm:
-        raise SAMLAuthError("Cannot create JWT token. Specify an algorithm.", extra={
-            "exc_type": Exception,
-            "error_code": NO_JWT_ALGORITHM,
-            "reason": "Cannot create JWT token for login.",
-            "status_code": 500
-        })
 
     secret = jwt_secret if (
         jwt_secret and

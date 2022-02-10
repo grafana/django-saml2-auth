@@ -314,26 +314,26 @@ def test_create_and_decode_jwt_token_success(
 @pytest.mark.parametrize('saml2_settings,error_msg', [
     ({
         "JWT_ALGORITHM": None
-    }, "Cannot create JWT token. Specify an algorithm."),
+    }, "Cannot encode/decode JWT token. Specify an algorithm."),
     ({
         "JWT_ALGORITHM": "HS256",
         "JWT_SECRET": None
-    }, "Cannot create JWT token. Specify a secret."),
+    }, "Cannot encode/decode JWT token. Specify a secret."),
     ({
         "JWT_ALGORITHM": "HS256",
         "JWT_SECRET": "",
-    }, "Cannot create JWT token. Specify a secret."),
+    }, "Cannot encode/decode JWT token. Specify a secret."),
     ({
         "JWT_ALGORITHM": "HS256",
         "JWT_PRIVATE_KEY": "-- PRIVATE KEY --"
-    }, "Cannot create JWT token. Specify a secret."),
+    }, "Cannot encode/decode JWT token. Specify a secret."),
     ({
         "JWT_ALGORITHM": "RS256",
-    }, "Cannot create JWT token. Specify a private key."),
+    }, "Cannot encode/decode JWT token. Specify a private key."),
     ({
         "JWT_ALGORITHM": "RS256",
         "JWT_SECRET": "A_SECRET_PHRASE"
-    }, "Cannot create JWT token. Specify a private key."),
+    }, "Cannot encode/decode JWT token. Specify a private key."),
 ])
 def test_create_jwt_token_with_incorrect_jwt_settings(
         settings: SettingsWrapper, saml2_settings: Dict[str, str], error_msg: str):
@@ -355,19 +355,19 @@ def test_create_jwt_token_with_incorrect_jwt_settings(
 @pytest.mark.parametrize('saml2_settings,error_msg', [
     ({
         "JWT_ALGORITHM": None
-    }, "Cannot create JWT token. Specify an algorithm."),
+    }, "Cannot encode/decode JWT token. Specify an algorithm."),
     ({
         "JWT_ALGORITHM": "HS256",
         "JWT_SECRET": None
-    }, "Cannot create JWT token. Specify a secret."),
+    }, "Cannot encode/decode JWT token. Specify a secret."),
     ({
         "JWT_ALGORITHM": "HS256",
         "JWT_SECRET": "",
-    }, "Cannot create JWT token. Specify a secret."),
+    }, "Cannot encode/decode JWT token. Specify a secret."),
     ({
         "JWT_ALGORITHM": "HS256",
         "JWT_PRIVATE_KEY": "-- PRIVATE KEY --"
-    }, "Cannot create JWT token. Specify a secret."),
+    }, "Cannot encode/decode JWT token. Specify a secret."),
     ({
         "JWT_ALGORITHM": "HS256",
         "JWT_SECRET": "secret",
@@ -375,11 +375,11 @@ def test_create_jwt_token_with_incorrect_jwt_settings(
     }, "Cannot decode JWT token."),
     ({
         "JWT_ALGORITHM": "RS256",
-    }, "Cannot create JWT token. Specify a public key."),
+    }, "Cannot encode/decode JWT token. Specify a public key."),
     ({
         "JWT_ALGORITHM": "RS256",
         "JWT_SECRET": "A_SECRET_PHRASE"
-    }, "Cannot create JWT token. Specify a public key.",),
+    }, "Cannot encode/decode JWT token. Specify a public key.",),
 ])
 def test_decode_jwt_token_with_incorrect_jwt_settings(
         settings: SettingsWrapper, saml2_settings: Dict[str, str], error_msg: str):

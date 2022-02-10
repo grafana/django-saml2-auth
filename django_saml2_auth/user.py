@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Tuple, Type, Union, Optional
 
 import jwt
-from jwt.algorithms import has_crypto
+from jwt.algorithms import has_crypto, requires_cryptography, get_default_algorithms
 from cryptography.hazmat.primitives import serialization
 from dictor import dictor
 from django import get_version
@@ -16,7 +16,8 @@ from django.db.models import Model
 from django_saml2_auth.errors import (CREATE_USER_ERROR, GROUP_JOIN_ERROR,
                                       SHOULD_NOT_CREATE_USER, NO_JWT_ALGORITHM,
                                       CANNOT_DECODE_JWT_TOKEN, NO_JWT_SECRET,
-                                      NO_JWT_PRIVATE_KEY, NO_JWT_PUBLIC_KEY)
+                                      NO_JWT_PRIVATE_KEY, NO_JWT_PUBLIC_KEY,
+                                      INVALID_JWT_ALGORITHM)
 from django_saml2_auth.exceptions import SAMLAuthError
 from django_saml2_auth.utils import run_hook
 from jwt.exceptions import PyJWTError
@@ -188,6 +189,89 @@ def get_user(user: Union[str, Dict[str, str]]) -> Type[Model]:
     return user_model.objects.get(**{id_field: user_id})
 
 
+def validate_jwt_algorithm(jwt_algorithm: str) -> None:
+    """Validate JWT algorithm
+
+    Args:
+        jwt_algorithm (str): JWT algorithm
+
+    Raises:
+        SAMLAuthError: Cannot create JWT token. Specify an algorithm.
+    """
+    if not jwt_algorithm:
+        raise SAMLAuthError("Cannot create JWT token. Specify an algorithm.", extra={
+            "exc_type": Exception,
+            "error_code": NO_JWT_ALGORITHM,
+            "reason": "Cannot create JWT token for login.",
+            "status_code": 500
+        })
+
+    if jwt_algorithm not in list(get_default_algorithms()):
+        raise SAMLAuthError("Cannot create JWT token. Invalid algorithm.", extra={
+            "exc_type": Exception,
+            "error_code": INVALID_JWT_ALGORITHM,
+            "reason": "Cannot create JWT token for login.",
+            "status_code": 500
+        })
+
+
+def validate_secret(jwt_algorithm: str, jwt_secret: str) -> None:
+    """Validate symmetric encryption key
+
+    Args:
+        jwt_algorithm (str): JWT algorithm
+        jwt_secret (str): JWT secret
+
+    Raises:
+        SAMLAuthError: Cannot create JWT token. Specify a secret.
+    """
+    if jwt_algorithm not in requires_cryptography and not jwt_secret:
+        raise SAMLAuthError("Cannot create JWT token. Specify a secret.", extra={
+            "exc_type": Exception,
+            "error_code": NO_JWT_SECRET,
+            "reason": "Cannot create JWT token for login.",
+            "status_code": 500
+        })
+
+
+def validate_private_key(jwt_algorithm: str, jwt_private_key: str) -> None:
+    """Validate private key
+
+    Args:
+        jwt_algorithm (str): JWT algorithm
+        jwt_private_key (str): JWT private key
+
+    Raises:
+        SAMLAuthError: Cannot create JWT token. Specify a private key.
+    """
+    if (jwt_algorithm in requires_cryptography and has_crypto) and not jwt_private_key:
+        raise SAMLAuthError("Cannot create JWT token. Specify a private key.", extra={
+            "exc_type": Exception,
+            "error_code": NO_JWT_PRIVATE_KEY,
+            "reason": "Cannot create JWT token for login.",
+            "status_code": 500
+        })
+
+
+def validate_public_key(jwt_algorithm: str, jwt_public_key: str) -> None:
+    """Validate public key
+
+    Args:
+        jwt_algorithm (str): JWT algorithm
+        jwt_public_key (str): JWT public key
+
+    Raises:
+        SAMLAuthError: Cannot create JWT token. Specify a public key.
+    """
+    if (jwt_algorithm in requires_cryptography and has_crypto) and not jwt_public_key:
+        raise SAMLAuthError("Cannot create JWT token. Specify a public key.", extra={
+            "exc_type": Exception,
+            "error_code": NO_JWT_PUBLIC_KEY,
+            "reason": "Cannot create JWT token for login.",
+            "status_code": 500
+        })
+
+
 def create_jwt_token(user_id: str) -> Optional[str]:
     """Create a new JWT token
 
@@ -205,8 +289,14 @@ def create_jwt_token(user_id: str) -> Optional[str]:
     user_model = get_user_model()
 
     jwt_algorithm = settings.SAML2_AUTH.get("JWT_ALGORITHM")
+    validate_jwt_algorithm(jwt_algorithm)
+
     jwt_secret = settings.SAML2_AUTH.get("JWT_SECRET")
+    validate_secret(jwt_algorithm, jwt_secret)
+
     jwt_private_key = settings.SAML2_AUTH.get("JWT_PRIVATE_KEY")
+    validate_private_key(jwt_algorithm, jwt_private_key)
+
     jwt_private_key_passphrase = settings.SAML2_AUTH.get("JWT_PRIVATE_KEY_PASSPHRASE")
     jwt_expiration = settings.SAML2_AUTH.get("JWT_EXP", 60)  # default: 1 minute
     payload = {
@@ -214,31 +304,6 @@ def create_jwt_token(user_id: str) -> Optional[str]:
         "exp": (datetime.utcnow() +
                 timedelta(seconds=jwt_expiration)).timestamp()
     }
-
-    if not jwt_algorithm:
-        raise SAMLAuthError("Cannot create JWT token. Specify an algorithm.", extra={
-            "exc_type": Exception,
-            "error_code": NO_JWT_ALGORITHM,
-            "reason": "Cannot create JWT token for login.",
-            "status_code": 500
-        })
-
-    if (jwt_algorithm in ["HS256", "HS384", "HS512"] and
-            not jwt_secret):
-        raise SAMLAuthError("Cannot create JWT token. Specify a secret.", extra={
-            "exc_type": Exception,
-            "error_code": NO_JWT_SECRET,
-            "reason": "Cannot create JWT token for login.",
-            "status_code": 500
-        })
-    elif (jwt_algorithm not in ["HS256", "HS384", "HS512"] and
-          has_crypto) and not jwt_private_key:
-        raise SAMLAuthError("Cannot create JWT token. Specify a private key.", extra={
-            "exc_type": Exception,
-            "error_code": NO_JWT_PRIVATE_KEY,
-            "reason": "Cannot create JWT token for login.",
-            "status_code": 500
-        })
 
     # If a passphrase is specified, we need to use a PEM-encoded private key
     # to decrypt the private key in order to encode the JWT token.
@@ -256,7 +321,7 @@ def create_jwt_token(user_id: str) -> Optional[str]:
 
     secret = jwt_secret if (
         jwt_secret and
-        jwt_algorithm in ["HS256", "HS384", "HS512"]) else jwt_private_key
+        jwt_algorithm not in requires_cryptography) else jwt_private_key
     jwt_token = jwt.encode(payload, secret, algorithm=jwt_algorithm)
     return jwt_token
 
@@ -277,8 +342,13 @@ def decode_jwt_token(jwt_token: str) -> Optional[str]:
         Optional[str]: A user_id as str or None.
     """
     jwt_algorithm = settings.SAML2_AUTH.get("JWT_ALGORITHM")
+    validate_jwt_algorithm(jwt_algorithm)
+
     jwt_secret = settings.SAML2_AUTH.get("JWT_SECRET")
+    validate_secret(jwt_algorithm, jwt_secret)
+
     jwt_public_key = settings.SAML2_AUTH.get("JWT_PUBLIC_KEY")
+    validate_public_key(jwt_algorithm, jwt_public_key)
 
     if not jwt_algorithm:
         raise SAMLAuthError("Cannot create JWT token. Specify an algorithm.", extra={
@@ -288,26 +358,9 @@ def decode_jwt_token(jwt_token: str) -> Optional[str]:
             "status_code": 500
         })
 
-    if (jwt_algorithm in ["HS256", "HS384", "HS512"] and
-            not jwt_secret):
-        raise SAMLAuthError("Cannot create JWT token. Specify a secret.", extra={
-            "exc_type": Exception,
-            "error_code": NO_JWT_SECRET,
-            "reason": "Cannot create JWT token for login.",
-            "status_code": 500
-        })
-    elif ((jwt_algorithm not in ["HS256", "HS384", "HS512"] and
-           has_crypto) and not jwt_public_key):
-        raise SAMLAuthError("Cannot create JWT token. Specify a public key.", extra={
-            "exc_type": Exception,
-            "error_code": NO_JWT_PUBLIC_KEY,
-            "reason": "Cannot create JWT token for login.",
-            "status_code": 500
-        })
-
     secret = jwt_secret if (
         jwt_secret and
-        jwt_algorithm in ["HS256", "HS384", "HS512"]) else jwt_public_key
+        jwt_algorithm not in requires_cryptography) else jwt_public_key
 
     try:
         data = jwt.decode(jwt_token, secret, algorithms=jwt_algorithm)

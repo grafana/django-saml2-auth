@@ -318,8 +318,8 @@ def create_jwt_token(user_id: str) -> Optional[str]:
     secret = jwt_secret if (
         jwt_secret and
         jwt_algorithm not in requires_cryptography) else jwt_private_key
-    jwt_token = jwt.encode(payload, secret, algorithm=jwt_algorithm)
-    return jwt_token
+
+    return jwt.encode(payload, secret, algorithm=jwt_algorithm)
 
 
 def decode_jwt_token(jwt_token: str) -> Optional[str]:

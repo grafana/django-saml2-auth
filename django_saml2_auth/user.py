@@ -39,12 +39,13 @@ def create_new_user(email: str, firstname: str, lastname: str) -> Type[Model]:
     Returns:
         Type[Model]: Returns a new user object, usually a subclass of the the User model
     """
+    saml2_auth_settings = settings.SAML2_AUTH
     user_model = get_user_model()
 
-    is_active = dictor(settings.SAML2_AUTH, "NEW_USER_PROFILE.ACTIVE_STATUS", default=True)
-    is_staff = dictor(settings.SAML2_AUTH, "NEW_USER_PROFILE.STAFF_STATUS", default=False)
-    is_superuser = dictor(settings.SAML2_AUTH, "NEW_USER_PROFILE.SUPERUSER_STATUS", default=False)
-    user_groups = dictor(settings.SAML2_AUTH, "NEW_USER_PROFILE.USER_GROUPS", default=[])
+    is_active = dictor(saml2_auth_settings, "NEW_USER_PROFILE.ACTIVE_STATUS", default=True)
+    is_staff = dictor(saml2_auth_settings, "NEW_USER_PROFILE.STAFF_STATUS", default=False)
+    is_superuser = dictor(saml2_auth_settings, "NEW_USER_PROFILE.SUPERUSER_STATUS", default=False)
+    user_groups = dictor(saml2_auth_settings, "NEW_USER_PROFILE.USER_GROUPS", default=[])
 
     try:
         user = user_model.objects.create_user(email, first_name=firstname, last_name=lastname)
@@ -95,17 +96,18 @@ def get_or_create_user(user: Dict[str, Any]) -> Tuple[bool, Type[Model]]:
     Returns:
         Tuple[bool, Type[Model]]: A tuple containing user creation status and user object
     """
+    saml2_auth_settings = settings.SAML2_AUTH
     user_model = get_user_model()
     created = False
 
     try:
         target_user = get_user(user)
     except user_model.DoesNotExist:
-        should_create_new_user = settings.SAML2_AUTH.get("CREATE_USER", True)
+        should_create_new_user = dictor(saml2_auth_settings, "CREATE_USER", True)
         if should_create_new_user:
             target_user = create_new_user(get_user_id(user), user["first_name"], user["last_name"])
 
-            create_user_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.CREATE_USER")
+            create_user_trigger = dictor(saml2_auth_settings, "TRIGGER.CREATE_USER")
             if create_user_trigger:
                 run_hook(create_user_trigger, user)
 
@@ -121,8 +123,8 @@ def get_or_create_user(user: Dict[str, Any]) -> Tuple[bool, Type[Model]]:
 
     # Optionally update this user's group assignments by updating group memberships from SAML groups
     # to Django equivalents
-    group_attribute = dictor(settings.SAML2_AUTH, "ATTRIBUTES_MAP.groups")
-    group_map = settings.SAML2_AUTH.get("GROUPS_MAP")
+    group_attribute = dictor(saml2_auth_settings, "ATTRIBUTES_MAP.groups")
+    group_map = dictor(saml2_auth_settings, "GROUPS_MAP")
 
     if group_attribute and group_attribute in user["user_identity"]:
         groups = []
@@ -177,11 +179,12 @@ def get_user(user: Union[str, Dict[str, str]]) -> Type[Model]:
     Returns:
         Type[Model]: An instance of the User model
     """
+    saml2_auth_settings = settings.SAML2_AUTH
     user_model = get_user_model()
     user_id = get_user_id(user)
 
     # Should email be case-sensitive or not. Default is False (case-insensitive).
-    login_case_sensitive = settings.SAML2_AUTH.get("LOGIN_CASE_SENSITIVE", False)
+    login_case_sensitive = dictor(saml2_auth_settings, "LOGIN_CASE_SENSITIVE", False)
     id_field = (
         user_model.USERNAME_FIELD
         if login_case_sensitive
@@ -282,19 +285,21 @@ def create_jwt_token(user_id: str) -> Optional[str]:
     Returns:
         Optional[str]: JWT token
     """
+    saml2_auth_settings = settings.SAML2_AUTH
     user_model = get_user_model()
 
-    jwt_algorithm = settings.SAML2_AUTH.get("JWT_ALGORITHM")
+    jwt_algorithm = dictor(saml2_auth_settings, "JWT_ALGORITHM")
     validate_jwt_algorithm(jwt_algorithm)
 
-    jwt_secret = settings.SAML2_AUTH.get("JWT_SECRET")
+    jwt_secret = dictor(saml2_auth_settings, "JWT_SECRET")
     validate_secret(jwt_algorithm, jwt_secret)
 
-    jwt_private_key = settings.SAML2_AUTH.get("JWT_PRIVATE_KEY")
+    jwt_private_key = dictor(saml2_auth_settings, "JWT_PRIVATE_KEY")
     validate_private_key(jwt_algorithm, jwt_private_key)
 
-    jwt_private_key_passphrase = settings.SAML2_AUTH.get("JWT_PRIVATE_KEY_PASSPHRASE")
-    jwt_expiration = settings.SAML2_AUTH.get("JWT_EXP", 60)  # default: 1 minute
+    jwt_private_key_passphrase = dictor(saml2_auth_settings, "JWT_PRIVATE_KEY_PASSPHRASE")
+    jwt_expiration = dictor(saml2_auth_settings, "JWT_EXP", 60)  # default: 1 minute
+
     payload = {
         user_model.USERNAME_FIELD: user_id,
         "exp": (datetime.now(tz=timezone.utc) +
@@ -334,13 +339,15 @@ def decode_jwt_token(jwt_token: str) -> Optional[str]:
     Returns:
         Optional[str]: A user_id as str or None.
     """
-    jwt_algorithm = settings.SAML2_AUTH.get("JWT_ALGORITHM")
+    saml2_auth_settings = settings.SAML2_AUTH
+
+    jwt_algorithm = dictor(saml2_auth_settings, "JWT_ALGORITHM")
     validate_jwt_algorithm(jwt_algorithm)
 
-    jwt_secret = settings.SAML2_AUTH.get("JWT_SECRET")
+    jwt_secret = dictor(saml2_auth_settings, "JWT_SECRET")
     validate_secret(jwt_algorithm, jwt_secret)
 
-    jwt_public_key = settings.SAML2_AUTH.get("JWT_PUBLIC_KEY")
+    jwt_public_key = dictor(saml2_auth_settings, "JWT_PUBLIC_KEY")
     validate_public_key(jwt_algorithm, jwt_public_key)
 
     secret = jwt_secret if (

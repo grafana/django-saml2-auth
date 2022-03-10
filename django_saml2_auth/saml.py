@@ -28,7 +28,8 @@ def get_assertion_url(request: HttpRequest) -> str:
     Returns:
         str: Either protocol://host or ASSERTION_URL
     """
-    assertion_url = settings.SAML2_AUTH.get("ASSERTION_URL")
+    saml2_auth_settings = settings.SAML2_AUTH
+    assertion_url = dictor(saml2_auth_settings, "ASSERTION_URL")
     if assertion_url:
         return assertion_url
 
@@ -44,7 +45,8 @@ def get_default_next_url() -> Optional[str]:
     Returns:
         Optional[str]: Returns default next url for redirection or admin index
     """
-    default_next_url = settings.SAML2_AUTH.get("DEFAULT_NEXT_URL")
+    saml2_auth_settings = settings.SAML2_AUTH
+    default_next_url = dictor(saml2_auth_settings, "DEFAULT_NEXT_URL")
     if default_next_url:
         return default_next_url
 
@@ -89,7 +91,8 @@ def get_metadata(user_id: Optional[str] = None) -> Mapping[str, Any]:
     Returns:
         Mapping[str, Any]: Returns a SAML metadata object as dictionary
     """
-    get_metadata_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.GET_METADATA_AUTO_CONF_URLS")
+    saml2_auth_settings = settings.SAML2_AUTH
+    get_metadata_trigger = dictor(saml2_auth_settings, "TRIGGER.GET_METADATA_AUTO_CONF_URLS")
     if get_metadata_trigger:
         metadata_urls = run_hook(get_metadata_trigger, user_id)
         if metadata_urls:
@@ -106,11 +109,11 @@ def get_metadata(user_id: Optional[str] = None) -> Mapping[str, Any]:
                                     "status_code": 500
                                 })
 
-    metadata_local_file_path = settings.SAML2_AUTH.get("METADATA_LOCAL_FILE_PATH")
+    metadata_local_file_path = dictor(saml2_auth_settings, "METADATA_LOCAL_FILE_PATH")
     if metadata_local_file_path:
         return {"local": [metadata_local_file_path]}
     else:
-        single_metadata_url = settings.SAML2_AUTH.get("METADATA_AUTO_CONF_URL")
+        single_metadata_url = dictor(saml2_auth_settings, "METADATA_AUTO_CONF_URL")
         if validate_metadata_url(single_metadata_url):
             return {"remote": [{"url": single_metadata_url}]}
         else:

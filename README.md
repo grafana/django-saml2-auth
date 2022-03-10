@@ -1,12 +1,12 @@
 # Django SAML2 Authentication Made Easy
 
-- Original Author  
+- Original Author
     Fang Li
 
-- Maintainer  
+- Maintainer
     Mostafa Moradian
 
-- Version  
+- Version
     Use 1.1.4 for Django \<=1.9, 2.x.x for Django \>= 1.9, Latest supported django version is 2.2. Version \>=3.0.0 is heavily refactored.
 
 This project aims to provide a simple way to integrate SAML2 Authentication into your Django-powered app. Try it now, and get rid of the complicated configuration of SAML.
@@ -276,6 +276,8 @@ More information can be found in the [Okta Developer Documentation](https://deve
 4. Send a pull request and bug the maintainer until it gets merged and published. :) Make sure to add yourself to [AUTHORS](https://github.com/grafana/django-saml2-auth/blob/master/AUTHORS.md).
 
 ## Release Log
+
+3.4.0: Add support for Django 3.2 and 4.0 and remove support for older Python and Django versions
 
 3.3.0: Add support for PKI in JWT
 

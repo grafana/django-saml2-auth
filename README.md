@@ -6,8 +6,12 @@
 - Maintainer
     Mostafa Moradian
 
-- Version
-    Use 1.1.4 for Django \<=1.9, 2.x.x for Django \>= 1.9, Latest supported django version is 2.2. Version \>=3.0.0 is heavily refactored.
+- Version support matrix
+    | **Python**                  | **Django** | **django-saml2-auth** |
+    | --------------------------- | ---------- | --------------------- |
+    | 3.7.x, 3.8.x, 3.9.x, 3.10.x | 2.2.x      | 3.4.0                 |
+    | 3.7.x, 3.8.x, 3.9.x, 3.10.x | 3.2.x      | 3.4.0                 |
+    | 3.8.x, 3.9.x, 3.10.x        | 4.0.x      | 3.4.0                 |
 
 This project aims to provide a simple way to integrate SAML2 Authentication into your Django-powered app. Try it now, and get rid of the complicated configuration of SAML.
 
@@ -15,13 +19,13 @@ Any SAML2 based SSO (Single Sign-On) identity provider (IdP) with dynamic metada
 
 ## When you raise an issue or PR
 
-Please note this library is mission-critical and supports almost all django versions since 1.7. We need to be extremely careful when merging any changes.
+Please note this library is mission-critical and supports almost all django versions since 2.2.x. We need to be extremely careful when merging any changes.
 
 The support for new versions of django are welcome and I'll make best effort to make it latest django compatible.
 
 ## Donate
 
-We accept donations, but not in the form of money\! If you want to support us, make sure to give us a nice, shiny ![star](https://img.shields.io/github/stars/grafana/django-saml2-auth.svg?style=social&label=Star&maxAge=86400)\!
+Please give us a shiny ![star](https://img.shields.io/github/stars/grafana/django-saml2-auth.svg?style=social&label=Star&maxAge=86400)\! and help spread the word.
 
 ## Install
 

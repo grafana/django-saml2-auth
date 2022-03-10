@@ -149,10 +149,12 @@ def get_saml_client(domain: str,
             "status_code": 500
         })
 
+    saml2_auth_settings = settings.SAML2_AUTH
+
     saml_settings = {
         "metadata": metadata,
         "allow_unknown_attributes": True,
-        "debug": settings.SAML2_AUTH.get("DEBUG", False),
+        "debug": saml2_auth_settings.get("DEBUG", False),
         "service": {
             "sp": {
                 "endpoints": {
@@ -163,28 +165,28 @@ def get_saml_client(domain: str,
                 },
                 "allow_unsolicited": True,
                 "authn_requests_signed": dictor(
-                    settings, "SAML2_AUTH.AUTHN_REQUESTS_SIGNED", default=True),
+                    saml2_auth_settings, "AUTHN_REQUESTS_SIGNED", default=True),
                 "logout_requests_signed": dictor(
-                    settings, "SAML2_AUTH.LOGOUT_REQUESTS_SIGNED", default=True),
+                    saml2_auth_settings, "LOGOUT_REQUESTS_SIGNED", default=True),
                 "want_assertions_signed": dictor(
-                    settings, "SAML2_AUTH.WANT_ASSERTIONS_SIGNED", default=True),
+                    saml2_auth_settings, "WANT_ASSERTIONS_SIGNED", default=True),
                 "want_response_signed": dictor(
-                    settings, "SAML2_AUTH.WANT_RESPONSE_SIGNED", default=True),
+                    saml2_auth_settings, "WANT_RESPONSE_SIGNED", default=True),
             },
         },
     }
 
-    entity_id = settings.SAML2_AUTH.get("ENTITY_ID")
+    entity_id = saml2_auth_settings.get("ENTITY_ID")
     if entity_id:
         saml_settings["entityid"] = entity_id
 
-    name_id_format = settings.SAML2_AUTH.get("NAME_ID_FORMAT")
+    name_id_format = saml2_auth_settings.get("NAME_ID_FORMAT")
     if name_id_format:
         saml_settings["service"]["sp"]["name_id_format"] = name_id_format
 
-    accepted_time_diff = settings.SAML2_AUTH.get("ACCEPTED_TIME_DIFF")
+    accepted_time_diff = saml2_auth_settings.get("ACCEPTED_TIME_DIFF")
     if accepted_time_diff:
-        saml_settings['accepted_time_diff'] = settings.SAML2_AUTH['ACCEPTED_TIME_DIFF']
+        saml_settings['accepted_time_diff'] = accepted_time_diff
 
     try:
         sp_config = Saml2Config()

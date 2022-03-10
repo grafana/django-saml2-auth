@@ -8,27 +8,30 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.7', '3.8', '3.9', '3.10' ]
+        versions:
+          - { "djangoVersion": "2.2.27", "pythonVersion": "3.7" }
+          - { "djangoVersion": "2.2.27", "pythonVersion": "3.8" }
+          - { "djangoVersion": "2.2.27", "pythonVersion": "3.9" }
+          - { "djangoVersion": "2.2.27", "pythonVersion": "3.10" }
+          - { "djangoVersion": "3.2.12", "pythonVersion": "3.7" }
+          - { "djangoVersion": "3.2.12", "pythonVersion": "3.8" }
+          - { "djangoVersion": "3.2.12", "pythonVersion": "3.9" }
+          - { "djangoVersion": "3.2.12", "pythonVersion": "3.10" }
+          - { "djangoVersion": "4.0.3", "pythonVersion": "3.8" }
+          - { "djangoVersion": "4.0.3", "pythonVersion": "3.9" }
+          - { "djangoVersion": "4.0.3", "pythonVersion": "3.10" }
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.versions.pythonVersion }}
       - name: Install xmlsec1
         run: sudo apt-get install xmlsec1
       - name: Install dependencies
         run: pip install -r requirements_test.txt && pip install -e .
-      - name: Install Django 2.2.27
-        run: pip install Django==2.2.27
-      - name: Test Django 2.2.27
-        run: pytest .
-      - name: Install Django 3.2.12
-        run: pip install Django==3.2.12
-      - name: Test Django 3.2.12
-        run: pytest .
-      - name: Install Django 4.0.3
-        run: pip install Django==4.0.3
-      - name: Test Django 4.0.3
+      - name: Install Django ${{ matrix.versions.djangoVersion }}
+        run: pip install Django==${{ matrix.versions.djangoVersion }}
+      - name: Test Django ${{ matrix.versions.djangoVersion }}
         run: pytest .

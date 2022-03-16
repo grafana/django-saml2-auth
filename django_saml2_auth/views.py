@@ -64,6 +64,8 @@ def acs(request: HttpRequest):
     Notes:
         https://wiki.shibboleth.net/confluence/display/CONCEPT/AssertionConsumerService
     """
+    saml2_auth_settings = settings.SAML2_AUTH
+
     authn_response = decode_saml_response(request, acs)
     user = extract_user_identity(authn_response.get_identity())
 
@@ -86,20 +88,20 @@ def acs(request: HttpRequest):
 
     is_new_user, target_user = get_or_create_user(user)
 
-    before_login_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.BEFORE_LOGIN")
+    before_login_trigger = dictor(saml2_auth_settings, "TRIGGER.BEFORE_LOGIN")
     if before_login_trigger:
         run_hook(before_login_trigger, user)
 
     request.session.flush()
 
-    use_jwt = settings.SAML2_AUTH.get("USE_JWT", False)
+    use_jwt = dictor(saml2_auth_settings, "USE_JWT", False)
     if use_jwt and target_user.is_active:
         # Create a new JWT token for IdP-initiated login (acs)
         jwt_token = create_jwt_token(target_user.email)
         # Use JWT auth to send token to frontend
         query = f"?token={jwt_token}"
 
-        frontend_url = settings.SAML2_AUTH.get("FRONTEND_URL", next_url)
+        frontend_url = dictor(saml2_auth_settings, "FRONTEND_URL", next_url)
 
         return HttpResponseRedirect(frontend_url + query)
 
@@ -107,7 +109,7 @@ def acs(request: HttpRequest):
         model_backend = "django.contrib.auth.backends.ModelBackend"
         login(request, target_user, model_backend)
 
-        after_login_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.AFTER_LOGIN")
+        after_login_trigger = dictor(saml2_auth_settings, "TRIGGER.AFTER_LOGIN")
         if after_login_trigger:
             run_hook(after_login_trigger, request.session, user)
     else:
@@ -151,6 +153,8 @@ def sp_initiated_login(request: HttpRequest) -> HttpResponseRedirect:
 
 @exception_handler
 def signin(request: HttpRequest):
+    saml2_auth_settings = settings.SAML2_AUTH
+
     next_url = request.GET.get("next") or get_default_next_url()
 
     try:
@@ -161,7 +165,7 @@ def signin(request: HttpRequest):
         next_url = request.GET.get("next") or get_default_next_url()
 
     # Only permit signin requests where the next_url is a safe URL
-    allowed_hosts = set(settings.SAML2_AUTH.get("ALLOWED_REDIRECT_HOSTS", []))
+    allowed_hosts = set(dictor(saml2_auth_settings, "ALLOWED_REDIRECT_HOSTS", []))
     if parse_version(get_version()) >= parse_version("2.0"):
         url_ok = is_safe_url(next_url, allowed_hosts)
     else:

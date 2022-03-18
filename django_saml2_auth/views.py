@@ -16,7 +16,10 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import render
 from django.template import TemplateDoesNotExist
-from django.utils.http import is_safe_url
+try:
+    from django.utils.http import url_has_allowed_host_and_scheme as is_safe_url
+except ImportError:
+    from django.utils.http import is_safe_url
 from django.views.decorators.csrf import csrf_exempt
 from django_saml2_auth.errors import INACTIVE_USER, INVALID_REQUEST_METHOD, USER_MISMATCH, BEFORE_LOGIN_TRIGGER_FAILURE
 from django_saml2_auth.exceptions import SAMLAuthError
@@ -65,6 +68,8 @@ def acs(request: HttpRequest):
     Notes:
         https://wiki.shibboleth.net/confluence/display/CONCEPT/AssertionConsumerService
     """
+    saml2_auth_settings = settings.SAML2_AUTH
+
     authn_response = decode_saml_response(request, acs)
     user = extract_user_identity(authn_response.get_identity())
 
@@ -101,7 +106,7 @@ def acs(request: HttpRequest):
 
     logger.debug('next url %s', next_url)
 
-    before_login_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.BEFORE_LOGIN")
+    before_login_trigger = dictor(saml2_auth_settings, "TRIGGER.BEFORE_LOGIN")
     if before_login_trigger:
         hook_value = run_hook(before_login_trigger, request, user, target_user, is_new_user, extra_data)
         if hook_value is False:
@@ -117,25 +122,25 @@ def acs(request: HttpRequest):
 
     request.session.flush()
 
-    use_jwt = settings.SAML2_AUTH.get("USE_JWT", False)
+    use_jwt = dictor(saml2_auth_settings, "USE_JWT", False)
     if use_jwt and target_user.is_active:
         # Create a new JWT token for IdP-initiated login (acs)
         jwt_token = create_jwt_token(target_user.email)
         # Use JWT auth to send token to frontend
         query = f"?token={jwt_token}"
 
-        frontend_url = settings.SAML2_AUTH.get("FRONTEND_URL", next_url)
+        frontend_url = dictor(saml2_auth_settings, "FRONTEND_URL", next_url)
 
         return HttpResponseRedirect(frontend_url + query)
 
     if target_user.is_active:
-        after_login_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.AFTER_LOGIN")
+        model_backend = "django.contrib.auth.backends.ModelBackend"
+        login(request, target_user, model_backend)
+
+        after_login_trigger = dictor(saml2_auth_settings, "TRIGGER.AFTER_LOGIN")
         if after_login_trigger:
             run_hook(after_login_trigger, request, user, target_user)
             logger.warning('request session %s', dict(request.session))
-        else:
-            model_backend = "django.contrib.auth.backends.ModelBackend"
-            login(request, target_user, model_backend)
     else:
         raise SAMLAuthError("The target user is inactive.", extra={
             "exc_type": Exception,
@@ -178,6 +183,8 @@ def sp_initiated_login(request: HttpRequest) -> HttpResponseRedirect:
 
 @exception_handler
 def signin(request: HttpRequest):
+    saml2_auth_settings = settings.SAML2_AUTH
+
     next_url = request.GET.get("next") or get_default_next_url()
 
     try:
@@ -188,7 +195,7 @@ def signin(request: HttpRequest):
         next_url = request.GET.get("next") or get_default_next_url()
 
     # Only permit signin requests where the next_url is a safe URL
-    allowed_hosts = set(settings.SAML2_AUTH.get("ALLOWED_REDIRECT_HOSTS", []))
+    allowed_hosts = set(dictor(saml2_auth_settings, "ALLOWED_REDIRECT_HOSTS", []))
     if parse_version(get_version()) >= parse_version("2.0"):
         url_ok = is_safe_url(next_url, allowed_hosts)
     else:
@@ -202,11 +209,7 @@ def signin(request: HttpRequest):
     saml_client = get_saml_client(get_assertion_url(request), acs, request)
     _, info = saml_client.prepare_for_authenticate(relay_state=next_url)
 
-    redirect_url = None
-
-    if "Location" in info["headers"]:
-        redirect_url = info["headers"]["Location"]
-
+    redirect_url = dict(info["headers"]).get("Location", "")
     return HttpResponseRedirect(redirect_url)
 
 

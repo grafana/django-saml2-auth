@@ -10,18 +10,18 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
-with open(path.join(here, "README.rst"), encoding="utf-8") as f:
+with open(path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
     name="django_saml2_auth",
 
-    version="3.0.0",
+    version="3.4.0",
 
     description="Django SAML2 Authentication Made Easy.",
     long_description=long_description,
 
-    url="https://github.com/loadimpact/django-saml2-auth",
+    url="https://github.com/grafana/django-saml2-auth",
 
     author="Fang Li",
     author_email="surivlee+djsaml2auth@gmail.com",
@@ -39,17 +39,15 @@ setup(
 
         "License :: OSI Approved :: Apache Software License",
 
-        "Framework :: Django :: 1.7",
-        "Framework :: Django :: 1.8",
-        "Framework :: Django :: 1.9",
-        "Framework :: Django :: 1.10",
-        "Framework :: Django :: 2.1",
         "Framework :: Django :: 2.2",
+        "Framework :: Django :: 3.2",
+        "Framework :: Django :: 4.0",
 
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
 
     keywords=[
@@ -64,8 +62,10 @@ setup(
 
     packages=find_packages(),
 
-    install_requires=["pysaml2==7.1.0",
-                      "PyJWT==2.0.1",
-                      "dictor==0.1.7"],
+    install_requires=[
+        "pysaml2==7.1.2",
+        "PyJWT==2.3.0",
+        "dictor==0.1.9"
+    ],
     include_package_data=True,
 )

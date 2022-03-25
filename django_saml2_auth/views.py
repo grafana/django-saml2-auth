@@ -73,8 +73,9 @@ def acs(request: HttpRequest):
 
     # If RelayState params is passed, it is a JWT token that identifies the user trying to login
     # via sp_initiated_login endpoint
+    # RelayState, depending on the SAML app configuration, can also be a "/" (%2F char)
     relay_state = request.POST.get("RelayState")
-    if relay_state:
+    if relay_state and relay_state != '/':
         redirected_user_id = decode_jwt_token(relay_state)
 
         # This prevents users from entering an email on the SP, but use a different email on IdP

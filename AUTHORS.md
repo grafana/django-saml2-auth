@@ -51,3 +51,4 @@ an issue.
 - [Akshit Dhar](https://github.com/akshit-wwstay)
 - [Jean Vincent](https://github.com/jean-sh)
 - [Søren Howe Gersager](https://github.com/syre)
+- [Gabrio Mauri](https://github.com/sgabb)

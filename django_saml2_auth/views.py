@@ -98,9 +98,16 @@ def acs(request: HttpRequest):
     use_jwt = dictor(saml2_auth_settings, "USE_JWT", False)
     if use_jwt and target_user.is_active:
         # Create a new JWT token for IdP-initiated login (acs)
-        jwt_token = create_jwt_token(target_user.email)
-        # Use JWT auth to send token to frontend
-        query = f"?token={jwt_token}"
+
+        # Check if there is a custom trigger for creating the JWT and URL query
+        custom_jwt_query_trigger = dictor(saml2_auth_settings, "TRIGGER.CUSTOM_TOKEN_QUERY")
+        if custom_jwt_query_trigger:
+            query = run_hook(custom_jwt_query_trigger, target_user)
+        else:
+            # Create a new JWT token with PyJWT
+            jwt_token = create_jwt_token(target_user.email)
+            # Use JWT auth to send token to frontend
+            query = f"?token={jwt_token}"
 
         frontend_url = dictor(saml2_auth_settings, "FRONTEND_URL", next_url)
 

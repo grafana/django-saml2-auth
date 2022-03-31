@@ -3,6 +3,7 @@ E.g. creating SAML client, creating user, exception handling, etc.
 """
 
 import logging
+import base64
 from functools import wraps
 from typing import Any, Callable, Iterable, Mapping, Optional, Tuple, Union
 
@@ -157,3 +158,29 @@ def exception_handler(function: Callable[..., HttpResponse]) -> Callable[..., Ht
             result = handle_exception(exc, request)
         return result
     return wrapper
+
+
+def is_jwt_well_formed(jwt: str):
+    """Check if JWT is well formed
+
+    Args:
+        jwt (str): Json Web Token
+
+    Returns:
+        Boolean: True if JWT is well formed, otherwise False
+    """
+    if isinstance(jwt, str):
+        # JWT should contain three segments, separated by two period ('.') characters.
+        jwt_segments = jwt.split('.')
+        if len(jwt_segments) == 3:
+            jose_header = jwt_segments[0]
+            # base64-encoded string length should be a multiple of 4
+            if len(jose_header) % 4 == 0:
+                try:
+                    jh_decoded = base64.b64decode(jose_header).decode('utf-8')
+                    if jh_decoded and jh_decoded.find('JWT') > -1:
+                        return True
+                except Exception:
+                    return False
+    # If tests not passed return False
+    return False

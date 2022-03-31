@@ -27,7 +27,7 @@ from django_saml2_auth.saml import (decode_saml_response,
                                     get_default_next_url, get_saml_client)
 from django_saml2_auth.user import (
     get_or_create_user, create_jwt_token, decode_jwt_token, get_user_id)
-from django_saml2_auth.utils import exception_handler, get_reverse, run_hook
+from django_saml2_auth.utils import exception_handler, get_reverse, is_jwt_well_formed, run_hook
 from pkg_resources import parse_version
 
 
@@ -71,11 +71,14 @@ def acs(request: HttpRequest):
 
     next_url = request.session.get("login_next_url") or get_default_next_url()
 
-    # If RelayState params is passed, it is a JWT token that identifies the user trying to login
-    # via sp_initiated_login endpoint
-    # RelayState, depending on the SAML app configuration, can also be a "/" (%2F char)
+    # A RelayState is an HTTP parameter that can be included as part of the SAML request and SAML response;
+    # usually is meant to be an opaque identifier that is passed back without any modification or inspection,
+    # and it is used to specify additional information to the SP or the IdP.
+    # If RelayState params is passed, it could be JWT token that identifies the user trying to login
+    # via sp_initiated_login endpoint, or it could be a URL used for redirection.
     relay_state = request.POST.get("RelayState")
-    if relay_state and relay_state != '/':
+    relay_state_is_token = is_jwt_well_formed(relay_state)
+    if relay_state_is_token:
         redirected_user_id = decode_jwt_token(relay_state)
 
         # This prevents users from entering an email on the SP, but use a different email on IdP

@@ -2,7 +2,8 @@ from typing import Any, Dict
 
 import mock
 import pytest
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, UserManager
+from django.contrib.auth import get_user_model
 from django_saml2_auth.exceptions import SAMLAuthError
 from django_saml2_auth.user import (create_jwt_token, create_new_user,
                                     decode_jwt_token, get_or_create_user,
@@ -11,7 +12,31 @@ from jwt.exceptions import PyJWTError
 from pytest_django.fixtures import SettingsWrapper
 
 
-def trigger_change_first_name(user: Dict[str, Any]) -> None:
+User = get_user_model()
+
+
+class MyUserManager(UserManager):
+    def create_user_with_email_username(self, email, password=None, **extra_fields):
+        """
+        Required for django-saml2-auth integration.
+        """
+        if email == '':
+            raise ValueError('invalid email')
+        password = password or ''
+        return super().create(username=email, email=email, password=password, **extra_fields)
+
+
+def has_usable_password(self):
+    if not self.password:
+        return False
+    return is_password_usable(self.password)
+
+
+User.add_to_class('objects', MyUserManager())
+User.add_to_class('has_usable_password', has_usable_password)
+
+
+def trigger_change_first_name(request, user: Dict[str, Any], target_user, extra_fields) -> None:
     """Trigger function to change user's first name.
 
     Args:
@@ -255,7 +280,7 @@ def test_decode_jwt_token_success_extra_data():
     user_id, extra_data = decode_jwt_token(jwt_token)
 
     assert user_id == "test@example.com"
-    assert extra_data == {"foo": "bar", "baz": "bam"}
+    assert extra_data == {"foo": "bar", "baz": "bam", "username": "test@example.com"}
 
 
 def test_decode_jwt_token_failure():

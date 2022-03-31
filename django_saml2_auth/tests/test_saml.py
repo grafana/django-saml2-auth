@@ -1,6 +1,7 @@
 from typing import Optional, List, Mapping
 
 import pytest
+import mock
 import responses
 from django.http import HttpRequest
 from django.test.client import RequestFactory
@@ -77,7 +78,7 @@ METADATA2 = b"""
 </md:EntityDescriptor>"""
 
 
-def get_metadata_auto_conf_urls(user_id: Optional[str] = None) -> List[Optional[Mapping[str, str]]]:
+def get_metadata_auto_conf_urls(request, user_id: Optional[str] = None) -> List[Optional[Mapping[str, str]]]:
     """Fixture for returning metadata autoconf URL(s) based on the user_id.
 
     Args:
@@ -200,7 +201,8 @@ def test_get_metadata_success_with_single_metadata_url(settings: SettingsWrapper
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = None
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
 
-    result = get_metadata()
+    request = mock.Mock()
+    result = get_metadata(request)
     assert result == {"remote": [{"url": METADATA_URL1}]}
 
 
@@ -214,8 +216,9 @@ def test_get_metadata_failure_with_invalid_metadata_url(settings: SettingsWrappe
     settings.SAML2_AUTH["METADATA_AUTO_CONF_URL"] = METADATA_URL1
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = None
 
+    request = mock.Mock()
     with pytest.raises(SAMLAuthError) as exc_info:
-        get_metadata()
+        get_metadata(request)
 
     assert str(exc_info.value) == "Invalid metadata URL."
 
@@ -232,7 +235,8 @@ def test_get_metadata_success_with_multiple_metadata_urls(settings: SettingsWrap
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
     responses.add(responses.GET, METADATA_URL2, body=METADATA2)
 
-    result = get_metadata()
+    request = mock.Mock()
+    result = get_metadata(request)
     assert result == {"remote": [{"url": METADATA_URL1}, {"url": METADATA_URL2}]}
 
 
@@ -246,7 +250,8 @@ def test_get_metadata_success_with_user_id(settings: SettingsWrapper):
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
 
-    result = get_metadata("test@example.com")
+    request = mock.Mock()
+    result = get_metadata(request, "test@example.com")
     assert result == {"remote": [{"url": METADATA_URL1}]}
 
 
@@ -258,8 +263,9 @@ def test_get_metadata_failure_with_nonexistent_user_id(settings: SettingsWrapper
     """
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
 
+    request = mock.Mock()
     with pytest.raises(SAMLAuthError) as exc_info:
-        get_metadata("nonexistent_user@example.com")
+        get_metadata(request, "nonexistent_user@example.com")
     assert str(exc_info.value) == "No metadata URL associated with the given user identifier."
 
 
@@ -272,7 +278,8 @@ def test_get_metadata_success_with_local_file(settings: SettingsWrapper):
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = None
     settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "/absolute/path/to/metadata.xml"
 
-    result = get_metadata()
+    request = mock.Mock()
+    result = get_metadata(request)
     assert result == {"local": ["/absolute/path/to/metadata.xml"]}
 
 
@@ -284,7 +291,8 @@ def test_get_saml_client_success(settings: SettingsWrapper):
         settings (SettingsWrapper): Fixture for django settings
     """
     settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "django_saml2_auth/tests/metadata.xml"
-    result = get_saml_client("example.com", acs)
+    request = mock.Mock()
+    result = get_saml_client("example.com", acs, request)
     assert isinstance(result, Saml2Client)
 
 
@@ -299,7 +307,8 @@ def test_get_saml_client_success_with_user_id(settings: SettingsWrapper):
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
 
-    result = get_saml_client("example.com", acs, "test@example.com")
+    request = mock.Mock()
+    result = get_saml_client("example.com", acs, request, "test@example.com")
     assert isinstance(result, Saml2Client)
 
 
@@ -312,8 +321,9 @@ def test_get_saml_client_failure_with_missing_metadata_url(settings: SettingsWra
     """
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
 
+    request = mock.Mock()
     with pytest.raises(SAMLAuthError) as exc_info:
-        get_saml_client("example.com", acs, "test@example.com")
+        get_saml_client("example.com", acs, request, "test@example.com")
 
     assert str(exc_info.value) == "Metadata URL/file is missing."
 
@@ -328,8 +338,9 @@ def test_get_saml_client_failure_with_invalid_file(settings: SettingsWrapper):
     settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "/invalid/metadata.xml"
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = None
 
+    request = mock.Mock()
     with pytest.raises(SAMLAuthError) as exc_info:
-        get_saml_client("example.com", acs)
+        get_saml_client("example.com", acs, request)
 
     assert str(exc_info.value) == "[Errno 2] No such file or directory: '/invalid/metadata.xml'"
     assert isinstance(exc_info.value.extra["exc"], FileNotFoundError)

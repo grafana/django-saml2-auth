@@ -128,8 +128,8 @@ def test_exception_handler_handle_exception():
 
 def test_jwt_well_formed():
     """Test if passed RelayState is a well formed JWT"""
-    token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI0MjQyIiwibmFtZSI6Ikplc3NpY2EgVGVtcG9yYWwiLCJuaWNrbmFtZSI6Ikplc3MifQ.EDkUUxaM439gWLsQ8a8mJWIvQtgZe0et3O3z4Fd_J8o'
+    token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI0MjQyIiwibmFtZSI6Ikplc3NpY2EgVGVtcG9yYWwiLCJuaWNrbmFtZSI6Ikplc3MifQ.EDkUUxaM439gWLsQ8a8mJWIvQtgZe0et3O3z4Fd_J8o'  # noqa
     res = is_jwt_well_formed(token)  # True
-    assert res == True
+    assert res is True
     res = is_jwt_well_formed('/')  # False
-    assert res == False
+    assert res is False

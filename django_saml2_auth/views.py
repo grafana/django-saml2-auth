@@ -3,10 +3,8 @@
 
 """Endpoints for SAML SSO login"""
 
-from lib2to3.pgen2 import token
 import urllib.parse as urlparse
 from urllib.parse import unquote
-import json
 
 from dictor import dictor
 from django import get_version

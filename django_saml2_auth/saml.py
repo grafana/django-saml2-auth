@@ -194,7 +194,7 @@ def get_saml_client(domain: str,
         },
     }
 
-    get_entity_id_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.GET_ENTITY_ID_URL")
+    get_entity_id_trigger = dictor(saml2_auth_settings, "TRIGGER.GET_ENTITY_ID_URL")
     if get_entity_id_trigger:
         entity_id = run_hook(get_entity_id_trigger, request, user_id)
         if entity_id:
@@ -310,6 +310,7 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
         user_identity (Dict[str, Any]): SAML user identity object (dict)
 
     Raises:
+        SAMLAuthError: No token specified.
         SAMLAuthError: No username or email provided.
 
     Returns:

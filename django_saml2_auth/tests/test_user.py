@@ -382,24 +382,6 @@ def test_create_jwt_token_with_incorrect_jwt_settings(
     assert str(exc_info.value) == error_msg
 
 
-def test_decode_jwt_token_success():
-    """Test decode_jwt_token function by verifying if the newly created JWT token using
-    create_jwt_token function is valid."""
-    jwt_token = create_jwt_token("test@example.com")
-    user_id, _ = decode_jwt_token(jwt_token)
-
-    assert user_id == "test@example.com"
-
-
-def test_decode_jwt_token_success_extra_data():
-    """Test decode_jwt_token function by verifying if the newly created JWT token using
-    create_jwt_token function is valid."""
-    jwt_token = create_jwt_token("test@example.com", foo='bar', baz='bam')
-    user_id, extra_data = decode_jwt_token(jwt_token)
-
-    assert user_id == "test@example.com"
-    assert extra_data == {"foo": "bar", "baz": "bam", "username": "test@example.com"}
-
 @pytest.mark.parametrize('saml2_settings,error_msg', [
     ({
         "JWT_ALGORITHM": None
@@ -444,6 +426,25 @@ def test_decode_jwt_token_with_incorrect_jwt_settings(
         decode_jwt_token("WHATEVER")
 
     assert str(exc_info.value) == error_msg
+
+
+def test_decode_jwt_token_success():
+    """Test decode_jwt_token function by verifying if the newly created JWT token using
+    create_jwt_token function is valid."""
+    jwt_token = create_jwt_token("test@example.com")
+    user_id, _ = decode_jwt_token(jwt_token)
+
+    assert user_id == "test@example.com"
+
+
+def test_decode_jwt_token_success_extra_data():
+    """Test decode_jwt_token function by verifying if the newly created JWT token using
+    create_jwt_token function is valid."""
+    jwt_token = create_jwt_token("test@example.com", foo='bar', baz='bam')
+    user_id, extra_data = decode_jwt_token(jwt_token)
+
+    assert user_id == "test@example.com"
+    assert extra_data == {"foo": "bar", "baz": "bam", "username": "test@example.com"}
 
 
 def test_decode_jwt_token_failure():

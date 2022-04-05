@@ -140,9 +140,6 @@ def acs(request: HttpRequest):
         if after_login_trigger:
             run_hook(after_login_trigger, request, user, target_user)
             logger.warning('request session %s', dict(request.session))
-        else:
-            model_backend = "django.contrib.auth.backends.ModelBackend"
-            login(request, target_user, model_backend)
     else:
         raise SAMLAuthError("The target user is inactive.", extra={
             "exc_type": Exception,

@@ -2,6 +2,7 @@ from typing import Any, Dict
 
 import mock
 import pytest
+from django.contrib.auth.hashers import is_password_usable
 from django.contrib.auth.models import Group, UserManager
 from django.contrib.auth import get_user_model
 from django_saml2_auth.exceptions import SAMLAuthError
@@ -336,7 +337,7 @@ def test_create_and_decode_jwt_token_success(
     settings.SAML2_AUTH = saml2_settings
 
     jwt_token = create_jwt_token("test@example.com")
-    user_id = decode_jwt_token(jwt_token)
+    user_id, _ = decode_jwt_token(jwt_token)
     assert user_id == "test@example.com"
 
 

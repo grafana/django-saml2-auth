@@ -28,7 +28,8 @@ def get_assertion_url(request: HttpRequest) -> str:
     Returns:
         str: Either protocol://host or ASSERTION_URL
     """
-    assertion_url = settings.SAML2_AUTH.get("ASSERTION_URL")
+    saml2_auth_settings = settings.SAML2_AUTH
+    assertion_url = dictor(saml2_auth_settings, "ASSERTION_URL")
     if assertion_url:
         return assertion_url
 
@@ -44,7 +45,8 @@ def get_default_next_url() -> Optional[str]:
     Returns:
         Optional[str]: Returns default next url for redirection or admin index
     """
-    default_next_url = settings.SAML2_AUTH.get("DEFAULT_NEXT_URL")
+    saml2_auth_settings = settings.SAML2_AUTH
+    default_next_url = dictor(saml2_auth_settings, "DEFAULT_NEXT_URL")
     if default_next_url:
         return default_next_url
 
@@ -89,7 +91,8 @@ def get_metadata(request: HttpRequest, user_id: Optional[str] = None, **extra_da
     Returns:
         Mapping[str, Any]: Returns a SAML metadata object as dictionary
     """
-    get_metadata_trigger = dictor(settings.SAML2_AUTH, "TRIGGER.GET_METADATA_AUTO_CONF_URLS")
+    saml2_auth_settings = settings.SAML2_AUTH
+    get_metadata_trigger = dictor(saml2_auth_settings, "TRIGGER.GET_METADATA_AUTO_CONF_URLS")
     if get_metadata_trigger:
         metadata_urls = run_hook(get_metadata_trigger, request, user_id, **extra_data)
         if metadata_urls:
@@ -106,11 +109,11 @@ def get_metadata(request: HttpRequest, user_id: Optional[str] = None, **extra_da
                                     "status_code": 500
                                 })
 
-    metadata_local_file_path = settings.SAML2_AUTH.get("METADATA_LOCAL_FILE_PATH")
+    metadata_local_file_path = dictor(saml2_auth_settings, "METADATA_LOCAL_FILE_PATH")
     if metadata_local_file_path:
         return {"local": [metadata_local_file_path]}
     else:
-        single_metadata_url = settings.SAML2_AUTH.get("METADATA_AUTO_CONF_URL")
+        single_metadata_url = dictor(saml2_auth_settings, "METADATA_AUTO_CONF_URL")
         if validate_metadata_url(single_metadata_url):
             return {"remote": [{"url": single_metadata_url}]}
         else:
@@ -151,10 +154,12 @@ def get_saml_client(domain: str,
             "status_code": 500
         })
 
+    saml2_auth_settings = settings.SAML2_AUTH
+
     saml_settings = {
         "metadata": metadata,
         "allow_unknown_attributes": True,
-        "debug": settings.SAML2_AUTH.get("DEBUG", False),
+        "debug": saml2_auth_settings.get("DEBUG", False),
         "service": {
             "sp": {
                 "endpoints": {
@@ -164,12 +169,14 @@ def get_saml_client(domain: str,
                     ],
                 },
                 "allow_unsolicited": True,
-                "authn_requests_signed": True,
-                "logout_requests_signed": True,
+                "authn_requests_signed": dictor(
+                    saml2_auth_settings, "AUTHN_REQUESTS_SIGNED", default=True),
+                "logout_requests_signed": dictor(
+                    saml2_auth_settings, "LOGOUT_REQUESTS_SIGNED", default=True),
                 "want_assertions_signed": dictor(
-                    settings, "SAML2_AUTH.WANT_ASSERTIONS_SIGNED", default=True),
+                    saml2_auth_settings, "WANT_ASSERTIONS_SIGNED", default=True),
                 "want_response_signed": dictor(
-                    settings, "SAML2_AUTH.WANT_RESPONSE_SIGNED", default=True),
+                    saml2_auth_settings, "WANT_RESPONSE_SIGNED", default=True),
             },
         },
     }
@@ -180,13 +187,17 @@ def get_saml_client(domain: str,
         if entity_id:
             saml_settings["entityid"] = entity_id
 
-    entity_id = settings.SAML2_AUTH.get("ENTITY_ID")
+    entity_id = saml2_auth_settings.get("ENTITY_ID")
     if "entityid" not in saml_settings and entity_id:
         saml_settings["entityid"] = entity_id
 
-    name_id_format = settings.SAML2_AUTH.get("NAME_ID_FORMAT")
+    name_id_format = saml2_auth_settings.get("NAME_ID_FORMAT")
     if name_id_format:
         saml_settings["service"]["sp"]["name_id_format"] = name_id_format
+
+    accepted_time_diff = saml2_auth_settings.get("ACCEPTED_TIME_DIFF")
+    if accepted_time_diff:
+        saml_settings['accepted_time_diff'] = accepted_time_diff
 
     try:
         sp_config = Saml2Config()
@@ -292,18 +303,29 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
         Dict[str, Optional[Any]]: Cleaned user information plus user_identity
             for backwards compatibility
     """
-    email_field = dictor(settings.SAML2_AUTH, "ATTRIBUTES_MAP.email", default="user.email")
-    username_field = dictor(settings.SAML2_AUTH, "ATTRIBUTES_MAP.username", default="user.username")
-    firstname_field = dictor(settings.SAML2_AUTH, "ATTRIBUTES_MAP.first_name", default="user.first_name")
-    lastname_field = dictor(settings.SAML2_AUTH, "ATTRIBUTES_MAP.last_name", default="user.last_name")
-    token_field = dictor(settings.SAML2_AUTH, "ATTRIBUTES_MAP.token", default="token")
+    saml2_auth_settings = settings.SAML2_AUTH
+
+    email_field = dictor(
+        saml2_auth_settings, "ATTRIBUTES_MAP.email", default="user.email")
+    username_field = dictor(
+        saml2_auth_settings, "ATTRIBUTES_MAP.username", default="user.username")
+    firstname_field = dictor(
+        saml2_auth_settings, "ATTRIBUTES_MAP.first_name", default="user.first_name")
+    lastname_field = dictor(
+        saml2_auth_settings, "ATTRIBUTES_MAP.last_name", default="user.last_name")
+    lastname_field = dictor(
+        saml2_auth_settings, "ATTRIBUTES_MAP.token", default="token")
 
     user = {}
     user["email"] = dictor(user_identity, f"{email_field}/0", pathsep="/")  # Path includes "."
     user["username"] = dictor(user_identity, f"{username_field}/0", pathsep="/")
     user["first_name"] = dictor(user_identity, f"{firstname_field}/0", pathsep="/")
     user["last_name"] = dictor(user_identity, f"{lastname_field}/0", pathsep="/")
-    user["token"] = dictor(user_identity, f"{token_field}.0")
+
+    TOKEN_REQUIRED = dictor(saml2_auth_settings, "TOKEN_REQUIRED", default=True)
+    if TOKEN_REQUIRED:
+        token_field = dictor(saml2_auth_settings, "ATTRIBUTES_MAP.token", default="token")
+        user["token"] = dictor(user_identity, f"{token_field}.0")
 
     if user["email"]:
         user["email"] = user["email"].lower()
@@ -318,6 +340,14 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
             "exc_type": ValueError,
             "error_code": NO_USERNAME_OR_EMAIL_SPECIFIED,
             "reason": "Username or email must be configured on the SAML app before logging in.",
+            "status_code": 422
+        })
+
+    if TOKEN_REQUIRED and not user.get("token"):
+        raise SAMLAuthError("No token specified.", extra={
+            "exc_type": ValueError,
+            "error_code": NO_TOKEN_SPECIFIED,
+            "reason": "Token must be configured on the SAML app before logging in.",
             "status_code": 422
         })
 

@@ -7,7 +7,20 @@ from dictor import dictor
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.urls import NoReverseMatch
-from django_saml2_auth.errors import *
+from django_saml2_auth.errors import (
+    ERROR_CREATING_SAML_CONFIG_OR_CLIENT,
+    INVALID_METADATA_URL,
+    NO_ISSUER_IN_SAML_RESPONSE,
+    NO_METADATA_URL_ASSOCIATED,
+    NO_METADATA_URL_OR_FILE,
+    NO_NAME_ID_IN_SAML_RESPONSE,
+    NO_SAML_CLIENT,
+    NO_SAML_RESPONSE_FROM_CLIENT,
+    NO_SAML_RESPONSE_FROM_IDP,
+    NO_TOKEN_SPECIFIED,
+    NO_USERNAME_OR_EMAIL_SPECIFIED,
+    NO_USER_IDENTITY_IN_SAML_RESPONSE,
+)
 from django_saml2_auth.exceptions import SAMLAuthError
 from django_saml2_auth.utils import get_reverse, run_hook
 from saml2 import BINDING_HTTP_POST, BINDING_HTTP_REDIRECT, entity
@@ -314,7 +327,6 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
         saml2_auth_settings, "ATTRIBUTES_MAP.first_name", default="user.first_name")
     lastname_field = dictor(
         saml2_auth_settings, "ATTRIBUTES_MAP.last_name", default="user.last_name")
-    token_field = dictor(settings.SAML2_AUTH, "ATTRIBUTES_MAP.token", default="token")
 
     user = {}
     user["email"] = dictor(user_identity, f"{email_field}/0", pathsep="/")  # Path includes "."

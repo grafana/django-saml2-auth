@@ -6,7 +6,6 @@
 import urllib.parse as urlparse
 import logging
 from urllib.parse import unquote
-import json
 
 from dictor import dictor
 from django import get_version

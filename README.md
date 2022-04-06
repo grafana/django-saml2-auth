@@ -1,33 +1,45 @@
-# Django SAML2 Authentication Made Easy
+# Django SAML2 Authentication
 
-- Original Author
-    Fang Li
+This plugin provides a simple way to integrate SAML2 Authentication into your Django-powered app. SAML SSO is a standard, so practically any SAML2 based SSO identity provider is supported.
 
-- Maintainer
-    Mostafa Moradian
+This plugin supports both identity provider and service provider-initiated SSO:
 
-- Version support matrix
+- For IdP-initiated SSO, the user should sign in to their identity provider platform, e.g., Okta, and click on the application that authorizes and redirects the user to the service provider, that is your platform.
+- For SP-initiated SSO, the user should first exist on your platform, either by signing in via the first method (IdP-initiated SSO) or any other custom solution. It can be configured to be redirected to the correct application on the identity provider platform.
+
+For IdP-initiated SSO, the user will be created if it doesn't exist. Still, for SP-initiated SSO, the user should exist in your platform for the code to detect and redirect them to the correct application on the identity provider platform.
+
+- [Django SAML2 Authentication](#django-saml2-authentication)
+  - [Project Information](#project-information)
+  - [Donate](#donate)
+  - [Installation](#installation)
+  - [How to use?](#how-to-use)
+  - [Module Settings](#module-settings)
+  - [JWT Signing Algorithm and Settings](#jwt-signing-algorithm-and-settings)
+    - [Custom token triggers](#custom-token-triggers)
+  - [Customize Error Messages](#customize-error-messages)
+  - [For Okta Users](#for-okta-users)
+
+## Project Information
+
+- Original Author: Fang Li ([@fangli](https://github.com/fangli))
+- Maintainer: Mostafa Moradian ([@mostafa](https://github.com/mostafa))
+- Version support matrix:
     | **Python**                  | **Django** | **django-saml2-auth** |
     | --------------------------- | ---------- | --------------------- |
     | 3.7.x, 3.8.x, 3.9.x, 3.10.x | 2.2.x      | >=3.4.0               |
     | 3.7.x, 3.8.x, 3.9.x, 3.10.x | 3.2.x      | >=3.4.0               |
     | 3.8.x, 3.9.x, 3.10.x        | 4.0.x      | >=3.4.0               |
 
-This project aims to provide a simple way to integrate SAML2 Authentication into your Django-powered app. Try it now, and get rid of the complicated configuration of SAML.
+- Release log is available [here](RELEASE-LOG.md).
 
-Any SAML2 based SSO (Single Sign-On) identity provider (IdP) with dynamic metadata configuration is supported by this Django plugin, for example Okta. The library also supports service provider-initiated SSO.
-
-## When you raise an issue or PR
-
-Please note this library is mission-critical and supports almost all django versions since 2.2.x. We need to be extremely careful when merging any changes.
-
-The support for new versions of django are welcome and I'll make best effort to make it latest django compatible.
+- For contribution, read [contributing guide](CONTRIBUTING.md).
 
 ## Donate
 
-Please give us a shiny ![star](https://img.shields.io/github/stars/grafana/django-saml2-auth.svg?style=social&label=Star&maxAge=86400)\! and help spread the word.
+Please give us a shiny ![star](https://img.shields.io/github/stars/grafana/django-saml2-auth.svg?style=social&label=Star&maxAge=86400) and help spread the word.
 
-## Install
+## Installation
 
 You can install this plugin via `pip`. Make sure you update `pip` to be able to install from git:
 
@@ -55,15 +67,6 @@ or from source:
 ```
 
 [Windows binaries](https://www.zlatkovic.com/projects/libxml/index.html) are also available.
-
-## What does this plugin do?
-
-This plugin can act as a SAML authentication system for Django that supports IdP and SP-initiated SSO.
-
-- For IdP-initiated SSO, the user should log in to their IdP platform (e.g. Okta), and click on the application that authorizes and redirects the user to the SP (your platform).
-- For SP-initiated SSO, the user should first exist on your platform (either log in using method 1 or else) and then it can be configured to be redirected to the correct application on the IdP platform.
-
-For IdP-initiated SSO, the user will be created if it doesn't exist, but for SP-initiated SSO, the user should exist in your platform for the code to detect and redirect them to the correct application on the IdP platform.
 
 ## How to use?
 
@@ -161,7 +164,8 @@ For IdP-initiated SSO, the user will be created if it doesn't exist, but for SP-
 
 5. In your SAML2 SSO identity provider, set the Single-sign-on URL and Audience URI (SP Entity ID) to <http://your-domain/saml2_auth/acs/>
 
-### Explanation
+## Module Settings
+
 | **Field name**                              | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                             | **Data type(s)** | **Default value(s)**                                                                                                                     | **Example**                                              |
 | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
 | **METADATA\_AUTO\_CONF\_URL**               | Auto SAML2 metadata configuration URL                                                                                                                                                                                                                                                                                                                                                                                                                       | `str`            | `None`                                                                                                                                   | `https://ORG.okta.com/app/APP-ID/sso/saml/metadata`      |
@@ -262,7 +266,7 @@ def get_custom_token_query(refresh):
 
 ```
 
-## Customize
+## Customize Error Messages
 
 The default permission `denied`, `error` and user `welcome` page can be overridden.
 
@@ -293,50 +297,3 @@ I created this plugin originally for Okta. The `METADATA_AUTO_CONF_URL` needed i
 The `Identity Provider metadata` link is the `METADATA_AUTO_CONF_URL`.
 
 More information can be found in the [Okta Developer Documentation](https://developer.okta.com/docs/guides/saml-application-setup/overview/).
-
-## How to Contribute
-
-1. Check for open issues or open a fresh issue to start a discussion around a feature idea or a bug.
-2. Fork [the repository](http://github.com/loadimpact/django-saml2-auth) on GitHub to start making your changes to the **master** branch (or branch off of it).
-3. Write a test which shows that the bug was fixed or that the feature works as expected.
-4. Send a pull request and bug the maintainer until it gets merged and published. :) Make sure to add yourself to [AUTHORS](https://github.com/grafana/django-saml2-auth/blob/master/AUTHORS.md).
-
-## Release Log
-
-3.4.0: Add support for Django 3.2 and 4.0 and remove support for older Python and Django versions
-
-3.3.0: Add support for PKI in JWT
-
-3.2.0: Update dependencies (#22)
-
-3.1.0: Make `token` field optional in the attribute statement by introducing `REQUIRE_TOKEN` settings (default: `True`)
-
-3.0.1: Minor fixes
-
-3.0.0: Extensive refactoring of the library (check the commit logs) - incompatible with previous versions
-
-2.3.0: Merge of PRs plus bugfixes and (manual) testing
-
-2.2.1: Fixed is\_safe\_url parameters issue for django 2.1
-
-2.2.0: ADFS SAML compatibility and fixed some issue for Django2.0
-
-2.1.2: Merged \#35
-
-2.1.1: Added ASSERTION\_URL in settings.
-
-2.1.0: Add DEFAULT\_NEXT\_URL. Issue \#19.
-
-2.0.4: Fixed compatibility with Windows.
-
-2.0.3: Fixed a vulnerabilities in the login flow, thanks qwrrty.
-
-2.0.1: Add support for Django 1.10
-
-1.1.4: Fixed urllib bug
-
-1.1.2: Added support for Python 2.7/3.x
-
-1.1.0: Added support for Django 1.6/1.7/1.8/1.9
-
-1.0.4: Fixed English grammar mistakes

@@ -327,6 +327,44 @@ def create_jwt_token(user_id: str) -> Optional[str]:
     return jwt.encode(payload, secret, algorithm=jwt_algorithm)
 
 
+def create_custom_or_default_jwt(user: Union[str, Type[Model]]):
+    """Create a new JWT token, eventually using custom trigger
+
+    Args:
+        user (dict or str): User instance or User's username or email based on User.USERNAME_FIELD
+
+    Returns:
+        Optional[str]: JWT token
+    """
+    saml2_auth_settings = settings.SAML2_AUTH
+    custom_create_jwt_trigger = dictor(saml2_auth_settings, "TRIGGER.CUSTOM_CREATE_JWT")
+
+    # If user is the id (user_model.USERNAME_FIELD), set it as user_id
+    user_id = None
+    if isinstance(user, str):
+        user_id = user
+
+    # Check if there is a custom trigger for creating the JWT and URL query
+    if custom_create_jwt_trigger:
+        target_user = user
+        # If user is user_id, get user instance
+        if user_id:
+            user_model = get_user_model()
+            user = {
+                user_model.USERNAME_FIELD: user_id
+            }
+            target_user = get_user(user)
+        jwt_token = run_hook(custom_create_jwt_trigger, target_user)
+    else:
+        # If user_id is not set, retrieve it from user instance
+        if not user_id:
+            user_id = getattr(user, user_model.USERNAME_FIELD)
+        # Create a new JWT token with PyJWT
+        jwt_token = create_jwt_token(user_id)
+
+    return jwt_token
+
+
 def decode_jwt_token(jwt_token: str) -> Optional[str]:
     """Decode a JWT token
 
@@ -366,3 +404,24 @@ def decode_jwt_token(jwt_token: str) -> Optional[str]:
             "reason": "Cannot decode JWT token.",
             "status_code": 500
         })
+
+
+def decode_custom_or_default_jwt(jwt_token: str) -> Optional[str]:
+    """Decode a JWT token, eventually using custom trigger
+
+    Args:
+        jwt_token (str): The token to decode
+
+    Raises:
+        SAMLAuthError: Cannot decode JWT token.
+
+    Returns:
+        Optional[str]: A user_id as str or None.
+    """
+    saml2_auth_settings = settings.SAML2_AUTH
+    custom_decode_jwt_trigger = dictor(saml2_auth_settings, "TRIGGER.CUSTOM_DECODE_JWT")
+    if custom_decode_jwt_trigger:
+        user_id = run_hook(custom_decode_jwt_trigger, jwt_token)
+    else:
+        user_id = decode_jwt_token(jwt_token)
+    return user_id

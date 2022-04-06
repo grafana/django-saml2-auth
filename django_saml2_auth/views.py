@@ -5,7 +5,6 @@
 
 import urllib.parse as urlparse
 from urllib.parse import unquote
-import json
 
 from dictor import dictor
 from django import get_version
@@ -26,8 +25,8 @@ from django_saml2_auth.saml import (decode_saml_response,
                                     extract_user_identity, get_assertion_url,
                                     get_default_next_url, get_saml_client)
 from django_saml2_auth.user import (
-    get_or_create_user, create_jwt_token, decode_jwt_token, get_user_id)
-from django_saml2_auth.utils import exception_handler, get_reverse, run_hook
+    create_custom_or_default_jwt, decode_custom_or_default_jwt, get_or_create_user, get_user_id)
+from django_saml2_auth.utils import exception_handler, get_reverse, is_jwt_well_formed, run_hook
 from pkg_resources import parse_version
 
 
@@ -71,11 +70,15 @@ def acs(request: HttpRequest):
 
     next_url = request.session.get("login_next_url") or get_default_next_url()
 
-    # If RelayState params is passed, it is a JWT token that identifies the user trying to login
-    # via sp_initiated_login endpoint
+    # A RelayState is an HTTP parameter that can be included as part of the SAML request and SAML response;
+    # usually is meant to be an opaque identifier that is passed back without any modification or inspection,
+    # and it is used to specify additional information to the SP or the IdP.
+    # If RelayState params is passed, it could be JWT token that identifies the user trying to login
+    # via sp_initiated_login endpoint, or it could be a URL used for redirection.
     relay_state = request.POST.get("RelayState")
-    if relay_state:
-        redirected_user_id = decode_jwt_token(relay_state)
+    relay_state_is_token = is_jwt_well_formed(relay_state)
+    if relay_state_is_token:
+        redirected_user_id = decode_custom_or_default_jwt(relay_state)
 
         # This prevents users from entering an email on the SP, but use a different email on IdP
         if get_user_id(user) != redirected_user_id:
@@ -97,10 +100,14 @@ def acs(request: HttpRequest):
     use_jwt = dictor(saml2_auth_settings, "USE_JWT", False)
     if use_jwt and target_user.is_active:
         # Create a new JWT token for IdP-initiated login (acs)
-        jwt_token = create_jwt_token(target_user.email)
-        # Use JWT auth to send token to frontend
-        query = f"?token={jwt_token}"
+        jwt_token = create_custom_or_default_jwt(target_user)
+        custom_token_query_trigger = dictor(saml2_auth_settings, "TRIGGER.CUSTOM_TOKEN_QUERY")
+        if custom_token_query_trigger:
+            query = run_hook(custom_token_query_trigger, jwt_token)
+        else:
+            query = f"?token={jwt_token}"
 
+        # Use JWT auth to send token to frontend
         frontend_url = dictor(saml2_auth_settings, "FRONTEND_URL", next_url)
 
         return HttpResponseRedirect(frontend_url + query)
@@ -134,9 +141,9 @@ def sp_initiated_login(request: HttpRequest) -> HttpResponseRedirect:
     # User must be created first by the IdP-initiated SSO (acs)
     if request.method == "GET":
         if request.GET.get("token"):
-            user_id = decode_jwt_token(request.GET.get("token"))
+            user_id = decode_custom_or_default_jwt(request.GET.get("token"))
             saml_client = get_saml_client(get_assertion_url(request), acs, user_id)
-            jwt_token = create_jwt_token(user_id)
+            jwt_token = create_custom_or_default_jwt(user_id)
             _, info = saml_client.prepare_for_authenticate(sign=False, relay_state=jwt_token)
             redirect_url = dict(info["headers"]).get("Location", "")
             if not redirect_url:

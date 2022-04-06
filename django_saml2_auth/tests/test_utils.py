@@ -2,7 +2,7 @@ import pytest
 from django.http import HttpRequest, HttpResponse
 from django.urls import NoReverseMatch
 from django_saml2_auth.exceptions import SAMLAuthError
-from django_saml2_auth.utils import exception_handler, get_reverse, run_hook
+from django_saml2_auth.utils import exception_handler, get_reverse, run_hook, is_jwt_well_formed
 
 
 def divide(a: int, b: int = 1) -> int:
@@ -124,3 +124,12 @@ def test_exception_handler_handle_exception():
     contents = result.content.decode("utf-8")
     assert result.status_code == 500
     assert "Reason: Internal world error!" in contents
+
+
+def test_jwt_well_formed():
+    """Test if passed RelayState is a well formed JWT"""
+    token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI0MjQyIiwibmFtZSI6Ikplc3NpY2EgVGVtcG9yYWwiLCJuaWNrbmFtZSI6Ikplc3MifQ.EDkUUxaM439gWLsQ8a8mJWIvQtgZe0et3O3z4Fd_J8o'  # noqa
+    res = is_jwt_well_formed(token)  # True
+    assert res is True
+    res = is_jwt_well_formed('/')  # False
+    assert res is False

@@ -3,8 +3,8 @@ from typing import Any, Dict
 import pytest
 from django.contrib.auth.models import Group
 from django_saml2_auth.exceptions import SAMLAuthError
-from django_saml2_auth.user import (create_jwt_token, create_new_user,
-                                    decode_jwt_token, get_or_create_user,
+from django_saml2_auth.user import (create_custom_or_default_jwt, create_new_user,
+                                    decode_custom_or_default_jwt, get_or_create_user,
                                     get_user, get_user_id)
 from jwt.exceptions import PyJWTError
 from pytest_django.fixtures import SettingsWrapper
@@ -306,8 +306,8 @@ def test_create_and_decode_jwt_token_success(
     """
     settings.SAML2_AUTH = saml2_settings
 
-    jwt_token = create_jwt_token("test@example.com")
-    user_id = decode_jwt_token(jwt_token)
+    jwt_token = create_custom_or_default_jwt("test@example.com")
+    user_id = decode_custom_or_default_jwt(jwt_token)
     assert user_id == "test@example.com"
 
 
@@ -347,7 +347,7 @@ def test_create_jwt_token_with_incorrect_jwt_settings(
     settings.SAML2_AUTH = saml2_settings
 
     with pytest.raises(SAMLAuthError) as exc_info:
-        create_jwt_token("test@example.com")
+        create_custom_or_default_jwt("test@example.com")
 
     assert str(exc_info.value) == error_msg
 
@@ -393,7 +393,7 @@ def test_decode_jwt_token_with_incorrect_jwt_settings(
     settings.SAML2_AUTH = saml2_settings
 
     with pytest.raises(SAMLAuthError) as exc_info:
-        decode_jwt_token("WHATEVER")
+        decode_custom_or_default_jwt("WHATEVER")
 
     assert str(exc_info.value) == error_msg
 
@@ -401,7 +401,7 @@ def test_decode_jwt_token_with_incorrect_jwt_settings(
 def test_decode_jwt_token_failure():
     """Test decode_jwt_token function by passing an invalid JWT token (None, in this case)."""
     with pytest.raises(SAMLAuthError) as exc_info:
-        decode_jwt_token(None)
+        decode_custom_or_default_jwt(None)
 
     assert str(exc_info.value) == "Cannot decode JWT token."
     assert isinstance(exc_info.value.extra["exc"], PyJWTError)

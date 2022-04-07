@@ -337,6 +337,8 @@ def create_custom_or_default_jwt(user: Union[str, Type[Model]]):
         Optional[str]: JWT token
     """
     saml2_auth_settings = settings.SAML2_AUTH
+    user_model = get_user_model()
+
     custom_create_jwt_trigger = dictor(saml2_auth_settings, "TRIGGER.CUSTOM_CREATE_JWT")
 
     # If user is the id (user_model.USERNAME_FIELD), set it as user_id

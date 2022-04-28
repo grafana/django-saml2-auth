@@ -1,5 +1,9 @@
 # Release log
 
+3.6.0: Publish package to PyPI (#40) and rename package to `grafana-django-saml2-auth`
+
+3.5.1: Fix an issue introduced in #35
+
 3.5.0: Add support for three new hook functions for JWT (#35)
 
 3.4.0: Add support for Django 3.2 and 4.0 and remove support for older Python and Django versions

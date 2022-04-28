@@ -1,6 +1,6 @@
 """The setup module for django_saml2_auth.
 See:
-https://github.com/loadimpact/django_saml2_auth
+https://github.com/grafana/django_saml2_auth
 """
 
 from codecs import open
@@ -14,12 +14,13 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
-    name="django_saml2_auth",
+    name="grafana_django_saml2_auth",
 
-    version="3.5.1",
+    version="3.6.0",
 
     description="Django SAML2 Authentication Made Easy.",
     long_description=long_description,
+    long_description_content_type="text/markdown",
 
     url="https://github.com/grafana/django-saml2-auth",
 
@@ -27,7 +28,7 @@ setup(
     author_email="surivlee+djsaml2auth@gmail.com",
 
     maintainer="Mostafa Moradian",
-    maintainer_email="mostafa@k6.io",
+    maintainer_email="mostafa@grafana.com",
 
     license="Apache 2.0",
 

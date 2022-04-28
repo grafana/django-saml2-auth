@@ -43,16 +43,16 @@ Please give us a shiny ![star](https://img.shields.io/github/stars/grafana/djang
 
 You can install this plugin via `pip`. Make sure you update `pip` to be able to install from git:
 
-``` bash
-# pip install git+https://github.com/loadimpact/django-saml2-auth.git@master#egg=django-saml2-auth
+```bash
+pip install git+https://github.com/grafana/django-saml2-auth.git@master#egg=django-saml2-auth
 ```
 
 or from source:
 
-``` bash
-# git clone https://github.com/loadimpact/django-saml2-auth
-# cd django-saml2-auth
-# python setup.py install
+```bash
+git clone https://github.com/grafana/django-saml2-auth
+cd django-saml2-auth
+python setup.py install
 ```
 
 `xmlsec` is also required by `pysaml2`, so it must be installed:

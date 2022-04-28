@@ -3,11 +3,11 @@
 
 """Endpoints for SAML SSO login"""
 
+from typing import Optional
 import urllib.parse as urlparse
 from urllib.parse import unquote
 
-from dictor import dictor
-from django import get_version
+from dictor import dictor  # type: ignore
 from django.conf import settings
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
@@ -19,7 +19,8 @@ try:
 except ImportError:
     from django.utils.http import is_safe_url
 from django.views.decorators.csrf import csrf_exempt
-from django_saml2_auth.errors import INACTIVE_USER, INVALID_REQUEST_METHOD, USER_MISMATCH
+from django_saml2_auth.errors import (
+    INACTIVE_USER, INVALID_REQUEST_METHOD, USER_MISMATCH, INVALID_TOKEN, INVALID_NEXT_URL)
 from django_saml2_auth.exceptions import SAMLAuthError
 from django_saml2_auth.saml import (decode_saml_response,
                                     extract_user_identity, get_assertion_url,
@@ -27,7 +28,6 @@ from django_saml2_auth.saml import (decode_saml_response,
 from django_saml2_auth.user import (
     create_custom_or_default_jwt, decode_custom_or_default_jwt, get_or_create_user, get_user_id)
 from django_saml2_auth.utils import exception_handler, get_reverse, is_jwt_well_formed, run_hook
-from pkg_resources import parse_version
 
 
 @login_required
@@ -35,7 +35,10 @@ def welcome(request: HttpRequest):
     try:
         return render(request, "django_saml2_auth/welcome.html", {"user": request.user})
     except TemplateDoesNotExist:
-        return HttpResponseRedirect(get_default_next_url())
+        default_next_url = get_default_next_url()
+        return (HttpResponseRedirect(default_next_url)
+                if default_next_url
+                else HttpResponseRedirect("/"))
 
 
 def denied(request: HttpRequest):
@@ -66,18 +69,22 @@ def acs(request: HttpRequest):
     saml2_auth_settings = settings.SAML2_AUTH
 
     authn_response = decode_saml_response(request, acs)
-    user = extract_user_identity(authn_response.get_identity())
+    # decode_saml_response() will raise SAMLAuthError if the response is invalid,
+    # so we can safely ignore the type check here.
+    user = extract_user_identity(authn_response.get_identity())  # type: ignore
 
     next_url = request.session.get("login_next_url") or get_default_next_url()
 
-    # A RelayState is an HTTP parameter that can be included as part of the SAML request and SAML response;
-    # usually is meant to be an opaque identifier that is passed back without any modification or inspection,
-    # and it is used to specify additional information to the SP or the IdP.
-    # If RelayState params is passed, it could be JWT token that identifies the user trying to login
-    # via sp_initiated_login endpoint, or it could be a URL used for redirection.
+    # A RelayState is an HTTP parameter that can be included as part of the SAML request
+    # and SAML response; usually is meant to be an opaque identifier that is passed back
+    # without any modification or inspection, and it is used to specify additional information
+    # to the SP or the IdP.
+    # If RelayState params is passed, it could be JWT token that identifies the user trying to
+    # login via sp_initiated_login endpoint, or it could be a URL used for redirection.
     relay_state = request.POST.get("RelayState")
-    relay_state_is_token = is_jwt_well_formed(relay_state)
-    if relay_state_is_token:
+    relay_state_is_token = is_jwt_well_formed(relay_state) if relay_state else False
+
+    if relay_state and relay_state_is_token:
         redirected_user_id = decode_custom_or_default_jwt(relay_state)
 
         # This prevents users from entering an email on the SP, but use a different email on IdP
@@ -93,7 +100,7 @@ def acs(request: HttpRequest):
 
     before_login_trigger = dictor(saml2_auth_settings, "TRIGGER.BEFORE_LOGIN")
     if before_login_trigger:
-        run_hook(before_login_trigger, user)
+        run_hook(before_login_trigger, user)  # type: ignore
 
     request.session.flush()
 
@@ -118,7 +125,7 @@ def acs(request: HttpRequest):
 
         after_login_trigger = dictor(saml2_auth_settings, "TRIGGER.AFTER_LOGIN")
         if after_login_trigger:
-            run_hook(after_login_trigger, request.session, user)
+            run_hook(after_login_trigger, request.session, user)  # type: ignore
     else:
         raise SAMLAuthError("The target user is inactive.", extra={
             "exc_type": Exception,
@@ -127,27 +134,51 @@ def acs(request: HttpRequest):
             "status_code": 500
         })
 
+    def redirect(redirect_url: Optional[str] = None) -> HttpResponseRedirect:
+        if redirect_url:
+            return HttpResponseRedirect(redirect_url)
+        else:
+            return HttpResponseRedirect("/")
+
     if is_new_user:
         try:
             return render(request, "django_saml2_auth/welcome.html", {"user": request.user})
         except TemplateDoesNotExist:
-            return HttpResponseRedirect(next_url)
+            return redirect(next_url)
     else:
-        return HttpResponseRedirect(next_url)
+        return redirect(next_url)
 
 
 @exception_handler
 def sp_initiated_login(request: HttpRequest) -> HttpResponseRedirect:
+    """This view is called by the SP to initiate a login to IdP, aka. SP-initiated SAML SSP.
+
+    Args:
+        request (HttpRequest): Incoming request from service provider (SP) for authentication
+
+    Returns:
+        HttpResponseRedirect: Redirect to the IdP login endpoint
+    """
     # User must be created first by the IdP-initiated SSO (acs)
     if request.method == "GET":
-        if request.GET.get("token"):
-            user_id = decode_custom_or_default_jwt(request.GET.get("token"))
+        token = request.GET.get("token")
+        if token:
+            user_id = decode_custom_or_default_jwt(token)
+            if not user_id:
+                raise SAMLAuthError("The token is invalid.", extra={
+                    "exc_type": ValueError,
+                    "error_code": INVALID_TOKEN,
+                    "reason": "The token is invalid.",
+                    "status_code": 403
+                })
             saml_client = get_saml_client(get_assertion_url(request), acs, user_id)
             jwt_token = create_custom_or_default_jwt(user_id)
-            _, info = saml_client.prepare_for_authenticate(sign=False, relay_state=jwt_token)
+            _, info = saml_client.prepare_for_authenticate(  # type: ignore
+                sign=False, relay_state=jwt_token)
             redirect_url = dict(info["headers"]).get("Location", "")
             if not redirect_url:
-                return HttpResponseRedirect(get_reverse([denied, "denied", "django_saml2_auth:denied"]))
+                return HttpResponseRedirect(
+                    get_reverse([denied, "denied", "django_saml2_auth:denied"]))  # type: ignore
             return HttpResponseRedirect(redirect_url)
     else:
         raise SAMLAuthError("Request method is not supported.", extra={
@@ -156,13 +187,22 @@ def sp_initiated_login(request: HttpRequest) -> HttpResponseRedirect:
             "reason": "Request method is not supported.",
             "status_code": 404
         })
+    return HttpResponseRedirect(
+        get_reverse([denied, "denied", "django_saml2_auth:denied"]))  # type: ignore
 
 
 @exception_handler
-def signin(request: HttpRequest):
+def signin(request: HttpRequest) -> HttpResponseRedirect:
     saml2_auth_settings = settings.SAML2_AUTH
 
     next_url = request.GET.get("next") or get_default_next_url()
+    if not next_url:
+        raise SAMLAuthError("The next URL is invalid.", extra={
+            "exc_type": ValueError,
+            "error_code": INVALID_NEXT_URL,
+            "reason": "The next URL is invalid.",
+            "status_code": 403
+        })
 
     try:
         if "next=" in unquote(next_url):
@@ -173,18 +213,16 @@ def signin(request: HttpRequest):
 
     # Only permit signin requests where the next_url is a safe URL
     allowed_hosts = set(dictor(saml2_auth_settings, "ALLOWED_REDIRECT_HOSTS", []))
-    if parse_version(get_version()) >= parse_version("2.0"):
-        url_ok = is_safe_url(next_url, allowed_hosts)
-    else:
-        url_ok = is_safe_url(next_url)
+    url_ok = is_safe_url(next_url, allowed_hosts)
 
     if not url_ok:
-        return HttpResponseRedirect(get_reverse([denied, "denied", "django_saml2_auth:denied"]))
+        return HttpResponseRedirect(
+            get_reverse([denied, "denied", "django_saml2_auth:denied"]))  # type: ignore
 
     request.session["login_next_url"] = next_url
 
     saml_client = get_saml_client(get_assertion_url(request), acs)
-    _, info = saml_client.prepare_for_authenticate(relay_state=next_url)
+    _, info = saml_client.prepare_for_authenticate(relay_state=next_url)  # type: ignore
 
     redirect_url = dict(info["headers"]).get("Location", "")
     return HttpResponseRedirect(redirect_url)

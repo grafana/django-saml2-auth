@@ -5,9 +5,9 @@ E.g. creating SAML client, creating user, exception handling, etc.
 import logging
 import base64
 from functools import wraps
-from typing import Any, Callable, Iterable, Mapping, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Tuple, Union
 
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import NoReverseMatch, reverse
 from django.utils.module_loading import import_string
@@ -111,14 +111,18 @@ def get_reverse(objects: Union[Any, Iterable[Any]]) -> Optional[str]:
     })
 
 
-def exception_handler(function: Callable[..., HttpResponse]) -> Callable[..., HttpResponse]:
+def exception_handler(
+    function: Callable[..., Union[HttpResponse, HttpResponseRedirect]]) -> \
+        Callable[..., Union[HttpResponse, HttpResponseRedirect]]:
     """This decorator can be used by view function to handle exceptions
 
     Args:
-        function (Callable[..., HttpResponse]): View function to decorate
+        function (Callable[..., Union[HttpResponse, HttpResponseRedirect]]):
+            View function to decorate
 
     Returns:
-        Callable[..., HttpResponse]: Decorated view function with exception handling
+        Callable[..., Union[HttpResponse, HttpResponseRedirect]]:
+            Decorated view function with exception handling
     """
     def handle_exception(exc: Exception, request: HttpRequest) -> HttpResponse:
         """Render page with exception details
@@ -133,15 +137,18 @@ def exception_handler(function: Callable[..., HttpResponse]) -> Callable[..., Ht
         logger = logging.getLogger(__name__)
         logger.debug(exc)
 
-        context = exc.extra if isinstance(exc, SAMLAuthError) else {}
-        status = exc.extra.get("status_code") if isinstance(exc, SAMLAuthError) else 500
+        context: Optional[Dict[str, Any]] = exc.extra if isinstance(exc, SAMLAuthError) else {}
+        if isinstance(exc, SAMLAuthError) and exc.extra:
+            status = exc.extra.get("status_code")
+        else:
+            status = 500
 
         return render(request,
                       "django_saml2_auth/error.html",
                       context=context,
                       status=status)
 
-    @wraps(function)
+    @ wraps(function)
     def wrapper(request: HttpRequest) -> HttpResponse:
         """Decorated function is wrapped and called here
 

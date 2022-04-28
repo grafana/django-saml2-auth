@@ -3,7 +3,7 @@
 
 from typing import Any, Callable, Dict, Mapping, Optional, Union
 
-from dictor import dictor
+from dictor import dictor  # type: ignore
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.urls import NoReverseMatch
@@ -94,7 +94,7 @@ def get_metadata(user_id: Optional[str] = None) -> Mapping[str, Any]:
     saml2_auth_settings = settings.SAML2_AUTH
     get_metadata_trigger = dictor(saml2_auth_settings, "TRIGGER.GET_METADATA_AUTO_CONF_URLS")
     if get_metadata_trigger:
-        metadata_urls = run_hook(get_metadata_trigger, user_id)
+        metadata_urls = run_hook(get_metadata_trigger, user_id)  # type: ignore
         if metadata_urls:
             # Filter invalid metadata URLs
             filtered_metadata_urls = list(
@@ -127,13 +127,16 @@ def get_metadata(user_id: Optional[str] = None) -> Mapping[str, Any]:
 
 def get_saml_client(domain: str,
                     acs: Callable[..., HttpResponse],
-                    user_id: str = None) -> Optional[Saml2Client]:
+                    user_id: Optional[str] = None) -> Optional[Saml2Client]:
     """Create a new Saml2Config object with the given config and return an initialized Saml2Client
     using the config object. The settings are read from django settings key: SAML2_AUTH.
 
     Args:
         domain (str): Domain name to get SAML config for
         acs (Callable[..., HttpResponse]): The acs endpoint
+        user_id (str, optional): If passed, it will be further processed by the
+            GET_METADATA_AUTO_CONF_URLS trigger, which will return the metadata URL corresponding
+            to the given user identifier, either email or username. Defaults to None.
 
     Raises:
         SAMLAuthError: Re-raise any exception raised by Saml2Config or Saml2Client
@@ -141,7 +144,8 @@ def get_saml_client(domain: str,
     Returns:
         Optional[Saml2Client]: A Saml2Client or None
     """
-    acs_url = domain + get_reverse([acs, "acs", "django_saml2_auth:acs"])
+    # get_reverse raises an exception if the view is not found, so we can safely ignore type errors
+    acs_url = domain + get_reverse([acs, "acs", "django_saml2_auth:acs"])  # type: ignore
     metadata = get_metadata(user_id)
     if (("local" in metadata and not metadata["local"]) or
             ("remote" in metadata and not metadata["remote"])):
@@ -154,7 +158,7 @@ def get_saml_client(domain: str,
 
     saml2_auth_settings = settings.SAML2_AUTH
 
-    saml_settings = {
+    saml_settings: Dict[str, Any] = {
         "metadata": metadata,
         "allow_unknown_attributes": True,
         "debug": saml2_auth_settings.get("DEBUG", False),
@@ -208,7 +212,8 @@ def get_saml_client(domain: str,
 
 def decode_saml_response(
         request: HttpRequest,
-        acs: Callable[..., HttpResponse]) -> Union[HttpResponseRedirect, Optional[AuthnResponse]]:
+        acs: Callable[..., HttpResponse]) -> Union[
+            HttpResponseRedirect, Optional[AuthnResponse], None]:
     """Given a request, the authentication response inside the SAML response body is parsed,
     decoded and returned. If there are any issues parsing the request, the identity or the issuer,
     an exception is raised.
@@ -225,8 +230,8 @@ def decode_saml_response(
         SAMLAuthError: No user identity in SAML response.
 
     Returns:
-        Union[HttpResponseRedirect, Optional[AuthnResponse]]: Returns an AuthnResponse object for
-        extracting user identity from.
+        Union[HttpResponseRedirect, Optional[AuthnResponse], None]: Returns an AuthnResponse
+            object for extracting user identity from.
     """
     saml_client = get_saml_client(get_assertion_url(request), acs)
     if not saml_client:

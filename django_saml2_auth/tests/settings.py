@@ -1,9 +1,10 @@
 import os
+from typing import List
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = "SECRET"
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS: List[str] = []
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",

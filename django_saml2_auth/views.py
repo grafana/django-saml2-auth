@@ -4,14 +4,14 @@
 """Endpoints for SAML SSO login"""
 
 import urllib.parse as urlparse
-from typing import Optional
+from typing import Optional, Union
 from urllib.parse import unquote
 
 from dictor import dictor  # type: ignore
 from django.conf import settings
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.http import HttpRequest, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template import TemplateDoesNotExist
 
@@ -37,7 +37,15 @@ from django_saml2_auth.utils import (exception_handler, get_reverse,
 
 
 @login_required
-def welcome(request: HttpRequest):
+def welcome(request: HttpRequest) -> Union[HttpResponse, HttpResponseRedirect]:
+    """Default welcome page
+
+    Args:
+        request (HttpRequest): Django request object.
+
+    Returns:
+        Union[HttpResponse, HttpResponseRedirect]: Django response or redirect object.
+    """
     try:
         return render(request, "django_saml2_auth/welcome.html", {"user": request.user})
     except TemplateDoesNotExist:
@@ -47,7 +55,15 @@ def welcome(request: HttpRequest):
                 else HttpResponseRedirect("/"))
 
 
-def denied(request: HttpRequest):
+def denied(request: HttpRequest) -> HttpResponse:
+    """Default access denied page
+
+    Args:
+        request (HttpRequest): Django request object.
+
+    Returns:
+        HttpResponse: Render access denied page.
+    """
     return render(request, "django_saml2_auth/denied.html")
 
 
@@ -141,6 +157,14 @@ def acs(request: HttpRequest):
         })
 
     def redirect(redirect_url: Optional[str] = None) -> HttpResponseRedirect:
+        """Redirect to the redirect_url or the root page.
+
+        Args:
+            redirect_url (str, optional): Redirect URL. Defaults to None.
+
+        Returns:
+            HttpResponseRedirect: Redirect to the redirect_url or the root page.
+        """
         if redirect_url:
             return HttpResponseRedirect(redirect_url)
         else:
@@ -199,6 +223,18 @@ def sp_initiated_login(request: HttpRequest) -> HttpResponseRedirect:
 
 @exception_handler
 def signin(request: HttpRequest) -> HttpResponseRedirect:
+    """Custom sign-in view for SP-initiated SSO. This will be deprecated in the future
+    in favor of sp_initiated_login.
+
+    Args:
+        request (HttpRequest): Incoming request from service provider (SP) for authentication.
+
+    Raises:
+        SAMLAuthError: The next URL is invalid.
+
+    Returns:
+        HttpResponseRedirect: Redirect to the IdP login endpoint
+    """
     saml2_auth_settings = settings.SAML2_AUTH
 
     next_url = request.GET.get("next") or get_default_next_url()
@@ -235,6 +271,14 @@ def signin(request: HttpRequest) -> HttpResponseRedirect:
 
 
 @exception_handler
-def signout(request: HttpRequest):
+def signout(request: HttpRequest) -> HttpResponse:
+    """Custom sign-out view.
+
+    Args:
+        request (HttpRequest): Django request object.
+
+    Returns:
+        HttpResponse: Render the logout page.
+    """
     logout(request)
     return render(request, "django_saml2_auth/signout.html")

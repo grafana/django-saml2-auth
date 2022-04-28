@@ -1,3 +1,7 @@
+"""
+Django settings for tests.
+"""
+
 import os
 from typing import List
 

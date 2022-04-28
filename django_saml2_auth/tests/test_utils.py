@@ -1,3 +1,7 @@
+"""
+Tests for utils.py
+"""
+
 import pytest
 from django.http import HttpRequest, HttpResponse
 from django.urls import NoReverseMatch

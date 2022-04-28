@@ -1,3 +1,7 @@
+"""
+Tests for user.py
+"""
+
 from typing import Any, Dict, Union
 
 import pytest

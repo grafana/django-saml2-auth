@@ -1,3 +1,7 @@
+"""
+Tests for saml.py
+"""
+
 from typing import Optional, List, Mapping
 
 import pytest
@@ -117,14 +121,17 @@ def mock_parse_authn_request_response(
         MockAuthnResponse: A mocked instance of AuthnResponse
     """
     class MockAuthnRequest:
+        """Mock class for AuthnRequest."""
         name_id = "Username"
 
         @staticmethod
         def issuer():
+            """Mock function for AuthnRequest.issuer()."""
             return METADATA_URL1
 
         @staticmethod
         def get_identity():
+            """Mock function for AuthnRequest.get_identity()."""
             return get_user_identity()
 
     return MockAuthnRequest()

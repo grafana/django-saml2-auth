@@ -1,3 +1,7 @@
+"""
+Tests for saml.py
+"""
+
 from typing import Optional, List, Mapping
 
 import pytest
@@ -109,21 +113,25 @@ def get_user_identity() -> Mapping[str, List[str]]:
 
 
 def mock_parse_authn_request_response(
-        self: Saml2Client, response: AuthnResponse, binding: str) -> "MockAuthnResponse":
+        self: Saml2Client, response: AuthnResponse, binding: str
+) -> "MockAuthnResponse":  # type: ignore
     """Mock function to return an mocked instance of AuthnResponse.
 
     Returns:
         MockAuthnResponse: A mocked instance of AuthnResponse
     """
     class MockAuthnRequest:
+        """Mock class for AuthnRequest."""
         name_id = "Username"
 
         @staticmethod
         def issuer():
+            """Mock function for AuthnRequest.issuer()."""
             return METADATA_URL1
 
         @staticmethod
         def get_identity():
+            """Mock function for AuthnRequest.get_identity()."""
             return get_user_identity()
 
     return MockAuthnRequest()
@@ -168,6 +176,7 @@ def test_get_default_next_url_no_default_next_url(settings: SettingsWrapper):
 
     # This doesn't happen on a real instance, unless you don't have "admin:index" route
     assert str(exc_info.value) == "We got a URL reverse issue: ['admin:index']"
+    assert exc_info.value.extra is not None
     assert issubclass(exc_info.value.extra["exc_type"], NoReverseMatch)
 
 
@@ -332,11 +341,13 @@ def test_get_saml_client_failure_with_invalid_file(settings: SettingsWrapper):
         get_saml_client("example.com", acs)
 
     assert str(exc_info.value) == "[Errno 2] No such file or directory: '/invalid/metadata.xml'"
+    assert exc_info.value.extra is not None
     assert isinstance(exc_info.value.extra["exc"], FileNotFoundError)
 
 
 @responses.activate
-def test_decode_saml_response_success(settings: SettingsWrapper, monkeypatch: "MonkeyPatch"):
+def test_decode_saml_response_success(
+        settings: SettingsWrapper, monkeypatch: "MonkeyPatch"):  # type: ignore
     """Test decode_saml_response function to verify if it correctly decodes the SAML response.
 
     Args:
@@ -352,13 +363,13 @@ def test_decode_saml_response_success(settings: SettingsWrapper, monkeypatch: "M
                         "parse_authn_request_response",
                         mock_parse_authn_request_response)
     result = decode_saml_response(post_request, acs)
-    assert len(result.get_identity()) > 0
+    assert len(result.get_identity()) > 0  # type: ignore
 
 
 def test_extract_user_identity_success():
     """Test extract_user_identity function to verify if it correctly extracts user identity
     information from a (pysaml2) parsed SAML response."""
-    result = extract_user_identity(get_user_identity())
+    result = extract_user_identity(get_user_identity())  # type: ignore
     assert len(result) == 6
     assert result["username"] == result["email"] == "test@example.com"
     assert result["first_name"] == "John"
@@ -372,6 +383,6 @@ def test_extract_user_identity_token_not_required(settings: SettingsWrapper):
     information from a (pysaml2) parsed SAML response when token is not required."""
     settings.SAML2_AUTH["TOKEN_REQUIRED"] = False
 
-    result = extract_user_identity(get_user_identity())
+    result = extract_user_identity(get_user_identity())  # type: ignore
     assert len(result) == 5
     assert "token" not in result

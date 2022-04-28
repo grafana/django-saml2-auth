@@ -1,0 +1,58 @@
+name: deploy
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: Test and build django-saml2-auth
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        versions:
+          - { "djangoVersion": "2.2.27", "pythonVersion": "3.7" }
+          - { "djangoVersion": "2.2.27", "pythonVersion": "3.8" }
+          - { "djangoVersion": "2.2.27", "pythonVersion": "3.9" }
+          - { "djangoVersion": "2.2.27", "pythonVersion": "3.10" }
+          - { "djangoVersion": "3.2.12", "pythonVersion": "3.7" }
+          - { "djangoVersion": "3.2.12", "pythonVersion": "3.8" }
+          - { "djangoVersion": "3.2.12", "pythonVersion": "3.9" }
+          - { "djangoVersion": "3.2.12", "pythonVersion": "3.10" }
+          - { "djangoVersion": "4.0.3", "pythonVersion": "3.8" }
+          - { "djangoVersion": "4.0.3", "pythonVersion": "3.9" }
+          - { "djangoVersion": "4.0.3", "pythonVersion": "3.10" }
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+      - name: Set up Python 🐍
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.versions.pythonVersion }}
+      - name: Install xmlsec1 📦
+        run: sudo apt-get install xmlsec1
+      - name: Install dependencies 📦
+        run: python -m pip install -r requirements_test.txt && python -m pip install -e .
+      - name: Install Django ${{ matrix.versions.djangoVersion }} 📦
+        run: python -m pip install Django==${{ matrix.versions.djangoVersion }}
+      - name: Check types and syntax 🦆
+        run: |
+          mypy .
+          flake8 .
+          interrogate --quiet --fail-under=95 .
+      - name: Test Django ${{ matrix.versions.djangoVersion }} with coverage 🧪
+        run: coverage run --source=django_saml2_auth -m pytest .
+      - name: Submit coverage report to Coveralls 📈
+        if: ${{ success() }}
+        run: coveralls
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+      - name: Install build dependencies 📦
+        run: python -m pip install build --user
+      - name: Build a binary wheel and a source tarball 🏗️
+        run: python -m build --sdist --wheel .
+      - name: Publish package to PyPI 🎉
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          skip_existing: true

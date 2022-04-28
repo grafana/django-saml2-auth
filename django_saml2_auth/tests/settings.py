@@ -1,9 +1,14 @@
+"""
+Django settings for tests.
+"""
+
 import os
+from typing import List
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = "SECRET"
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS: List[str] = []
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -84,7 +89,8 @@ SAML2_AUTH = {
     },
     "TRIGGER": {
         "BEFORE_LOGIN": "django_saml2_auth.tests.test_user.saml_user_setup",
-        "GET_METADATA_AUTO_CONF_URLS": "django_saml2_auth.tests.test_saml.get_metadata_auto_conf_urls"
+        "GET_METADATA_AUTO_CONF_URLS":
+        "django_saml2_auth.tests.test_saml.get_metadata_auto_conf_urls"
     },
     "ASSERTION_URL": "https://api.example.com",
     "ENTITY_ID": "https://api.example.com/sso/acs/",

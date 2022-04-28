@@ -1,4 +1,8 @@
-from typing import Any, Dict
+"""
+Tests for user.py
+"""
+
+from typing import Any, Dict, Union
 
 import pytest
 from django.contrib.auth.models import Group
@@ -82,15 +86,15 @@ GwIDAQAB
 -----END PUBLIC KEY-----"""
 
 
-def trigger_change_first_name(user: Dict[str, Any]) -> None:
+def trigger_change_first_name(user: Union[str, Dict[str, str]]) -> None:
     """Trigger function to change user's first name.
 
     Args:
-        user (Dict[str, Any]): User information
+        user (Union[str, Dict[str, str]]): User information
     """
-    user = get_user(user)
-    user.first_name = "CHANGED_FIRSTNAME"
-    user.save()
+    _user = get_user(user)
+    _user.first_name = "CHANGED_FIRSTNAME"
+    _user.save()
 
 
 @pytest.mark.django_db
@@ -112,8 +116,8 @@ def test_create_new_user_success(settings: SettingsWrapper):
     user = create_new_user("test@example.com", "John", "Doe")
     # It can also be email depending on USERNAME_FIELD setting
     assert user.username == "test@example.com"
-    assert user.is_active == True
-    assert user.has_usable_password() == False
+    assert user.is_active is True
+    assert user.has_usable_password() is False
     assert user.groups.get(name="users") == Group.objects.get(name="users")
 
 
@@ -135,6 +139,7 @@ def test_create_new_user_no_group_error(settings: SettingsWrapper):
         create_new_user("test@example.com", "John", "Doe")
 
     assert str(exc_info.value) == "There was an error joining the user to the group."
+    assert exc_info.value.extra is not None
     assert exc_info.value.extra["exc_type"] == Group.DoesNotExist
 
 
@@ -179,8 +184,8 @@ def test_get_or_create_user_success(settings: SettingsWrapper):
     })
     assert created
     assert user.username == "test@example.com"
-    assert user.is_active == True
-    assert user.has_usable_password() == False
+    assert user.is_active is True
+    assert user.has_usable_password() is False
     assert user.groups.get(name="users") == Group.objects.get(name="users")
 
 
@@ -207,6 +212,7 @@ def test_get_or_create_user_trigger_error(settings: SettingsWrapper):
 
     assert str(exc_info.value) == (
         "module 'django_saml2_auth.tests.test_user' has no attribute 'nonexistent_trigger'")
+    assert exc_info.value.extra is not None
     assert isinstance(exc_info.value.extra["exc"], AttributeError)
 
 
@@ -233,8 +239,8 @@ def test_get_or_create_user_trigger_change_first_name(settings: SettingsWrapper)
     assert created
     assert user.username == "test@example.com"
     assert user.first_name == "CHANGED_FIRSTNAME"
-    assert user.is_active == True
-    assert user.has_usable_password() == False
+    assert user.is_active is True
+    assert user.has_usable_password() is False
 
 
 @pytest.mark.django_db
@@ -257,6 +263,7 @@ def test_get_or_create_user_should_not_create_user(settings: SettingsWrapper):
         })
 
     assert str(exc_info.value) == "Cannot create user."
+    assert exc_info.value.extra is not None
     assert exc_info.value.extra["reason"] == (
         "Due to current config, a new user should not be created.")
 

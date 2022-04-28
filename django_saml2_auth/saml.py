@@ -7,7 +7,18 @@ from dictor import dictor  # type: ignore
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.urls import NoReverseMatch
-from django_saml2_auth.errors import *
+from django_saml2_auth.errors import (ERROR_CREATING_SAML_CONFIG_OR_CLIENT,
+                                      INVALID_METADATA_URL,
+                                      NO_ISSUER_IN_SAML_RESPONSE,
+                                      NO_METADATA_URL_ASSOCIATED,
+                                      NO_METADATA_URL_OR_FILE,
+                                      NO_NAME_ID_IN_SAML_RESPONSE,
+                                      NO_SAML_CLIENT,
+                                      NO_SAML_RESPONSE_FROM_CLIENT,
+                                      NO_SAML_RESPONSE_FROM_IDP,
+                                      NO_TOKEN_SPECIFIED,
+                                      NO_USER_IDENTITY_IN_SAML_RESPONSE,
+                                      NO_USERNAME_OR_EMAIL_SPECIFIED)
 from django_saml2_auth.exceptions import SAMLAuthError
 from django_saml2_auth.utils import get_reverse, run_hook
 from saml2 import BINDING_HTTP_POST, BINDING_HTTP_REDIRECT, entity
@@ -67,7 +78,7 @@ def validate_metadata_url(url: str) -> bool:
         http_client = HTTPBase()
         metadata = MetaDataExtern(None, url=url, http=http_client)
         metadata.load()
-    except:
+    except Exception:
         return False
 
     return True
@@ -318,8 +329,8 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
     user["first_name"] = dictor(user_identity, f"{firstname_field}/0", pathsep="/")
     user["last_name"] = dictor(user_identity, f"{lastname_field}/0", pathsep="/")
 
-    TOKEN_REQUIRED = dictor(saml2_auth_settings, "TOKEN_REQUIRED", default=True)
-    if TOKEN_REQUIRED:
+    token_required = dictor(saml2_auth_settings, "TOKEN_REQUIRED", default=True)
+    if token_required:
         token_field = dictor(saml2_auth_settings, "ATTRIBUTES_MAP.token", default="token")
         user["token"] = dictor(user_identity, f"{token_field}.0")
 
@@ -339,7 +350,7 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
             "status_code": 422
         })
 
-    if TOKEN_REQUIRED and not user.get("token"):
+    if token_required and not user.get("token"):
         raise SAMLAuthError("No token specified.", extra={
             "exc_type": ValueError,
             "error_code": NO_TOKEN_SPECIFIED,

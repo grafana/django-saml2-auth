@@ -85,7 +85,8 @@ SAML2_AUTH = {
     },
     "TRIGGER": {
         "BEFORE_LOGIN": "django_saml2_auth.tests.test_user.saml_user_setup",
-        "GET_METADATA_AUTO_CONF_URLS": "django_saml2_auth.tests.test_saml.get_metadata_auto_conf_urls"
+        "GET_METADATA_AUTO_CONF_URLS":
+        "django_saml2_auth.tests.test_saml.get_metadata_auto_conf_urls"
     },
     "ASSERTION_URL": "https://api.example.com",
     "ENTITY_ID": "https://api.example.com/sso/acs/",

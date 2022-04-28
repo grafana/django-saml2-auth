@@ -2,17 +2,19 @@
 E.g. creating SAML client, creating user, exception handling, etc.
 """
 
-import logging
 import base64
+import logging
 from functools import wraps
-from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Tuple, Union
+from typing import (Any, Callable, Dict, Iterable, Mapping, Optional, Tuple,
+                    Union)
 
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import NoReverseMatch, reverse
 from django.utils.module_loading import import_string
-
-from django_saml2_auth.errors import *
+from django_saml2_auth.errors import (EMPTY_FUNCTION_PATH, GENERAL_EXCEPTION,
+                                      IMPORT_ERROR, NO_REVERSE_MATCH,
+                                      PATH_ERROR)
 from django_saml2_auth.exceptions import SAMLAuthError
 
 

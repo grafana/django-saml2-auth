@@ -2,23 +2,25 @@
 """
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Tuple, Union, Optional
+from typing import Any, Dict, Optional, Tuple, Union
 
 import jwt
-from jwt.algorithms import has_crypto, requires_cryptography, get_default_algorithms
 from cryptography.hazmat.primitives import serialization
 from dictor import dictor  # type: ignore
 from django import get_version
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import User, Group
-from django_saml2_auth.errors import (CREATE_USER_ERROR, GROUP_JOIN_ERROR,
-                                      SHOULD_NOT_CREATE_USER, NO_JWT_ALGORITHM,
-                                      CANNOT_DECODE_JWT_TOKEN, NO_JWT_SECRET,
+from django.contrib.auth.models import Group, User
+from django_saml2_auth.errors import (CANNOT_DECODE_JWT_TOKEN,
+                                      CREATE_USER_ERROR, GROUP_JOIN_ERROR,
+                                      INVALID_JWT_ALGORITHM, NO_JWT_ALGORITHM,
                                       NO_JWT_PRIVATE_KEY, NO_JWT_PUBLIC_KEY,
-                                      NO_USER_ID, INVALID_JWT_ALGORITHM)
+                                      NO_JWT_SECRET, NO_USER_ID,
+                                      SHOULD_NOT_CREATE_USER)
 from django_saml2_auth.exceptions import SAMLAuthError
 from django_saml2_auth.utils import run_hook
+from jwt.algorithms import (get_default_algorithms, has_crypto,
+                            requires_cryptography)
 from jwt.exceptions import PyJWTError
 from pkg_resources import parse_version
 

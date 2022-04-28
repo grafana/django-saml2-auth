@@ -1,0 +1,12 @@
+[flake8]
+    max-line-length = 100
+    per-file-ignores =
+        django_saml2_auth/tests/test_saml.py: E501, F821
+    exclude =
+        django_saml2_auth.egg-info,
+        dist,
+        build,
+        env,
+        venv,
+        .env,
+        .venv,

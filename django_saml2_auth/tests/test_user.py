@@ -1,7 +1,7 @@
 from typing import Any, Dict, Union
 
 import pytest
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group
 from django_saml2_auth.exceptions import SAMLAuthError
 from django_saml2_auth.user import (create_custom_or_default_jwt, create_new_user,
                                     decode_custom_or_default_jwt, get_or_create_user,
@@ -112,8 +112,8 @@ def test_create_new_user_success(settings: SettingsWrapper):
     user = create_new_user("test@example.com", "John", "Doe")
     # It can also be email depending on USERNAME_FIELD setting
     assert user.username == "test@example.com"
-    assert user.is_active == True
-    assert user.has_usable_password() == False
+    assert user.is_active is True
+    assert user.has_usable_password() is False
     assert user.groups.get(name="users") == Group.objects.get(name="users")
 
 
@@ -180,8 +180,8 @@ def test_get_or_create_user_success(settings: SettingsWrapper):
     })
     assert created
     assert user.username == "test@example.com"
-    assert user.is_active == True
-    assert user.has_usable_password() == False
+    assert user.is_active is True
+    assert user.has_usable_password() is False
     assert user.groups.get(name="users") == Group.objects.get(name="users")
 
 
@@ -235,8 +235,8 @@ def test_get_or_create_user_trigger_change_first_name(settings: SettingsWrapper)
     assert created
     assert user.username == "test@example.com"
     assert user.first_name == "CHANGED_FIRSTNAME"
-    assert user.is_active == True
-    assert user.has_usable_password() == False
+    assert user.is_active is True
+    assert user.has_usable_password() is False
 
 
 @pytest.mark.django_db

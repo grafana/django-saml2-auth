@@ -44,7 +44,7 @@ Please give us a shiny ![star](https://img.shields.io/github/stars/grafana/djang
 You can install this plugin via `pip`. Make sure you update `pip` to be able to install from git:
 
 ```bash
-pip install git+https://github.com/grafana/django-saml2-auth.git@master#egg=django-saml2-auth
+pip install grafana-django-saml2-auth
 ```
 
 or from source:

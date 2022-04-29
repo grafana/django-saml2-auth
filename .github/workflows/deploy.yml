@@ -52,8 +52,8 @@ jobs:
       - name: Generate CycloneDX SBOM artifacts 📃
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
         run: |
-          cyclonedx-bom --format json -i requirements.txt -o cyclonedx-${{ github.ref_name }}.json
-          cyclonedx-bom --format json -i requirements_test.txt -o cyclonedx-test-${{ github.ref_name }}.json
+          cyclonedx-bom -r --format json -i requirements.txt -o cyclonedx-${{ github.ref_name }}.json
+          cyclonedx-bom -r --format json -i requirements_test.txt -o cyclonedx-test-${{ github.ref_name }}.json
       - name: Upload CycloneDX SBOM artifact for requirements.txt 💾
         uses: actions/upload-artifact@v3
         with:

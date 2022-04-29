@@ -13,6 +13,9 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
+# Extract requirements from requirements.txt
+requirements = [r.rstrip() for r in open("requirements.txt").readlines()]
+
 setup(
     name="grafana_django_saml2_auth",
 
@@ -63,10 +66,6 @@ setup(
 
     packages=find_packages(),
 
-    install_requires=[
-        "pysaml2==7.1.2",
-        "PyJWT==2.3.0",
-        "dictor==0.1.9"
-    ],
+    install_requires=requirements,
     include_package_data=True,
 )

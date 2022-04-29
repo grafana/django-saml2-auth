@@ -37,6 +37,10 @@ For IdP-initiated SSO, the user will be created if it doesn't exist. Still, for 
 
 - For contribution, read [contributing guide](CONTRIBUTING.md).
 
+## CycloneDX SBOM
+
+From [v3.6.1](https://github.com/grafana/django-saml2-auth/releases/tag/v3.6.1), CycloneDX SBOMs will be generated for [requirements.txt](./requirements.txt) and [requirements_test.txt](./requirements_test.txt) and it can be accessed from the latest build of GitHub Actions for a tagged release, for example, [this one](https://github.com/grafana/django-saml2-auth/actions/runs/2245422253). The artifacts are only kept for 90 days.
+
 ## Donate
 
 Please give us a shiny ![star](https://img.shields.io/github/stars/grafana/django-saml2-auth.svg?style=social&label=Star&maxAge=86400) and help spread the word.

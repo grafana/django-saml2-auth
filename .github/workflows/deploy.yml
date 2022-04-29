@@ -49,6 +49,23 @@ jobs:
         run: python -m pip install build --user
       - name: Build a binary wheel and a source tarball 🏗️
         run: python -m build --sdist --wheel .
+      - name: Generate CycloneDX SBOM artifacts 📃
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+        run: |
+          cyclonedx-bom --format json -i requirements.txt -o cyclonedx-${{ github.ref_name }}.json
+          cyclonedx-bom --format json -i requirements_test.txt -o cyclonedx-test-${{ github.ref_name }}.json
+      - name: Upload CycloneDX SBOM artifact for requirements.txt 💾
+        uses: actions/upload-artifact@v3
+        with:
+          name: cyclonedx-${{ github.ref_name }}.json
+          path:
+            cyclonedx-${{ github.ref_name }}.json
+      - name: Upload CycloneDX SBOM artifact for requirements_test.txt 💾
+        uses: actions/upload-artifact@v3
+        with:
+          name: cyclonedx-test-${{ github.ref_name }}.json
+          path:
+            cyclonedx-test-${{ github.ref_name }}.json
       - name: Publish package to PyPI 🎉
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
         uses: pypa/gh-action-pypi-publish@release/v1

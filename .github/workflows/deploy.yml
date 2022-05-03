@@ -33,7 +33,7 @@ jobs:
         run: python -m pip install -r requirements_test.txt && python -m pip install -e .
       - name: Install Django ${{ matrix.versions.djangoVersion }} 📦
         run: python -m pip install Django==${{ matrix.versions.djangoVersion }}
-      - name: Check types and syntax 🦆
+      - name: Check types, syntax and duckstrings 🦆
         run: |
           mypy .
           flake8 .

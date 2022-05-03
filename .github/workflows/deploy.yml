@@ -55,12 +55,14 @@ jobs:
           cyclonedx-bom -r --format json -i requirements.txt -o cyclonedx-django-saml2-auth-${{ github.ref_name }}.json
           cyclonedx-bom -r --format json -i requirements_test.txt -o cyclonedx-django-saml2-auth-test-${{ github.ref_name }}.json
       - name: Upload CycloneDX SBOM artifact for requirements.txt 💾
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
         uses: actions/upload-artifact@v3
         with:
           name: cyclonedx-django-saml2-auth-${{ github.ref_name }}.json
           path:
             cyclonedx-django-saml2-auth-${{ github.ref_name }}.json
       - name: Upload CycloneDX SBOM artifact for requirements_test.txt 💾
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
         uses: actions/upload-artifact@v3
         with:
           name: cyclonedx-django-saml2-auth-test-${{ github.ref_name }}.json

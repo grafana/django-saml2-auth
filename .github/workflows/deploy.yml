@@ -52,20 +52,20 @@ jobs:
       - name: Generate CycloneDX SBOM artifacts 📃
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
         run: |
-          cyclonedx-bom -r --format json -i requirements.txt -o cyclonedx-${{ github.ref_name }}.json
-          cyclonedx-bom -r --format json -i requirements_test.txt -o cyclonedx-test-${{ github.ref_name }}.json
+          cyclonedx-bom -r --format json -i requirements.txt -o cyclonedx-django-saml2-auth-${{ github.ref_name }}.json
+          cyclonedx-bom -r --format json -i requirements_test.txt -o cyclonedx-django-saml2-auth-test-${{ github.ref_name }}.json
       - name: Upload CycloneDX SBOM artifact for requirements.txt 💾
         uses: actions/upload-artifact@v3
         with:
-          name: cyclonedx-${{ github.ref_name }}.json
+          name: cyclonedx-django-saml2-auth-${{ github.ref_name }}.json
           path:
-            cyclonedx-${{ github.ref_name }}.json
+            cyclonedx-django-saml2-auth-${{ github.ref_name }}.json
       - name: Upload CycloneDX SBOM artifact for requirements_test.txt 💾
         uses: actions/upload-artifact@v3
         with:
-          name: cyclonedx-test-${{ github.ref_name }}.json
+          name: cyclonedx-django-saml2-auth-test-${{ github.ref_name }}.json
           path:
-            cyclonedx-test-${{ github.ref_name }}.json
+            cyclonedx-django-saml2-auth-test-${{ github.ref_name }}.json
       - name: Publish package to PyPI 🎉
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
         uses: pypa/gh-action-pypi-publish@release/v1

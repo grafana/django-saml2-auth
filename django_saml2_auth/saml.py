@@ -111,8 +111,9 @@ def get_metadata(request: HttpRequest, user_id: Optional[str] = None, **extra_da
         if metadata_urls:
             # Filter invalid metadata URLs
             filtered_metadata_urls = list(
-                filter(lambda md: validate_metadata_url(md["url"]), metadata_urls))
-            return {"remote": filtered_metadata_urls}
+                filter(lambda md: 'url' in md.keys() and validate_metadata_url(md["url"]), metadata_urls))
+            inline_file_contents = [x['inline'] for x in list(filter(lambda md: "inline" in md.keys(), metadata_urls))]
+            return {"remote": filtered_metadata_urls, "inline": inline_file_contents}
         else:
             raise SAMLAuthError("No metadata URL associated with the given user identifier.",
                                 extra={

@@ -17,6 +17,7 @@ from saml2.client import Saml2Client
 from saml2.response import AuthnResponse
 
 GET_METADATA_AUTO_CONF_URLS = "django_saml2_auth.tests.test_saml.get_metadata_auto_conf_urls"
+GET_METADATA_AUTO_CONF_URLS_INLINE = "django_saml2_auth.tests.test_saml.get_metadata_auto_conf_urls_inline"
 METADATA_URL1 = "https://testserver1.com/saml/sso/metadata"
 METADATA_URL2 = "https://testserver2.com/saml/sso/metadata"
 # Ref: https://en.wikipedia.org/wiki/SAML_metadata#Entity_metadata
@@ -92,6 +93,18 @@ def get_metadata_auto_conf_urls(request, user_id: Optional[str] = None) -> List[
     if user_id == "test@example.com":
         return [{"url": METADATA_URL1}]
     return [{"url": METADATA_URL1}, {"url": METADATA_URL2}]
+
+
+def get_metadata_auto_conf_urls_inline(request, user_id: Optional[str] = None) -> List[Optional[Mapping[str, str]]]:
+    """Fixture for returning metadata autoconf URL(s) based on the user_id.
+
+    Args:
+        user_id (str, optional): User identifier: username or email. Defaults to None.
+
+    Returns:
+        list: Either an empty list or a list of valid metadata URL(s)
+    """
+    return [{"inline": METADATA1}]
 
 
 def get_user_identity() -> Mapping[str, List[str]]:
@@ -237,7 +250,22 @@ def test_get_metadata_success_with_multiple_metadata_urls(settings: SettingsWrap
 
     request = mock.Mock()
     result = get_metadata(request)
-    assert result == {"remote": [{"url": METADATA_URL1}, {"url": METADATA_URL2}]}
+    assert result == {"remote": [{"url": METADATA_URL1}, {"url": METADATA_URL2}], "inline": []}
+
+
+@responses.activate
+def test_get_metadata_success_with_inline_xml(settings: SettingsWrapper):
+    """Test get_metadata function to verify if it returns multiple metadata URLs if the user_id is
+    unknown.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
+    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS_INLINE
+
+    request = mock.Mock()
+    result = get_metadata(request)
+    assert result == {"remote": [], "inline": [METADATA1]}
 
 
 @responses.activate
@@ -252,7 +280,7 @@ def test_get_metadata_success_with_user_id(settings: SettingsWrapper):
 
     request = mock.Mock()
     result = get_metadata(request, "test@example.com")
-    assert result == {"remote": [{"url": METADATA_URL1}]}
+    assert result == {"remote": [{"url": METADATA_URL1}], "inline": []}
 
 
 def test_get_metadata_failure_with_nonexistent_user_id(settings: SettingsWrapper):

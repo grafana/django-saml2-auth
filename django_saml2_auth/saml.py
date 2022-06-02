@@ -113,7 +113,12 @@ def get_metadata(request: HttpRequest, user_id: Optional[str] = None, **extra_da
             filtered_metadata_urls = list(
                 filter(lambda md: 'url' in md.keys() and validate_metadata_url(md["url"]), metadata_urls))
             inline_file_contents = [x['inline'] for x in list(filter(lambda md: "inline" in md.keys(), metadata_urls))]
-            return {"remote": filtered_metadata_urls, "inline": inline_file_contents}
+            ret = {}
+            if filtered_metadata_urls:
+                ret["remote"] = filtered_metadata_urls
+            if inline_file_contents:
+                ret["inline"] = inline_file_contents
+            return ret
         else:
             raise SAMLAuthError("No metadata URL associated with the given user identifier.",
                                 extra={
@@ -159,7 +164,7 @@ def get_saml_client(domain: str,
     """
     acs_url = domain + get_reverse([acs, "acs", "django_saml2_auth:acs"])
     metadata = get_metadata(request, user_id, **extra_data)
-    if (("local" in metadata and not metadata["local"]) or
+    if (metadata == {} or ("local" in metadata and not metadata["local"]) or
             ("remote" in metadata and not metadata["remote"])):
         raise SAMLAuthError("Metadata URL/file is missing.", extra={
             "exc_type": NoReverseMatch,

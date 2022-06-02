@@ -250,7 +250,7 @@ def test_get_metadata_success_with_multiple_metadata_urls(settings: SettingsWrap
 
     request = mock.Mock()
     result = get_metadata(request)
-    assert result == {"remote": [{"url": METADATA_URL1}, {"url": METADATA_URL2}], "inline": []}
+    assert result == {"remote": [{"url": METADATA_URL1}, {"url": METADATA_URL2}]}
 
 
 @responses.activate
@@ -265,7 +265,7 @@ def test_get_metadata_success_with_inline_xml(settings: SettingsWrapper):
 
     request = mock.Mock()
     result = get_metadata(request)
-    assert result == {"remote": [], "inline": [METADATA1]}
+    assert result == {"inline": [METADATA1]}
 
 
 @responses.activate
@@ -280,7 +280,7 @@ def test_get_metadata_success_with_user_id(settings: SettingsWrapper):
 
     request = mock.Mock()
     result = get_metadata(request, "test@example.com")
-    assert result == {"remote": [{"url": METADATA_URL1}], "inline": []}
+    assert result == {"remote": [{"url": METADATA_URL1}]}
 
 
 def test_get_metadata_failure_with_nonexistent_user_id(settings: SettingsWrapper):

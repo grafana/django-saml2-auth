@@ -3,8 +3,9 @@ E.g. creating SAML client, creating user, exception handling, etc.
 """
 
 import base64
-import logging
 from functools import wraps
+from importlib import import_module
+import logging
 from typing import (Any, Callable, Dict, Iterable, Mapping, Optional, Tuple,
                     Union)
 
@@ -23,7 +24,8 @@ def run_hook(function_path: str,
              **kwargs: Optional[Mapping[str, Any]]) -> Optional[Any]:
     """Runs a hook function with given args and kwargs. For example, given
     "models.User.create_new_user", the "create_new_user" function is imported from
-    the "models.User" module and run with args and kwargs.
+    the "models.User" module and run with args and kwargs. Functions can be
+    imported directly from modules, without having to be inside any class.
 
     Args:
         function_path (str): A path to a hook function,
@@ -60,12 +62,24 @@ def run_hook(function_path: str,
     module_path = ".".join(path[:-1])
     result = None
     try:
-        cls = import_string(module_path)
+        cls = import_module(module_path)
+    except ModuleNotFoundError:
+        try:
+            cls = import_string(module_path)
+        except ImportError as exc:
+            raise SAMLAuthError(str(exc), extra={
+                "exc": exc,
+                "exc_type": type(exc),
+                "error_code": IMPORT_ERROR,
+                "reason": "There was an error processing your request.",
+                "status_code": 500
+            })
+    try:
         result = getattr(cls, path[-1])(*args, **kwargs)
     except SAMLAuthError as exc:
         # Re-raise the exception
         raise exc
-    except (ImportError, AttributeError) as exc:
+    except AttributeError as exc:
         raise SAMLAuthError(str(exc), extra={
             "exc": exc,
             "exc_type": type(exc),

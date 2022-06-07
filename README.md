@@ -145,8 +145,11 @@ python setup.py install
             'CREATE_USER': 'path.to.your.new.user.hook.method',
             'BEFORE_LOGIN': 'path.to.your.login.hook.method',
             'AFTER_LOGIN': 'path.to.your.after.login.hook.method',
+            # Optional. This is executed right before METADATA_AUTO_CONF_URL.
+            # For systems with many metadata files registered allows to narrow the search scope.
+            'GET_USER_ID_FROM_SAML_RESPONSE': 'path.to.your.get.user.from.saml.hook.method',
             # This can override the METADATA_AUTO_CONF_URL to enumerate all existing metadata autoconf URLs
-            'GET_METADATA_AUTO_CONF_URLS': 'path.to.your.after.metadata.conf.hook.method',
+            'GET_METADATA_AUTO_CONF_URLS': 'path.to.your.get.metadata.conf.hook.method',
         },
         'ASSERTION_URL': 'https://mysite.com',  # Custom URL to validate incoming SAML requests against
         'ENTITY_ID': 'https://mysite.com/saml2_auth/acs/',  # Populates the Issuer element in authn request
@@ -205,6 +208,14 @@ python setup.py install
 | **WANT\_RESPONSE\_SIGNED**                  | Set this to `False` if you don't want your provider to sign the response.                                                                                                                                                                                                                                                                                                                                                                                   | `bool`           | `True`                                                                                                                                   |                                                          |
 | **ACCEPTED\_TIME\_DIFF**                    | Sets the [accepted time diff](https://pysaml2.readthedocs.io/en/latest/howto/config.html#accepted-time-diff) in seconds                                                                                                                                                                                                                                                                                                                                     | `int` or `None`  | `None`                                                                                                                                   |                                                          |
 | **ALLOWED\_REDIRECT\_HOSTS**                | Allowed hosts to redirect to using the `?next=` parameter                                                                                                                                                                                                                                                                                                                                                                                                   | `list`           | `[]`                                                                                                                                     | `['https://app.example.com', 'https://api.exmaple.com']` |
+
+### Triggers
+| **Setting name**                            | **Description**                                                                                                                             | **Interface**                                                                                 |
+|---------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| **GET\_METADATA\_AUTO\_CONF\_URLS**         | Auto SAML2 metadata configuration URL                                                                                                       | get_metadata_auto_conf_urls(user_id: Optional[str] = None) -> Optional[List[Dict[str, str]]]  |
+| **GET\_USER_ID\_FROM\_SAML\_RESPONSE**      | Allows retrieving a user ID before GET_METADATA_AUTO_CONF_URLS gets triggered. Warning: SAML response still not verified. Use with caution! | get_user_id_from_saml_response(saml_response: str, user_id: Optional[str]) -> Optional[str]   |
+
+
 
 ## JWT Signing Algorithm and Settings
 

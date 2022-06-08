@@ -63,7 +63,8 @@ setup(
     packages=find_packages(),
 
     install_requires=[
-        "pysaml2==7.1.2",
+        "-e git+https://github.com/wzuo/pysaml2.git@f5c9e1ec8b67698838ebc839ac393845b1ad5a3d#egg=pysaml2",
+        # "pysaml2==7.1.2",
         "PyJWT==2.3.0",
         "dictor==0.1.9"
     ],

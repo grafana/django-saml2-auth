@@ -68,7 +68,7 @@ setup(
         "dictor==0.1.9"
     ],
     dependency_links=[
-        "git+https://github.com/wzuo/pysaml2.git@f5c9e1ec8b67698838ebc839ac393845b1ad5a3d#egg=pysaml2",
+        "git+https://github.com/wzuo/pysaml2.git@050d2c8747b9cd0450cae1d8cf0ba2c3caaba799#egg=pysaml2",
     ],
     include_package_data=True,
 )

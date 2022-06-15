@@ -349,6 +349,9 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
         user["email"] = user["email"].lower()
     if user["username"]:
         user["username"] = user["username"].lower()
+    else:
+        # in case UserName is not present, fallback to Email
+        user["username"] = user["email"]
 
     # For backwards compatibility
     user["user_identity"] = user_identity

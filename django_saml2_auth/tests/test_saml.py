@@ -406,6 +406,19 @@ def test_extract_user_identity_success():
     assert result["user_identity"] == get_user_identity()
 
 
+def test_extract_user_identity_username_fallback_to_email():
+    broken_identity = {
+        "user.username": [],
+        "user.email": ["test@example.com"],
+        "user.first_name": ["John"],
+        "user.last_name": ["Doe"],
+        "token": ["TOKEN"]
+    }
+    result = extract_user_identity(broken_identity)
+    assert len(result) == 6
+    assert result["username"] == result["email"] == "test@example.com"
+
+
 def test_extract_user_identity_token_not_required(settings: SettingsWrapper):
     """Test extract_user_identity function to verify if it correctly extracts user identity
     information from a (pysaml2) parsed SAML response when token is not required."""

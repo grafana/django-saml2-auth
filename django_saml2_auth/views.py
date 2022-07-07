@@ -138,7 +138,7 @@ def acs(request: HttpRequest):
 
         after_login_trigger = dictor(saml2_auth_settings, "TRIGGER.AFTER_LOGIN")
         if after_login_trigger:
-            run_hook(after_login_trigger, request, user, target_user)
+            run_hook(after_login_trigger, request, user, target_user, extra_data)
             logger.warning('request session %s', dict(request.session))
     else:
         raise SAMLAuthError("The target user is inactive.", extra={

@@ -25,7 +25,7 @@ from jwt.exceptions import PyJWTError
 from pkg_resources import parse_version
 
 
-def create_new_user(email: str, firstname: str, lastname: str) -> User:
+def create_new_user(email: str, firstname: str=None, lastname: str=None, **kwargs) -> User:
     """Create a new user with the given information
 
     Args:
@@ -47,9 +47,13 @@ def create_new_user(email: str, firstname: str, lastname: str) -> User:
     is_staff = dictor(saml2_auth_settings, "NEW_USER_PROFILE.STAFF_STATUS", default=False)
     is_superuser = dictor(saml2_auth_settings, "NEW_USER_PROFILE.SUPERUSER_STATUS", default=False)
     user_groups = dictor(saml2_auth_settings, "NEW_USER_PROFILE.USER_GROUPS", default=[])
+    
+    if firstname and lastname:
+        kwargs['first_name'] = firstname
+        kwargs['last_name'] = lastname
 
     try:
-        user = user_model.objects.create_user(email, first_name=firstname, last_name=lastname)
+        user = user_model.objects.create_user(email, **kwargs)
         user.is_active = is_active
         user.is_staff = is_staff
         user.is_superuser = is_superuser

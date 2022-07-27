@@ -52,3 +52,4 @@ an issue.
 - [Jean Vincent](https://github.com/jean-sh)
 - [Søren Howe Gersager](https://github.com/syre)
 - [Gabrio Mauri](https://github.com/sgabb)
+- [Uraiz Ali](https://github.com/UraizAli)

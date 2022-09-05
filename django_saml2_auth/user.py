@@ -25,7 +25,7 @@ from jwt.exceptions import PyJWTError
 from pkg_resources import parse_version
 
 
-def create_new_user(email: str, firstname: str=None, lastname: str=None, **kwargs) -> User:
+def create_new_user(email: str, firstname: str = None, lastname: str = None, **kwargs) -> User:
     """Create a new user with the given information
 
     Args:

@@ -217,6 +217,32 @@ def test_get_or_create_user_trigger_error(settings: SettingsWrapper):
 
 
 @pytest.mark.django_db
+def test_get_user_trigger_error(settings: SettingsWrapper):
+    """Test get_user function to verify if it raises an exception in case the GET_USER
+    trigger function is nonexistent.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
+    settings.SAML2_AUTH = {
+        "TRIGGER": {
+            "GET_USER": "django_saml2_auth.tests.test_user.nonexistent_trigger",
+        }
+    }
+    with pytest.raises(SAMLAuthError) as exc_info:
+        get_user({
+            "username": "test@example.com",
+            "first_name": "John",
+            "last_name": "Doe"
+        })
+
+    assert str(exc_info.value) == (
+        "module 'django_saml2_auth.tests.test_user' has no attribute 'nonexistent_trigger'")
+    assert exc_info.value.extra is not None
+    assert isinstance(exc_info.value.extra["exc"], AttributeError)
+
+
+@pytest.mark.django_db
 def test_get_or_create_user_trigger_change_first_name(settings: SettingsWrapper):
     """Test get_or_create_user function to verify if it correctly triggers the CREATE_USER function
     and the trigger updates the user's first name.

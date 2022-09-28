@@ -53,3 +53,5 @@ an issue.
 - [Søren Howe Gersager](https://github.com/syre)
 - [Gabrio Mauri](https://github.com/sgabb)
 - [Hugh Enxing](https://github.com/henxing) (CVision AI)
+- [Tamara Nocentini](https://github.com/TamaraNocentini)
+- [Paolo Romolini](https://github.com/paoloromolini)

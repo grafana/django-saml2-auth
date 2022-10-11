@@ -39,7 +39,7 @@ jobs:
           flake8 .
           interrogate --quiet --fail-under=95 .
       - name: Test Django ${{ matrix.versions.djangoVersion }} with coverage 🧪
-        run: coverage run -o coverage.lcov --source=django_saml2_auth -m pytest .
+        run: coverage run --source=django_saml2_auth -m pytest . && coverage lcov -o coverage.lcov
       - name: Submit coverage report to Coveralls 📈
         if: ${{ success() }}
         uses: coverallsapp/github-action@1.1.3

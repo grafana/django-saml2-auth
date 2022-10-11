@@ -25,13 +25,19 @@ from jwt.exceptions import PyJWTError
 from pkg_resources import parse_version
 
 
-def create_new_user(email: str, firstname: str = None, lastname: str = None, **kwargs) -> User:
+def create_new_user(email: str,
+                    first_name: Optional[str] = None,
+                    last_name: Optional[str] = None,
+                    **kwargs) -> User:
     """Create a new user with the given information
 
     Args:
         email (str): Email
-        firstname (str): First name
-        lastname (str): Last name
+        first_name (str): First name
+        last_name (str): Last name
+
+    Keyword Args:
+        **kwargs: Additional keyword arguments
 
     Raises:
         SAMLAuthError: There was an error creating the new user.
@@ -47,10 +53,10 @@ def create_new_user(email: str, firstname: str = None, lastname: str = None, **k
     is_staff = dictor(saml2_auth_settings, "NEW_USER_PROFILE.STAFF_STATUS", default=False)
     is_superuser = dictor(saml2_auth_settings, "NEW_USER_PROFILE.SUPERUSER_STATUS", default=False)
     user_groups = dictor(saml2_auth_settings, "NEW_USER_PROFILE.USER_GROUPS", default=[])
-    
-    if firstname and lastname:
-        kwargs['first_name'] = firstname
-        kwargs['last_name'] = lastname
+
+    if first_name and last_name:
+        kwargs['first_name'] = first_name
+        kwargs['last_name'] = last_name
 
     try:
         user = user_model.objects.create_user(email, **kwargs)

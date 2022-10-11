@@ -21,6 +21,7 @@ For IdP-initiated SSO, the user will be created if it doesn't exist. Still, for 
     | 3.7.x, 3.8.x, 3.9.x, 3.10.x | 2.2.x      | >=3.4.0               |
     | 3.7.x, 3.8.x, 3.9.x, 3.10.x | 3.2.x      | >=3.4.0               |
     | 3.8.x, 3.9.x, 3.10.x        | 4.0.x      | >=3.4.0               |
+    | 3.8.x, 3.9.x, 3.10.x        | 4.1.x      | >=3.4.0               |
 
 - Release logs are available [here](https://github.com/grafana/django-saml2-auth/releases). The old [release log file](RELEASE-LOG.md) still exist, and will be removed in future releases.
 

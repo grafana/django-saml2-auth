@@ -25,13 +25,19 @@ from jwt.exceptions import PyJWTError
 from pkg_resources import parse_version
 
 
-def create_new_user(email: str, firstname: str, lastname: str) -> User:
+def create_new_user(email: str,
+                    first_name: Optional[str] = None,
+                    last_name: Optional[str] = None,
+                    **kwargs) -> User:
     """Create a new user with the given information
 
     Args:
         email (str): Email
-        firstname (str): First name
-        lastname (str): Last name
+        first_name (str): First name
+        last_name (str): Last name
+
+    Keyword Args:
+        **kwargs: Additional keyword arguments
 
     Raises:
         SAMLAuthError: There was an error creating the new user.
@@ -48,8 +54,12 @@ def create_new_user(email: str, firstname: str, lastname: str) -> User:
     is_superuser = dictor(saml2_auth_settings, "NEW_USER_PROFILE.SUPERUSER_STATUS", default=False)
     user_groups = dictor(saml2_auth_settings, "NEW_USER_PROFILE.USER_GROUPS", default=[])
 
+    if first_name and last_name:
+        kwargs['first_name'] = first_name
+        kwargs['last_name'] = last_name
+
     try:
-        user = user_model.objects.create_user(email, first_name=firstname, last_name=lastname)
+        user = user_model.objects.create_user(email, **kwargs)
         user.is_active = is_active
         user.is_staff = is_staff
         user.is_superuser = is_superuser
@@ -189,7 +199,16 @@ def get_user(user: Union[str, Dict[str, str]]) -> User:
         User: An instance of the User model
     """
     saml2_auth_settings = settings.SAML2_AUTH
+    get_user_custom_method = dictor(saml2_auth_settings, "TRIGGER.GET_USER")
+
     user_model = get_user_model()
+    if get_user_custom_method:
+        found_user = run_hook(get_user_custom_method, user)  # type: ignore
+        if not found_user:
+            raise user_model.DoesNotExist
+        else:
+            return found_user
+
     user_id = get_user_id(user)
 
     # Should email be case-sensitive or not. Default is False (case-insensitive).

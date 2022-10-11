@@ -11,17 +11,6 @@ This plugin supports both identity provider and service provider-initiated SSO:
 
 For IdP-initiated SSO, the user will be created if it doesn't exist. Still, for SP-initiated SSO, the user should exist in your platform for the code to detect and redirect them to the correct application on the identity provider platform.
 
-- [Django SAML2 Authentication](#django-saml2-authentication)
-  - [Project Information](#project-information)
-  - [Donate](#donate)
-  - [Installation](#installation)
-  - [How to use?](#how-to-use)
-  - [Module Settings](#module-settings)
-  - [JWT Signing Algorithm and Settings](#jwt-signing-algorithm-and-settings)
-    - [Custom token triggers](#custom-token-triggers)
-  - [Customize Error Messages](#customize-error-messages)
-  - [For Okta Users](#for-okta-users)
-
 ## Project Information
 
 - Original Author: Fang Li ([@fangli](https://github.com/fangli))
@@ -33,7 +22,7 @@ For IdP-initiated SSO, the user will be created if it doesn't exist. Still, for 
     | 3.7.x, 3.8.x, 3.9.x, 3.10.x | 3.2.x      | >=3.4.0               |
     | 3.8.x, 3.9.x, 3.10.x        | 4.0.x      | >=3.4.0               |
 
-- Release log is available [here](RELEASE-LOG.md).
+- Release logs are available [here](https://github.com/grafana/django-saml2-auth/releases). The old [release log file](RELEASE-LOG.md) still exist, and will be removed in future releases.
 
 - For contribution, read [contributing guide](CONTRIBUTING.md).
 
@@ -209,18 +198,18 @@ python setup.py install
 | **JWT\_PUBLIC\_KEY**                        | Public key to decode the signed JWT token.                                                                                                                                                                                                                                                                                                                                                                                                                  | `str` or `bytes` | `'--- YOUR PUBLIC KEY ---'`                                                                                                              |                                                          |
 | **JWT\_EXP**                                | JWT expiry time in seconds                                                                                                                                                                                                                                                                                                                                                                                                                                  | `int`            | 60                                                                                                                                       |                                                          |
 | **FRONTEND\_URL**                           | If `USE_JWT` is `True`, you should set the URL to where your frontend is located (will default to `DEFAULT_NEXT_URL` if you fail to do so). Once the client is authenticated through the SAML SSO, your client is redirected to the `FRONTEND_URL` with the JWT token as `token` query parameter. Example: `https://app.example.com/?&token=<your.jwt.token`. With the token, your SPA can now authenticate with your API.                                  | `str`            | `admin:index`                                                                                                                            |                                                          |
-| **AUTHN\_REQUESTS\_SIGNED**                | Set this to `False` if your provider doesn't sign each authorization request.                                                                                                                                                                                                                                                                                                                                                                                           | `bool`           | `True`                                                                                                                                   |
-| **LOGOUT\_REQUESTS\_SIGNED**                | Set this to `False` if your provider doesn't sign each logout request.                                                                                                                                                                                                                                                                                                                                                                                           | `bool`           | `True`                                                                                                                                   | |
+| **AUTHN\_REQUESTS\_SIGNED**                 | Set this to `False` if your provider doesn't sign each authorization request.                                                                                                                                                                                                                                                                                                                                                                               | `bool`           | `True`                                                                                                                                   |
+| **LOGOUT\_REQUESTS\_SIGNED**                | Set this to `False` if your provider doesn't sign each logout request.                                                                                                                                                                                                                                                                                                                                                                                      | `bool`           | `True`                                                                                                                                   |                                                          |
 | **WANT\_ASSERTIONS\_SIGNED**                | Set this to `False` if your provider doesn't sign each assertion.                                                                                                                                                                                                                                                                                                                                                                                           | `bool`           | `True`                                                                                                                                   |                                                          |
 | **WANT\_RESPONSE\_SIGNED**                  | Set this to `False` if you don't want your provider to sign the response.                                                                                                                                                                                                                                                                                                                                                                                   | `bool`           | `True`                                                                                                                                   |                                                          |
 | **ACCEPTED\_TIME\_DIFF**                    | Sets the [accepted time diff](https://pysaml2.readthedocs.io/en/latest/howto/config.html#accepted-time-diff) in seconds                                                                                                                                                                                                                                                                                                                                     | `int` or `None`  | `None`                                                                                                                                   |                                                          |
 | **ALLOWED\_REDIRECT\_HOSTS**                | Allowed hosts to redirect to using the `?next=` parameter                                                                                                                                                                                                                                                                                                                                                                                                   | `list`           | `[]`                                                                                                                                     | `['https://app.example.com', 'https://api.exmaple.com']` |
 
 ### Triggers
-| **Setting name**                            | **Description**                                                                                                                             | **Interface**                                                                                 |
-|---------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
-| **GET\_METADATA\_AUTO\_CONF\_URLS**         | Auto SAML2 metadata configuration URL                                                                                                       | get_metadata_auto_conf_urls(user_id: Optional[str] = None) -> Optional[List[Dict[str, str]]]  |
-| **GET\_USER_ID\_FROM\_SAML\_RESPONSE**      | Allows retrieving a user ID before GET_METADATA_AUTO_CONF_URLS gets triggered. Warning: SAML response still not verified. Use with caution! | get_user_id_from_saml_response(saml_response: str, user_id: Optional[str]) -> Optional[str]   |
+| **Setting name**                       | **Description**                                                                                                                             | **Interface**                                                                                |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **GET\_METADATA\_AUTO\_CONF\_URLS**    | Auto SAML2 metadata configuration URL                                                                                                       | get_metadata_auto_conf_urls(user_id: Optional[str] = None) -> Optional[List[Dict[str, str]]] |
+| **GET\_USER_ID\_FROM\_SAML\_RESPONSE** | Allows retrieving a user ID before GET_METADATA_AUTO_CONF_URLS gets triggered. Warning: SAML response still not verified. Use with caution! | get_user_id_from_saml_response(saml_response: str, user_id: Optional[str]) -> Optional[str]  |
 
 
 
@@ -321,3 +310,11 @@ I created this plugin originally for Okta. The `METADATA_AUTO_CONF_URL` needed i
 The `Identity Provider metadata` link is the `METADATA_AUTO_CONF_URL`.
 
 More information can be found in the [Okta Developer Documentation](https://developer.okta.com/docs/guides/saml-application-setup/overview/).
+
+## Release Process
+
+I adopted a reasonably simple release process, which is almost automated, except for two actions that needed to be taken to start a release:
+
+1. Update [setup.py](setup.py) and increase the version number in the `setup` function. Unless something backward-incompatible is introduced, only the minor version is upgraded: 3.8.0 becomes 3.9.0.
+2. Tag the `main` branch with the the `vSEMVER`, e.g. `v3.9.0`, and git-push the tag.
+3. The rest is handled in the CI/CD using GitHub Actions.

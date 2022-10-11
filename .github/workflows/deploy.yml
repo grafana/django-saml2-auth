@@ -13,13 +13,16 @@ jobs:
           - { "djangoVersion": "2.2.28", "pythonVersion": "3.8" }
           - { "djangoVersion": "2.2.28", "pythonVersion": "3.9" }
           - { "djangoVersion": "2.2.28", "pythonVersion": "3.10" }
-          - { "djangoVersion": "3.2.13", "pythonVersion": "3.7" }
-          - { "djangoVersion": "3.2.13", "pythonVersion": "3.8" }
-          - { "djangoVersion": "3.2.13", "pythonVersion": "3.9" }
-          - { "djangoVersion": "3.2.13", "pythonVersion": "3.10" }
-          - { "djangoVersion": "4.0.4", "pythonVersion": "3.8" }
-          - { "djangoVersion": "4.0.4", "pythonVersion": "3.9" }
-          - { "djangoVersion": "4.0.4", "pythonVersion": "3.10" }
+          - { "djangoVersion": "3.2.16", "pythonVersion": "3.7" }
+          - { "djangoVersion": "3.2.16", "pythonVersion": "3.8" }
+          - { "djangoVersion": "3.2.16", "pythonVersion": "3.9" }
+          - { "djangoVersion": "3.2.16", "pythonVersion": "3.10" }
+          - { "djangoVersion": "4.0.8", "pythonVersion": "3.8" }
+          - { "djangoVersion": "4.0.8", "pythonVersion": "3.9" }
+          - { "djangoVersion": "4.0.8", "pythonVersion": "3.10" }
+          - { "djangoVersion": "4.1.2", "pythonVersion": "3.8" }
+          - { "djangoVersion": "4.1.2", "pythonVersion": "3.9" }
+          - { "djangoVersion": "4.1.2", "pythonVersion": "3.10" }
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v3

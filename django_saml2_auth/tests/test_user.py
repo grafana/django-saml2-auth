@@ -133,6 +133,59 @@ def test_create_new_user_success(settings: SettingsWrapper):
 
 
 @pytest.mark.django_db
+def test_create_new_user_with_dict_success(settings: SettingsWrapper):
+    """Test create_new_user function to verify if it works and correctly joins the user to the
+    respective group.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
+    settings.SAML2_AUTH = {
+        "NEW_USER_PROFILE": {
+            "USER_GROUPS": ["users"],
+        }
+    }
+
+    # Create a group for the users to join
+    Group.objects.create(name="users")
+    params = {
+        "first_name": "test_John",
+        "last_name": "test_Doe"
+    }
+    user = create_new_user("user_test@example.com", **params)
+    # It can also be email depending on USERNAME_FIELD setting
+    assert user.username == "user_test@example.com"
+    assert user.is_active is True
+    assert user.has_usable_password() is False
+    assert user.groups.get(name="users") == Group.objects.get(name="users")
+
+
+@pytest.mark.django_db
+def test_create_new_user_with_dict_success__no_first_and_last_name(settings: SettingsWrapper):
+    """Test create_new_user function to verify if it works and correctly joins the user to the
+    respective group.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
+    settings.SAML2_AUTH = {
+        "NEW_USER_PROFILE": {
+            "USER_GROUPS": ["users"],
+        }
+    }
+
+    # Create a group for the users to join
+    Group.objects.create(name="users")
+    # Create a user without first and last name (valid use-case)
+    user = create_new_user("user_test@example.com")
+    # It can also be email depending on USERNAME_FIELD setting
+    assert user.username == "user_test@example.com"
+    assert user.is_active is True
+    assert user.has_usable_password() is False
+    assert user.groups.get(name="users") == Group.objects.get(name="users")
+
+
+@pytest.mark.django_db
 def test_create_new_user_no_group_error(settings: SettingsWrapper):
     """Test create_new_user function to verify if it creates the user, but fails to join the user
     to the respective group.

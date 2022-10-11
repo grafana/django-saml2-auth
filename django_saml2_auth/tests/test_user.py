@@ -5,7 +5,8 @@ Tests for user.py
 from typing import Any, Dict, Union
 
 import pytest
-from django.contrib.auth.models import Group
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group, User
 from django_saml2_auth.exceptions import SAMLAuthError
 from django_saml2_auth.user import (create_custom_or_default_jwt, create_new_user,
                                     decode_custom_or_default_jwt, get_or_create_user,
@@ -95,6 +96,16 @@ def trigger_change_first_name(user: Union[str, Dict[str, str]]) -> None:
     _user = get_user(user)
     _user.first_name = "CHANGED_FIRSTNAME"
     _user.save()
+
+
+def trigger_get_user(user: Dict) -> User:
+    """Trigger function to get a user.
+
+    Args:
+        user (Union[str, Dict[str, str]]): User information
+    """
+    user_model = get_user_model()
+    return user_model.objects.get(email=user['username'])
 
 
 @pytest.mark.django_db
@@ -214,6 +225,52 @@ def test_get_or_create_user_trigger_error(settings: SettingsWrapper):
         "module 'django_saml2_auth.tests.test_user' has no attribute 'nonexistent_trigger'")
     assert exc_info.value.extra is not None
     assert isinstance(exc_info.value.extra["exc"], AttributeError)
+
+
+@pytest.mark.django_db
+def test_get_user_trigger_error(settings: SettingsWrapper):
+    """Test get_user function to verify if it raises an exception in case the GET_USER
+    trigger function is nonexistent.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
+    settings.SAML2_AUTH = {
+        "TRIGGER": {
+            "GET_USER": "django_saml2_auth.tests.test_user.nonexistent_trigger",
+        }
+    }
+    with pytest.raises(SAMLAuthError) as exc_info:
+        get_user({
+            "username": "test@example.com",
+            "first_name": "John",
+            "last_name": "Doe"
+        })
+
+    assert str(exc_info.value) == (
+        "module 'django_saml2_auth.tests.test_user' has no attribute 'nonexistent_trigger'")
+    assert exc_info.value.extra is not None
+    assert isinstance(exc_info.value.extra["exc"], AttributeError)
+
+
+@pytest.mark.django_db
+def test_get_user_trigger(settings: SettingsWrapper):
+
+    settings.SAML2_AUTH = {
+        "TRIGGER": {
+            "GET_USER": "django_saml2_auth.tests.test_user.trigger_get_user",
+        }
+    }
+    user_model = get_user_model()
+    user_model.objects.create(
+        username="test_example_com", email="test@example.com")
+    created, user = get_or_create_user({
+        "username": "test@example.com",
+        "first_name": "John",
+        "last_name": "Doe"
+    })
+    assert created is False
+    assert user.username == "test_example_com"
 
 
 @pytest.mark.django_db

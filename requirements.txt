@@ -1,3 +1,4 @@
 pysaml2==7.2.1
 PyJWT==2.6.0
 dictor==0.1.10
+setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability

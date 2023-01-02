@@ -1,6 +1,6 @@
 # Django SAML2 Authentication
 
-[![PyPI](https://img.shields.io/pypi/v/grafana-django-saml2-auth?label=version&logo=pypi)](https://pypi.org/project/grafana-django-saml2-auth/) [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/grafana/django-saml2-auth/deploy?logo=github)](https://github.com/grafana/django-saml2-auth/actions) [![Coveralls](https://img.shields.io/coveralls/github/grafana/django-saml2-auth?logo=coveralls)](https://coveralls.io/github/grafana/django-saml2-auth) [![Downloads](https://pepy.tech/badge/grafana-django-saml2-auth)](https://pepy.tech/project/grafana-django-saml2-auth)
+[![PyPI](https://img.shields.io/pypi/v/grafana-django-saml2-auth?label=version&logo=pypi)](https://pypi.org/project/grafana-django-saml2-auth/) [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/grafana/django-saml2-auth/deploy.yml?branch=main&logo=github)](https://github.com/grafana/django-saml2-auth/actions) [![Coveralls](https://img.shields.io/coveralls/github/grafana/django-saml2-auth?logo=coveralls)](https://coveralls.io/github/grafana/django-saml2-auth) [![Downloads](https://pepy.tech/badge/grafana-django-saml2-auth)](https://pepy.tech/project/grafana-django-saml2-auth)
 
 This plugin provides a simple way to integrate SAML2 Authentication into your Django-powered app. SAML SSO is a standard, so practically any SAML2 based SSO identity provider is supported.
 

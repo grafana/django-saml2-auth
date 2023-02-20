@@ -1,7 +1,7 @@
 pytest==7.2.0
 pytest-django==4.5.2
 responses==0.22.0
-mypy==0.982
+mypy==1.0.1
 flake8==5.0.4
 django-stubs==1.13.1
 types-pysaml2==1.0.0

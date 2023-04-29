@@ -105,7 +105,7 @@ def acs(request: HttpRequest):
     # login via sp_initiated_login endpoint, or it could be a URL used for redirection.
     relay_state = request.POST.get("RelayState")
     relay_state_is_token = is_jwt_well_formed(relay_state) if relay_state else False
-    if next_url is None and relay_state:
+    if next_url is None and relay_state and not relay_state_is_token:
         next_url = relay_state
     elif next_url is None:
         next_url = get_default_next_url()

@@ -7,6 +7,7 @@ from typing import Optional, List, Mapping
 import pytest
 import responses
 from django.contrib.sessions.middleware import SessionMiddleware
+from unittest.mock import MagicMock
 from django.http import HttpRequest
 from django.test.client import RequestFactory
 from django.urls import NoReverseMatch
@@ -424,7 +425,7 @@ def test_acs_view_when_next_url_is_none(settings: SettingsWrapper, monkeypatch: 
                         "get_or_create_user",
                         (created, mock_user,))
 
-    middleware = SessionMiddleware(lambda x: None)
+    middleware = SessionMiddleware(MagicMock())
     middleware.process_request(post_request)
     post_request.session["login_next_url"] = None
     post_request.session.save()
@@ -467,7 +468,7 @@ def test_acs_view_when_redirection_state_is_passed_in_relay_state(settings: Sett
                         "get_or_create_user",
                         (created, mock_user,))
 
-    middleware = SessionMiddleware(lambda x: None)
+    middleware = SessionMiddleware(MagicMock())
     middleware.process_request(post_request)
     post_request.session["login_next_url"] = None
     post_request.session.save()

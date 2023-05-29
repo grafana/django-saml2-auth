@@ -138,7 +138,7 @@ def get_metadata(user_id: Optional[str] = None) -> Mapping[str, Any]:
 
 def get_saml_client(domain: str,
                     acs: Callable[..., HttpResponse],
-                    user_id: str = None,
+                    user_id: Optional[str] = None,
                     saml_response: Optional[str] = None) -> Optional[Saml2Client]:
     """Create a new Saml2Config object with the given config and return an initialized Saml2Client
     using the config object. The settings are read from django settings key: SAML2_AUTH.

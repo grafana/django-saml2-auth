@@ -95,7 +95,7 @@ def acs(request: HttpRequest):
     # so we can safely ignore the type check here.
     user = extract_user_identity(authn_response.get_identity())  # type: ignore
 
-    next_url = request.session.get("login_next_url") or get_default_next_url()
+    next_url = request.session.get("login_next_url")
 
     # A RelayState is an HTTP parameter that can be included as part of the SAML request
     # and SAML response; usually is meant to be an opaque identifier that is passed back
@@ -105,6 +105,10 @@ def acs(request: HttpRequest):
     # login via sp_initiated_login endpoint, or it could be a URL used for redirection.
     relay_state = request.POST.get("RelayState")
     relay_state_is_token = is_jwt_well_formed(relay_state) if relay_state else False
+    if next_url is None and relay_state and not relay_state_is_token:
+        next_url = relay_state
+    elif next_url is None:
+        next_url = get_default_next_url()
 
     if relay_state and relay_state_is_token:
         redirected_user_id = decode_custom_or_default_jwt(relay_state)

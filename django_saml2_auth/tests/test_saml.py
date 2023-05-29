@@ -6,6 +6,8 @@ from typing import Optional, List, Mapping
 
 import pytest
 import responses
+from django.contrib.sessions.middleware import SessionMiddleware
+from unittest.mock import MagicMock
 from django.http import HttpRequest
 from django.test.client import RequestFactory
 from django.urls import NoReverseMatch
@@ -18,6 +20,8 @@ from django_saml2_auth.views import acs
 from pytest_django.fixtures import SettingsWrapper
 from saml2.client import Saml2Client
 from saml2.response import AuthnResponse
+from django_saml2_auth import user
+
 
 GET_METADATA_AUTO_CONF_URLS = "django_saml2_auth.tests.test_saml.get_metadata_auto_conf_urls"
 METADATA_URL1 = "https://testserver1.com/saml/sso/metadata"
@@ -386,3 +390,88 @@ def test_extract_user_identity_token_not_required(settings: SettingsWrapper):
     result = extract_user_identity(get_user_identity())  # type: ignore
     assert len(result) == 5
     assert "token" not in result
+
+
+@pytest.mark.django_db
+@responses.activate
+def test_acs_view_when_next_url_is_none(settings: SettingsWrapper, monkeypatch: "MonkeyPatch"):  # type: ignore
+    """Test Acs view when login_next_url is None in the session
+    """
+    responses.add(responses.GET, METADATA_URL1, body=METADATA1)
+    settings.SAML2_AUTH = {
+        "ASSERTION_URL": "https://api.example.com",
+        "DEFAULT_NEXT_URL": "default_next_url",
+        "USE_JWT": False,
+        "TRIGGER": {
+            "BEFORE_LOGIN": None,
+            "AFTER_LOGIN": None,
+            "GET_METADATA_AUTO_CONF_URLS": GET_METADATA_AUTO_CONF_URLS
+        }
+    }
+    post_request = RequestFactory().post(METADATA_URL1,
+                                         {"SAMLResponse": "SAML RESPONSE"})
+
+    monkeypatch.setattr(Saml2Client,
+                        "parse_authn_request_response",
+                        mock_parse_authn_request_response)
+
+    created, mock_user = user.get_or_create_user({
+        "username": "test@example.com",
+        "first_name": "John",
+        "last_name": "Doe"
+    })
+
+    monkeypatch.setattr(user,
+                        "get_or_create_user",
+                        (created, mock_user,))
+
+    middleware = SessionMiddleware(MagicMock())
+    middleware.process_request(post_request)
+    post_request.session["login_next_url"] = None
+    post_request.session.save()
+
+    result = acs(post_request)
+    assert result['Location'] == "default_next_url"
+
+
+@pytest.mark.django_db
+@responses.activate
+def test_acs_view_when_redirection_state_is_passed_in_relay_state(settings: SettingsWrapper, monkeypatch: "MonkeyPatch"):  # type: ignore
+    """Test Acs view when login_next_url is None and redirection state in POST request
+    """
+    responses.add(responses.GET, METADATA_URL1, body=METADATA1)
+    settings.SAML2_AUTH = {
+        "ASSERTION_URL": "https://api.example.com",
+        "DEFAULT_NEXT_URL": "default_next_url",
+        "USE_JWT": False,
+        "TRIGGER": {
+            "BEFORE_LOGIN": None,
+            "AFTER_LOGIN": None,
+            "GET_METADATA_AUTO_CONF_URLS": GET_METADATA_AUTO_CONF_URLS
+        }
+    }
+    post_request = RequestFactory().post(METADATA_URL1,
+                                         {"SAMLResponse": "SAML RESPONSE",
+                                          "RelayState": '/admin/logs'})
+
+    monkeypatch.setattr(Saml2Client,
+                        "parse_authn_request_response",
+                        mock_parse_authn_request_response)
+
+    created, mock_user = user.get_or_create_user({
+        "username": "test@example.com",
+        "first_name": "John",
+        "last_name": "Doe"
+    })
+
+    monkeypatch.setattr(user,
+                        "get_or_create_user",
+                        (created, mock_user,))
+
+    middleware = SessionMiddleware(MagicMock())
+    middleware.process_request(post_request)
+    post_request.session["login_next_url"] = None
+    post_request.session.save()
+
+    result = acs(post_request)
+    assert result['Location'] == "/admin/logs"

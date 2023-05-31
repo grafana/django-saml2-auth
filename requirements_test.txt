@@ -8,5 +8,5 @@ types-pysaml2==1.0.1
 types-setuptools==67.8.0.0
 types-pkg-resources==0.1.3
 interrogate==1.5.0
-coverage==7.2.6
+coverage==7.2.7
 cyclonedx-bom==3.11.0

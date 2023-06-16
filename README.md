@@ -108,6 +108,8 @@ python setup.py install
         # Metadata is required, choose either remote url or local file path
         'METADATA_AUTO_CONF_URL': '[The auto(dynamic) metadata configuration URL of SAML2]',
         'METADATA_LOCAL_FILE_PATH': '[The metadata configuration file path]',
+        'KEY_FILE': '[The key file path]',
+        'CERT_FILE': '[The certificate file path]',
 
         'DEBUG': False,  # Send debug information to a log file
 

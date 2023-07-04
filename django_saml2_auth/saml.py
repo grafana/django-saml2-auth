@@ -223,6 +223,14 @@ def get_saml_client(domain: str,
     if logging:
         saml_settings["logging"] = logging
 
+    key_file = saml2_auth_settings.get("KEY_FILE")
+    if key_file:
+        saml_settings['key_file'] = key_file
+
+    cert_file = saml2_auth_settings.get("CERT_FILE")
+    if cert_file:
+        saml_settings['cert_file'] = cert_file
+
     try:
         sp_config = Saml2Config()
         sp_config.load(saml_settings)

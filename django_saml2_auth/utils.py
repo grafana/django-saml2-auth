@@ -9,6 +9,7 @@ import logging
 from typing import (Any, Callable, Dict, Iterable, Mapping, Optional, Tuple,
                     Union)
 
+from django.conf import settings
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import NoReverseMatch, reverse
@@ -151,7 +152,12 @@ def exception_handler(
             HttpResponse: Rendered error page with details
         """
         logger = logging.getLogger(__name__)
-        logger.debug(exc)
+        if getattr(settings.SAML2_AUTH, "DEBUG", False):
+            # Log the exception with traceback
+            logger.exception(exc)
+        else:
+            # Log the exception without traceback
+            logger.debug(exc)
 
         context: Optional[Dict[str, Any]] = exc.extra if isinstance(exc, SAMLAuthError) else {}
         if isinstance(exc, SAMLAuthError) and exc.extra:

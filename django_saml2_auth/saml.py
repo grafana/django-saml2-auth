@@ -217,6 +217,14 @@ def get_saml_client(domain: str,
     if accepted_time_diff:
         saml_settings['accepted_time_diff'] = accepted_time_diff
 
+    key_file = saml2_auth_settings.get("KEY_FILE")
+    if key_file:
+        saml_settings['key_file'] = key_file
+
+    cert_file = saml2_auth_settings.get("CERT_FILE")
+    if cert_file:
+        saml_settings['cert_file'] = cert_file
+
     try:
         sp_config = Saml2Config()
         sp_config.load(saml_settings)

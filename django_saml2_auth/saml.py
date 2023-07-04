@@ -217,6 +217,10 @@ def get_saml_client(domain: str,
     if accepted_time_diff:
         saml_settings['accepted_time_diff'] = accepted_time_diff
 
+    # Enable logging with a custom logger. See below for more details:
+    # https://pysaml2.readthedocs.io/en/latest/howto/config.html?highlight=debug#logging
+    saml_settings["logging"] = saml2_auth_settings.get("LOGGING", {})
+
     try:
         sp_config = Saml2Config()
         sp_config.load(saml_settings)

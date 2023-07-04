@@ -110,6 +110,39 @@ python setup.py install
         'METADATA_LOCAL_FILE_PATH': '[The metadata configuration file path]',
 
         'DEBUG': False,  # Send debug information to a log file
+        # Optional logging configuration.
+        # By default, it won't log anything, as it is an empty dict.
+        # The following configuration is an example of how to configure the logger,
+        # which can be used together with the DEBUG option above. Please note that
+        # the logger configuration follows the Python's logging configuration schema:
+        # https://docs.python.org/3/library/logging.config.html#logging-config-dictschema
+        'LOGGING': {
+            'version': 1,
+            'formatters': {
+                'simple': {
+                    'format': '[%(asctime)s] [%(levelname)s] [%(name)s.%(funcName)s] %(message)s',
+                },
+            },
+            'handlers': {
+                'stdout': {
+                    'class': 'logging.StreamHandler',
+                    'stream': 'ext://sys.stdout',
+                    'level': 'DEBUG',
+                    'formatter': 'simple',
+                },
+            },
+            'loggers': {
+                'saml2': {
+                    'level': 'DEBUG'
+                },
+            },
+            'root': {
+                'level': 'DEBUG',
+                'handlers': [
+                    'stdout',
+                ],
+            },
+        },
 
         # Optional settings below
         'DEFAULT_NEXT_URL': '/admin',  # Custom target redirect URL after the user get logged in. Default to /admin if not set. This setting will be overwritten if you have parameter ?next= specificed in the login URL.
@@ -171,27 +204,20 @@ python setup.py install
 
 To debug what's happening between the SAMLP Identity Provider and your Django application, you can use SAML-tracer for [Firefox](https://addons.mozilla.org/en-US/firefox/addon/saml-tracer/) or [Chrome](https://chrome.google.com/webstore/detail/saml-tracer/mpdajninpobndbfcldcmbpnnbhibjmch?hl=en). Using this tool, you can see the SAML requests and responses that are being sent back and forth.
 
-Also, you can enable the debug mode in the settings.py file:
+Also, you can enable the debug mode in the `settings.py` file by setting the `DEBUG` flag to `True` and enabling the `LOGGING` configuration. See above for configuration examples.
 
-```python
-SAML2_AUTH = {
-    # ...
-    'DEBUG': True,
-    # ...
-}
-```
-
-This will log the exception to your console, so you can see what's happening in the code.
-
-*Note:* Don't forget to disable the debug mode in production.
+*Note:* Don't forget to disable the debug mode in production and also remove the logging configuration if you don't want to see internal logs of pysaml2 library.
 
 ## Module Settings
+
+Some of the following settings are related to how this module operates. The rest are passed as options to the pysaml2 library. For more information on the pysaml2 library, see the [pysaml2 documentation](https://pysaml2.readthedocs.io/en/latest/howto/config.html), which contains examples of available settings. Also, note that all settings are not implemented in this module.
 
 | **Field name**                              | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                             | **Data type(s)** | **Default value(s)**                                                                                                                     | **Example**                                              |
 | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
 | **METADATA\_AUTO\_CONF\_URL**               | Auto SAML2 metadata configuration URL                                                                                                                                                                                                                                                                                                                                                                                                                       | `str`            | `None`                                                                                                                                   | `https://ORG.okta.com/app/APP-ID/sso/saml/metadata`      |
 | **METADATA\_LOCAL\_FILE\_PATH**             | SAML2 metadata configuration file path                                                                                                                                                                                                                                                                                                                                                                                                                      | `str`            | `None`                                                                                                                                   | `/path/to/the/metadata.xml`                              |
 | **DEBUG**                                   | Send debug information to a log file                                                                                                                                                                                                                                                                                                                                                                                                                        | `bool`           | `False`                                                                                                                                  |                                                          |
+| **LOGGING**                                 | Logging configuration dictionary                                                                                                                                                                                                                                                                                                                                                                                                                            | `dict`           | `{}`                                                                                                                                     |                                                          |
 | **DEFAULT\_NEXT\_URL**                      | Custom target redirect URL after the user get logged in. Default to /admin if not set. This setting will be overwritten if you have parameter `?next=` specificed in the login URL.                                                                                                                                                                                                                                                                         | `str`            | `admin:index`                                                                                                                            | `https://app.example.com/account/login`                  |
 | **CREATE\_USER**                            | Determines if a new Django user should be created for new users                                                                                                                                                                                                                                                                                                                                                                                             | `bool`           | `True`                                                                                                                                   |                                                          |
 | **NEW\_USER\_PROFILE**                      | Default settings for newly created users                                                                                                                                                                                                                                                                                                                                                                                                                    | `dict`           | `{'USER_GROUPS': [], 'ACTIVE_STATUS': True, 'STAFF_STATUS': False, 'SUPERUSER_STATUS': False}`                                           |                                                          |

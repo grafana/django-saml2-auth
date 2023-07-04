@@ -167,6 +167,24 @@ python setup.py install
 
 5. In your SAML2 SSO identity provider, set the Single-sign-on URL and Audience URI (SP Entity ID) to <http://your-domain/saml2_auth/acs/>
 
+## How to debug?
+
+To debug what's happening between the SAMLP Identity Provider and your Django application, you can use SAML-tracer for [Firefox](https://addons.mozilla.org/en-US/firefox/addon/saml-tracer/) or [Chrome](https://chrome.google.com/webstore/detail/saml-tracer/mpdajninpobndbfcldcmbpnnbhibjmch?hl=en). Using this tool, you can see the SAML requests and responses that are being sent back and forth.
+
+Also, you can enable the debug mode in the settings.py file:
+
+```python
+SAML2_AUTH = {
+    # ...
+    'DEBUG': True,
+    # ...
+}
+```
+
+This will log the exception to your console, so you can see what's happening in the code.
+
+*Note:* Don't forget to disable the debug mode in production.
+
 ## Module Settings
 
 | **Field name**                              | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                             | **Data type(s)** | **Default value(s)**                                                                                                                     | **Example**                                              |

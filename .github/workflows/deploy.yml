@@ -9,20 +9,17 @@ jobs:
     strategy:
       matrix:
         versions:
-          - { "djangoVersion": "2.2.28", "pythonVersion": "3.7" }
-          - { "djangoVersion": "2.2.28", "pythonVersion": "3.8" }
-          - { "djangoVersion": "2.2.28", "pythonVersion": "3.9" }
-          - { "djangoVersion": "2.2.28", "pythonVersion": "3.10" }
-          - { "djangoVersion": "3.2.16", "pythonVersion": "3.7" }
-          - { "djangoVersion": "3.2.16", "pythonVersion": "3.8" }
-          - { "djangoVersion": "3.2.16", "pythonVersion": "3.9" }
-          - { "djangoVersion": "3.2.16", "pythonVersion": "3.10" }
-          - { "djangoVersion": "4.0.8", "pythonVersion": "3.8" }
-          - { "djangoVersion": "4.0.8", "pythonVersion": "3.9" }
-          - { "djangoVersion": "4.0.8", "pythonVersion": "3.10" }
-          - { "djangoVersion": "4.1.2", "pythonVersion": "3.8" }
-          - { "djangoVersion": "4.1.2", "pythonVersion": "3.9" }
-          - { "djangoVersion": "4.1.2", "pythonVersion": "3.10" }
+          - { "djangoVersion": "3.2.20", "pythonVersion": "3.7" }
+          - { "djangoVersion": "3.2.20", "pythonVersion": "3.8" }
+          - { "djangoVersion": "3.2.20", "pythonVersion": "3.9" }
+          - { "djangoVersion": "3.2.20", "pythonVersion": "3.10" }
+          - { "djangoVersion": "4.1.10", "pythonVersion": "3.8" }
+          - { "djangoVersion": "4.1.10", "pythonVersion": "3.9" }
+          - { "djangoVersion": "4.1.10", "pythonVersion": "3.10" }
+          - { "djangoVersion": "4.2.3", "pythonVersion": "3.8" }
+          - { "djangoVersion": "4.2.3", "pythonVersion": "3.9" }
+          - { "djangoVersion": "4.2.3", "pythonVersion": "3.10" }
+          - { "djangoVersion": "4.2.3", "pythonVersion": "3.11" }
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v3
@@ -63,15 +60,13 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: cyclonedx-django-saml2-auth-${{ github.ref_name }}.json
-          path:
-            cyclonedx-django-saml2-auth-${{ github.ref_name }}.json
+          path: cyclonedx-django-saml2-auth-${{ github.ref_name }}.json
       - name: Upload CycloneDX SBOM artifact for requirements_test.txt 💾
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
         uses: actions/upload-artifact@v3
         with:
           name: cyclonedx-django-saml2-auth-test-${{ github.ref_name }}.json
-          path:
-            cyclonedx-django-saml2-auth-test-${{ github.ref_name }}.json
+          path: cyclonedx-django-saml2-auth-test-${{ github.ref_name }}.json
       - name: Publish package to PyPI 🎉
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
         uses: pypa/gh-action-pypi-publish@release/v1

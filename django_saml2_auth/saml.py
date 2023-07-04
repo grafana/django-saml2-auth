@@ -219,7 +219,9 @@ def get_saml_client(domain: str,
 
     # Enable logging with a custom logger. See below for more details:
     # https://pysaml2.readthedocs.io/en/latest/howto/config.html?highlight=debug#logging
-    saml_settings["logging"] = saml2_auth_settings.get("LOGGING", {})
+    logging = saml2_auth_settings.get("LOGGING")
+    if logging:
+        saml_settings["logging"] = logging
 
     try:
         sp_config = Saml2Config()

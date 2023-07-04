@@ -19,7 +19,7 @@ requirements = [r.rstrip() for r in open("requirements.txt").readlines()]
 setup(
     name="grafana_django_saml2_auth",
 
-    version="3.10.0",
+    version="3.11.0",
 
     description="Django SAML2 Authentication Made Easy.",
     long_description=long_description,
@@ -53,6 +53,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
 
     keywords=[

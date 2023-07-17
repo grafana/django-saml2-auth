@@ -403,12 +403,8 @@ def test_get_or_create_user_should_not_create_group(settings: SettingsWrapper):
     assert user.is_active is True
     assert user.has_usable_password() is False
     assert user.groups.get(name="users") == Group.objects.get(name="users")
-    with pytest.raises(Group.DoesNotExist) as exc_info:
-        user.groups.get(name="consumers")
-        assert str(exc_info.value) == "Cannot create user."
-        assert exc_info.value.extra is not None
-        assert exc_info.value.extra["reason"] == (
-            "Due to current config, a new user should not be created.")
+    assert Group.objects.filter(name="consumers").exists() is False
+    assert user.groups.filter(name="consumers").exists() is False
 
 
 @pytest.mark.django_db

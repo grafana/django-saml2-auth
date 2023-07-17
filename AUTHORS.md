@@ -56,3 +56,4 @@ an issue.
 - [Tamara Nocentini](https://github.com/TamaraNocentini)
 - [Paolo Romolini](https://github.com/paoloromolini)
 - [Uraiz Ali](https://github.com/UraizAli)
+- [Santiago Gandolfo](https://github.com/santigandolfo)

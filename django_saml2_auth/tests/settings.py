@@ -74,6 +74,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 SAML2_AUTH = {
     "DEFAULT_NEXT_URL": "http://app.example.com/account/login",
     "CREATE_USER": True,
+    "CREATE_GROUPS": False,
     "NEW_USER_PROFILE": {
         "USER_GROUPS": [],
         "ACTIVE_STATUS": True,

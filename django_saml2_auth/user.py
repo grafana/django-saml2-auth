@@ -158,7 +158,9 @@ def get_or_create_user(user: Dict[str, Any]) -> Tuple[bool, User]:
             try:
                 groups.append(Group.objects.get(name=group_name_django))
             except Group.DoesNotExist:
-                pass
+                should_create_new_groups = dictor(saml2_auth_settings, "CREATE_GROUPS", False)
+                if should_create_new_groups:
+                    groups.append(Group.objects.create(name=group_name_django))
 
         if parse_version(get_version()) >= parse_version("2.0"):
             target_user.groups.set(groups)

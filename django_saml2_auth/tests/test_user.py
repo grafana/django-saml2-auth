@@ -378,6 +378,71 @@ def test_get_or_create_user_should_not_create_user(settings: SettingsWrapper):
         "Due to current config, a new user should not be created.")
 
 
+@pytest.mark.django_db
+def test_get_or_create_user_should_not_create_group(settings: SettingsWrapper):
+    """Test get_or_create_user function to verify if it doesn't create a group while creating a new
+    group is prohibited by settings.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
+    Group.objects.create(name="users")
+    created, user = get_or_create_user({
+        "username": "test@example.com",
+        "first_name": "John",
+        "last_name": "Doe",
+        "user_identity": {
+            "user.username": "test@example.com",
+            "user.first_name": "John",
+            "user.last_name": "Doe",
+            "groups": ["users", "consumers"]
+        }
+    })
+    assert created
+    assert user.username == "test@example.com"
+    assert user.is_active is True
+    assert user.has_usable_password() is False
+    assert user.groups.get(name="users") == Group.objects.get(name="users")
+    with pytest.raises(Group.DoesNotExist) as exc_info:
+        user.groups.get(name="consumers")
+        assert str(exc_info.value) == "Cannot create user."
+        assert exc_info.value.extra is not None
+        assert exc_info.value.extra["reason"] == (
+            "Due to current config, a new user should not be created.")
+
+
+@pytest.mark.django_db
+def test_get_or_create_user_should_create_group(settings: SettingsWrapper):
+    """Test get_or_create_user function to verify if it creates a group when creating a new
+    group is enabled by settings.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
+    settings.SAML2_AUTH = {
+        "CREATE_GROUPS": True,
+    }
+
+    Group.objects.create(name="users")
+    created, user = get_or_create_user({
+        "username": "test@example.com",
+        "first_name": "John",
+        "last_name": "Doe",
+        "user_identity": {
+            "user.username": "test@example.com",
+            "user.first_name": "John",
+            "user.last_name": "Doe",
+            "groups": ["users", "consumers"]
+        }
+    })
+    assert created
+    assert user.username == "test@example.com"
+    assert user.is_active is True
+    assert user.has_usable_password() is False
+    assert user.groups.get(name="users") == Group.objects.get(name="users")
+    assert user.groups.get(name="consumers") == Group.objects.get(name="consumers")
+
+
 def test_get_user_id_success():
     """Test get_user_id function to verify if it correctly returns the user_id based on the
     User.USERNAME_FIELD."""

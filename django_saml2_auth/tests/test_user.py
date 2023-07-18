@@ -378,6 +378,117 @@ def test_get_or_create_user_should_not_create_user(settings: SettingsWrapper):
         "Due to current config, a new user should not be created.")
 
 
+@pytest.mark.django_db
+def test_get_or_create_user_should_not_create_group(settings: SettingsWrapper):
+    """Test get_or_create_user function to verify if it doesn't create a group while creating a new
+    group is prohibited by settings.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
+    settings.SAML2_AUTH = {
+        "ATTRIBUTES_MAP": {
+            "groups": "groups",
+        }
+    }
+
+    Group.objects.create(name="users")
+    created, user = get_or_create_user({
+        "username": "test@example.com",
+        "first_name": "John",
+        "last_name": "Doe",
+        "user_identity": {
+            "user.username": "test@example.com",
+            "user.first_name": "John",
+            "user.last_name": "Doe",
+            "groups": ["users", "consumers"]
+        }
+    })
+    assert created
+    assert user.username == "test@example.com"
+    assert user.is_active is True
+    assert user.has_usable_password() is False
+    assert Group.objects.get(name="users") in user.groups.all()
+    assert Group.objects.filter(name="consumers").exists() is False
+    assert user.groups.filter(name="consumers").exists() is False
+
+
+@pytest.mark.django_db
+def test_get_or_create_user_should_create_group(settings: SettingsWrapper):
+    """Test get_or_create_user function to verify if it creates a group when creating a new
+    group is enabled by settings.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
+    settings.SAML2_AUTH = {
+        "CREATE_GROUPS": True,
+        "ATTRIBUTES_MAP": {
+            "groups": "groups",
+        },
+    }
+
+    Group.objects.create(name="users")
+    created, user = get_or_create_user({
+        "username": "test@example.com",
+        "first_name": "John",
+        "last_name": "Doe",
+        "user_identity": {
+            "user.username": "test@example.com",
+            "user.first_name": "John",
+            "user.last_name": "Doe",
+            "groups": ["users", "consumers"]
+        }
+    })
+    assert created
+    assert user.username == "test@example.com"
+    assert user.is_active is True
+    assert user.has_usable_password() is False
+    assert user.groups.get(name="users") == Group.objects.get(name="users")
+    assert user.groups.get(name="consumers") == Group.objects.get(name="consumers")
+
+
+@pytest.mark.django_db
+def test_get_or_create_user_should_create_and_map_group(settings: SettingsWrapper):
+    """Test get_or_create_user function to verify if it creates a group when creating a new
+    group is enabled by settings. It also verifies if the group is mapped correctly from
+    "consumers" in SAML attributes to "customers" in Django.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
+    settings.SAML2_AUTH = {
+        "CREATE_GROUPS": True,
+        "ATTRIBUTES_MAP": {
+            "groups": "groups",
+        },
+        "GROUPS_MAP": {
+            "consumers": "customers",
+        },
+    }
+
+    Group.objects.create(name="users")
+    created, user = get_or_create_user(
+        {
+            "username": "test@example.com",
+            "first_name": "John",
+            "last_name": "Doe",
+            "user_identity": {
+                "user.username": "test@example.com",
+                "user.first_name": "John",
+                "user.last_name": "Doe",
+                "groups": ["users", "consumers"],
+            },
+        }
+    )
+    assert created
+    assert user.username == "test@example.com"
+    assert user.is_active is True
+    assert user.has_usable_password() is False
+    assert user.groups.get(name="users") == Group.objects.get(name="users")
+    assert user.groups.get(name="customers") == Group.objects.get(name="customers")
+
+
 def test_get_user_id_success():
     """Test get_user_id function to verify if it correctly returns the user_id based on the
     User.USERNAME_FIELD."""

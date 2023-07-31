@@ -7,7 +7,6 @@ from typing import Any, Dict, Optional, Tuple, Union
 import jwt
 from cryptography.hazmat.primitives import serialization
 from dictor import dictor  # type: ignore
-from django import get_version
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, User
@@ -22,7 +21,6 @@ from django_saml2_auth.utils import run_hook
 from jwt.algorithms import (get_default_algorithms, has_crypto,
                             requires_cryptography)
 from jwt.exceptions import PyJWTError
-from pkg_resources import parse_version
 
 
 def create_new_user(email: str,
@@ -76,10 +74,7 @@ def create_new_user(email: str,
     try:
         groups = [Group.objects.get(name=group) for group in user_groups]
         if groups:
-            if parse_version(get_version()) <= parse_version("1.8"):
-                user.groups = groups
-            else:
-                user.groups.set(groups)
+            user.groups.set(groups)
     except Exception as exc:
         raise SAMLAuthError("There was an error joining the user to the group.", extra={
             "exc": exc,
@@ -162,10 +157,7 @@ def get_or_create_user(user: Dict[str, Any]) -> Tuple[bool, User]:
                 if should_create_new_groups:
                     groups.append(Group.objects.create(name=group_name_django))
 
-        if parse_version(get_version()) >= parse_version("2.0"):
-            target_user.groups.set(groups)
-        else:
-            target_user.groups = groups
+        target_user.groups.set(groups)
 
     return (created, target_user)
 

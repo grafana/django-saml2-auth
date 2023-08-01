@@ -1,4 +1,4 @@
 pysaml2==7.3.0
-PyJWT==2.7.0
+PyJWT==2.8.0
 dictor==0.1.11
 setuptools>=67.8.0

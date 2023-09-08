@@ -57,3 +57,4 @@ an issue.
 - [Paolo Romolini](https://github.com/paoloromolini)
 - [Uraiz Ali](https://github.com/UraizAli)
 - [Santiago Gandolfo](https://github.com/santigandolfo)
+- [Michael V. Battista](https://github.com/mvbattista)

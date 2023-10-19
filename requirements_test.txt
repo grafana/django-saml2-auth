@@ -3,7 +3,7 @@ pytest-django==4.5.2
 responses==0.23.3
 mypy==1.4.1
 flake8==5.0.4
-django-stubs==4.2.0
+django-stubs==4.2.5
 types-pysaml2==1.0.1
 types-setuptools==68.0.0.3
 types-pkg-resources==0.1.3

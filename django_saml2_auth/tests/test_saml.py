@@ -379,8 +379,8 @@ def test_get_saml_client_failure_with_invalid_file(settings: SettingsWrapper):
     ],
 )
 def test_get_saml_client_success_with_key_and_cert_files(settings: SettingsWrapper, supplied_config_values: Dict[str, str], expected_encryption_keypairs: Union[List, None]):
-    """Test get_saml_client function to verify if it is correctly instantiated with encryption keypairs
-    if both key and cert files are provided (and encryption keypair isn't provided).
+    """Test get_saml_client function to verify that it is correctly instantiated with encryption_keypairs
+    if both key_file and cert_file are provided (even if encryption_keypairs isn't).
 
     Args:
         settings (SettingsWrapper): Fixture for django settings

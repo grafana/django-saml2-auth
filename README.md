@@ -111,6 +111,14 @@ python setup.py install
         'METADATA_LOCAL_FILE_PATH': '[The metadata configuration file path]',
         'KEY_FILE': '[The key file path]',
         'CERT_FILE': '[The certificate file path]',
+        
+        # If both `KEY_FILE` and `CERT_FILE` are provided, `ENCRYPTION_KEYPAIRS` will be added automatically. There is no need to provide it unless you wish to override the default value.
+        'ENCRYPTION_KEYPAIRS': [
+            {
+                "key_file": '[The key file path]',
+                "cert_file": '[The certificate file path]',
+            }
+        ],
 
         'DEBUG': False,  # Send debug information to a log file
         # Optional logging configuration.

@@ -2,7 +2,7 @@
 Tests for saml.py
 """
 
-from typing import Optional, List, Mapping
+from typing import Dict, Optional, List, Mapping, Union
 
 import pytest
 import responses
@@ -347,6 +347,57 @@ def test_get_saml_client_failure_with_invalid_file(settings: SettingsWrapper):
     assert str(exc_info.value) == "[Errno 2] No such file or directory: '/invalid/metadata.xml'"
     assert exc_info.value.extra is not None
     assert isinstance(exc_info.value.extra["exc"], FileNotFoundError)
+
+
+@pytest.mark.parametrize(
+    "supplied_config_values,expected_encryption_keypairs",
+    [
+        (
+            {
+                "KEY_FILE": "django_saml2_auth/tests/dummy_key.pem",
+            },
+            None,
+        ),
+        (
+            {
+                "CERT_FILE": "django_saml2_auth/tests/dummy_cert.pem",
+            },
+            None,
+        ),
+        (
+            {
+                "KEY_FILE": "django_saml2_auth/tests/dummy_key.pem",
+                "CERT_FILE": "django_saml2_auth/tests/dummy_cert.pem",
+            },
+            [
+                {
+                    "key_file": "django_saml2_auth/tests/dummy_key.pem",
+                    "cert_file": "django_saml2_auth/tests/dummy_cert.pem",
+                }
+            ],
+        ),
+    ],
+)
+def test_get_saml_client_success_with_key_and_cert_files(settings: SettingsWrapper, supplied_config_values: Dict[str, str], expected_encryption_keypairs: Union[List, None]):
+    """Test get_saml_client function to verify if it is correctly instantiated with encryption keypairs
+    if both key and cert files are provided (and encryption keypair isn't provided).
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
+
+    settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "django_saml2_auth/tests/metadata.xml"
+
+    for key, value in supplied_config_values.items():
+        settings.SAML2_AUTH[key] = value
+
+    result = get_saml_client("example.com", acs)
+    assert isinstance(result, Saml2Client)
+    assert result.config.encryption_keypairs == expected_encryption_keypairs
+
+    for key, value in supplied_config_values.items():
+        # ensure that the added settings do not get carried over to other tests
+        del settings.SAML2_AUTH[key]
 
 
 @responses.activate

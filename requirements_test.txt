@@ -1,5 +1,5 @@
 pytest==7.4.0
-pytest-django==4.5.2
+pytest-django==4.7.0
 responses==0.23.3
 mypy==1.4.1
 flake8==5.0.4

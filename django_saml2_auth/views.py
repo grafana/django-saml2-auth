@@ -272,7 +272,8 @@ def signin(request: HttpRequest) -> HttpResponseRedirect:
 
     request.session["login_next_url"] = next_url
 
-    saml_client = get_saml_client(get_assertion_url(request), acs)
+    user_id = request.GET['user_email']
+    saml_client = get_saml_client(get_assertion_url(request), acs, user_id)
     _, info = saml_client.prepare_for_authenticate(relay_state=next_url)  # type: ignore
 
     redirect_url = dict(info["headers"]).get("Location", "")

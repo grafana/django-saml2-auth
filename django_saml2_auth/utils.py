@@ -2,17 +2,21 @@
 E.g. creating SAML client, creating user, exception handling, etc.
 """
 
-import logging
+import base64
 from functools import wraps
-from typing import Any, Callable, Iterable, Mapping, Optional, Tuple, Union
+from importlib import import_module
+import logging
+from typing import (Any, Callable, Dict, Iterable, Mapping, Optional, Tuple,
+                    Union)
 
 from django.conf import settings
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import NoReverseMatch, reverse
 from django.utils.module_loading import import_string
-
-from django_saml2_auth.errors import *
+from django_saml2_auth.errors import (EMPTY_FUNCTION_PATH, GENERAL_EXCEPTION,
+                                      IMPORT_ERROR, NO_REVERSE_MATCH,
+                                      PATH_ERROR)
 from django_saml2_auth.exceptions import SAMLAuthError
 
 
@@ -21,7 +25,8 @@ def run_hook(function_path: str,
              **kwargs: Optional[Mapping[str, Any]]) -> Optional[Any]:
     """Runs a hook function with given args and kwargs. For example, given
     "models.User.create_new_user", the "create_new_user" function is imported from
-    the "models.User" module and run with args and kwargs.
+    the "models.User" module and run with args and kwargs. Functions can be
+    imported directly from modules, without having to be inside any class.
 
     Args:
         function_path (str): A path to a hook function,
@@ -58,12 +63,24 @@ def run_hook(function_path: str,
     module_path = ".".join(path[:-1])
     result = None
     try:
-        cls = import_string(module_path)
+        cls = import_module(module_path)
+    except ModuleNotFoundError:
+        try:
+            cls = import_string(module_path)
+        except ImportError as exc:
+            raise SAMLAuthError(str(exc), extra={
+                "exc": exc,
+                "exc_type": type(exc),
+                "error_code": IMPORT_ERROR,
+                "reason": "There was an error processing your request.",
+                "status_code": 500
+            })
+    try:
         result = getattr(cls, path[-1])(*args, **kwargs)
     except SAMLAuthError as exc:
         # Re-raise the exception
         raise exc
-    except (ImportError, AttributeError) as exc:
+    except AttributeError as exc:
         raise SAMLAuthError(str(exc), extra={
             "exc": exc,
             "exc_type": type(exc),
@@ -111,14 +128,18 @@ def get_reverse(objects: Union[Any, Iterable[Any]]) -> Optional[str]:
     })
 
 
-def exception_handler(function: Callable[..., HttpResponse]) -> Callable[..., HttpResponse]:
+def exception_handler(
+    function: Callable[..., Union[HttpResponse, HttpResponseRedirect]]) -> \
+        Callable[..., Union[HttpResponse, HttpResponseRedirect]]:
     """This decorator can be used by view function to handle exceptions
 
     Args:
-        function (Callable[..., HttpResponse]): View function to decorate
+        function (Callable[..., Union[HttpResponse, HttpResponseRedirect]]):
+            View function to decorate
 
     Returns:
-        Callable[..., HttpResponse]: Decorated view function with exception handling
+        Callable[..., Union[HttpResponse, HttpResponseRedirect]]:
+            Decorated view function with exception handling
     """
     def handle_exception(exc: Exception, request: HttpRequest) -> HttpResponse:
         """Render page with exception details
@@ -131,17 +152,25 @@ def exception_handler(function: Callable[..., HttpResponse]) -> Callable[..., Ht
             HttpResponse: Rendered error page with details
         """
         logger = logging.getLogger(__name__)
-        logger.debug(exc)
+        if getattr(settings.SAML2_AUTH, "DEBUG", False):
+            # Log the exception with traceback
+            logger.exception(exc)
+        else:
+            # Log the exception without traceback
+            logger.debug(exc)
 
-        context = exc.extra if isinstance(exc, SAMLAuthError) else {}
-        status = exc.extra.get("status_code") if isinstance(exc, SAMLAuthError) else 500
+        context: Optional[Dict[str, Any]] = exc.extra if isinstance(exc, SAMLAuthError) else {}
+        if isinstance(exc, SAMLAuthError) and exc.extra:
+            status = exc.extra.get("status_code")
+        else:
+            status = 500
 
         return render(request,
                       "django_saml2_auth/error.html",
                       context=context,
                       status=status)
 
-    @wraps(function)
+    @ wraps(function)
     def wrapper(request: HttpRequest) -> HttpResponse:
         """Decorated function is wrapped and called here
 
@@ -160,3 +189,29 @@ def exception_handler(function: Callable[..., HttpResponse]) -> Callable[..., Ht
             result = handle_exception(exc, request)
         return result
     return wrapper
+
+
+def is_jwt_well_formed(jwt: str):
+    """Check if JWT is well formed
+
+    Args:
+        jwt (str): Json Web Token
+
+    Returns:
+        Boolean: True if JWT is well formed, otherwise False
+    """
+    if isinstance(jwt, str):
+        # JWT should contain three segments, separated by two period ('.') characters.
+        jwt_segments = jwt.split('.')
+        if len(jwt_segments) == 3:
+            jose_header = jwt_segments[0]
+            # base64-encoded string length should be a multiple of 4
+            if len(jose_header) % 4 == 0:
+                try:
+                    jh_decoded = base64.b64decode(jose_header).decode('utf-8')
+                    if jh_decoded and jh_decoded.find('JWT') > -1:
+                        return True
+                except Exception:
+                    return False
+    # If tests not passed return False
+    return False

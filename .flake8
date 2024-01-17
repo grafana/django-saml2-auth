@@ -1,2 +1,14 @@
 [flake8]
-ignore = E501,E227,E226,E265,E261,E114,E116,W503,W504,E225,B301,B007,B305
+    ignore = E501,E227,E226,E265,E261,E114,E116,W503,W504,E225,B301,B007,B305
+    max-line-length = 100
+    per-file-ignores =
+        django_saml2_auth/tests/test_saml.py: E501, F821
+        django_saml2_auth/saml.py: E231
+    exclude =
+        django_saml2_auth.egg-info,
+        dist,
+        build,
+        env,
+        venv,
+        .env,
+        .venv,

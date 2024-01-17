@@ -1,6 +1,6 @@
 """The setup module for django_saml2_auth.
 See:
-https://github.com/loadimpact/django_saml2_auth
+https://github.com/grafana/django_saml2_auth
 """
 
 from codecs import open
@@ -13,13 +13,17 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
-setup(
-    name="django_saml2_auth",
+# Extract requirements from requirements.txt
+requirements = [r.rstrip() for r in open("requirements.txt").readlines()]
 
-    version="3.4.0",
+setup(
+    name="grafana_django_saml2_auth",
+
+    version="3.12.0",
 
     description="Django SAML2 Authentication Made Easy.",
     long_description=long_description,
+    long_description_content_type="text/markdown",
 
     url="https://github.com/grafana/django-saml2-auth",
 
@@ -27,7 +31,7 @@ setup(
     author_email="surivlee+djsaml2auth@gmail.com",
 
     maintainer="Mostafa Moradian",
-    maintainer_email="mostafa@k6.io",
+    maintainer_email="mostafa@grafana.com",
 
     license="Apache 2.0",
 
@@ -39,15 +43,14 @@ setup(
 
         "License :: OSI Approved :: Apache Software License",
 
-        "Framework :: Django :: 2.2",
         "Framework :: Django :: 3.2",
-        "Framework :: Django :: 4.0",
+        "Framework :: Django :: 4.2",
 
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
 
     keywords=[
@@ -62,13 +65,6 @@ setup(
 
     packages=find_packages(),
 
-    install_requires=[
-        # "pysaml2==7.1.2",
-        "PyJWT==2.3.0",
-        "dictor==0.1.9"
-    ],
-    dependency_links=[
-        "git+https://github.com/wzuo/pysaml2.git@2b2ea99c59906ed2bc4a2ad30e9a106495a31b8b#egg=pysaml2",
-    ],
+    install_requires=requirements,
     include_package_data=True,
 )

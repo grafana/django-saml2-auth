@@ -1,46 +1,52 @@
-# Django SAML2 Authentication Made Easy
+# Django SAML2 Authentication
 
-- Original Author
-    Fang Li
+[![PyPI](https://img.shields.io/pypi/v/grafana-django-saml2-auth?label=version&logo=pypi)](https://pypi.org/project/grafana-django-saml2-auth/) [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/grafana/django-saml2-auth/deploy.yml?branch=main&logo=github)](https://github.com/grafana/django-saml2-auth/actions) [![Coveralls](https://img.shields.io/coveralls/github/grafana/django-saml2-auth?logo=coveralls)](https://coveralls.io/github/grafana/django-saml2-auth) [![Downloads](https://pepy.tech/badge/grafana-django-saml2-auth)](https://pepy.tech/project/grafana-django-saml2-auth)
 
-- Maintainer
-    Mostafa Moradian
+This plugin provides a simple way to integrate SAML2 Authentication into your Django-powered app. SAML SSO is a standard, so practically any SAML2 based SSO identity provider is supported.
 
-- Version support matrix
-    | **Python**                  | **Django** | **django-saml2-auth** |
-    | --------------------------- | ---------- | --------------------- |
-    | 3.7.x, 3.8.x, 3.9.x, 3.10.x | 2.2.x      | 3.4.0                 |
-    | 3.7.x, 3.8.x, 3.9.x, 3.10.x | 3.2.x      | 3.4.0                 |
-    | 3.8.x, 3.9.x, 3.10.x        | 4.0.x      | 3.4.0                 |
+This plugin supports both identity provider and service provider-initiated SSO:
 
-This project aims to provide a simple way to integrate SAML2 Authentication into your Django-powered app. Try it now, and get rid of the complicated configuration of SAML.
+- For IdP-initiated SSO, the user should sign in to their identity provider platform, e.g., Okta, and click on the application that authorizes and redirects the user to the service provider, that is your platform.
+- For SP-initiated SSO, the user should first exist on your platform, either by signing in via the first method (IdP-initiated SSO) or any other custom solution. It can be configured to be redirected to the correct application on the identity provider platform.
 
-Any SAML2 based SSO (Single Sign-On) identity provider (IdP) with dynamic metadata configuration is supported by this Django plugin, for example Okta. The library also supports service provider-initiated SSO.
+For IdP-initiated SSO, the user will be created if it doesn't exist. Still, for SP-initiated SSO, the user should exist in your platform for the code to detect and redirect them to the correct application on the identity provider platform.
 
-## When you raise an issue or PR
+## Project Information
 
-Please note this library is mission-critical and supports almost all django versions since 2.2.x. We need to be extremely careful when merging any changes.
+- Original Author: Fang Li ([@fangli](https://github.com/fangli))
+- Maintainer: Mostafa Moradian ([@mostafa](https://github.com/mostafa))
+- Version support matrix:
+    | **Python**                    | **Django** | **django-saml2-auth** | **End of Support<br/>(django-saml2-auth)** | **End of extended support<br/>(Django)** |
+    | ----------------------------- | ---------- | --------------------- | ------------------------------------------ | ---------------------------------------- |
+    | 3.9.x, 3.10.x                 | 3.2.x      | >=3.4.0               |                                            | April 2024                               |
+    | 3.9.x, 3.10.x, 3.11.x, 3.12.x | 4.2.x      | >=3.4.0               |                                            | April 2026                               |
 
-The support for new versions of django are welcome and I'll make best effort to make it latest django compatible.
+- Release logs are available [here](https://github.com/grafana/django-saml2-auth/releases).
+
+- For contribution, read [contributing guide](CONTRIBUTING.md).
+
+## CycloneDX SBOM
+
+From [v3.6.1](https://github.com/grafana/django-saml2-auth/releases/tag/v3.6.1), CycloneDX SBOMs will be generated for [requirements.txt](./requirements.txt) and [requirements_test.txt](./requirements_test.txt) and it can be accessed from the latest build of GitHub Actions for a tagged release, for example, [this one](https://github.com/grafana/django-saml2-auth/actions/runs/2245422253). The artifacts are only kept for 90 days.
 
 ## Donate
 
-Please give us a shiny ![star](https://img.shields.io/github/stars/grafana/django-saml2-auth.svg?style=social&label=Star&maxAge=86400)\! and help spread the word.
+Please give us a shiny ![star](https://img.shields.io/github/stars/grafana/django-saml2-auth.svg?style=social&label=Star&maxAge=86400) and help spread the word.
 
-## Install
+## Installation
 
 You can install this plugin via `pip`. Make sure you update `pip` to be able to install from git:
 
-``` bash
-# pip install git+https://github.com/loadimpact/django-saml2-auth.git@master#egg=django-saml2-auth
+```bash
+pip install grafana-django-saml2-auth
 ```
 
 or from source:
 
-``` bash
-# git clone https://github.com/loadimpact/django-saml2-auth
-# cd django-saml2-auth
-# python setup.py install
+```bash
+git clone https://github.com/grafana/django-saml2-auth
+cd django-saml2-auth
+python setup.py install
 ```
 
 `xmlsec` is also required by `pysaml2`, so it must be installed:
@@ -56,15 +62,6 @@ or from source:
 
 [Windows binaries](https://www.zlatkovic.com/projects/libxml/index.html) are also available.
 
-## What does this plugin do?
-
-This plugin can act as a SAML authentication system for Django that supports IdP and SP-initiated SSO.
-
-- For IdP-initiated SSO, the user should log in to their IdP platform (e.g. Okta), and click on the application that authorizes and redirects the user to the SP (your platform).
-- For SP-initiated SSO, the user should first exist on your platform (either log in using method 1 or else) and then it can be configured to be redirected to the correct application on the IdP platform.
-
-For IdP-initiated SSO, the user will be created if it doesn't exist, but for SP-initiated SSO, the user should exist in your platform for the code to detect and redirect them to the correct application on the IdP platform.
-
 ## How to use?
 
 1. Once you have the library installed or in your `requirements.txt`, import the views module in your root `urls.py`:
@@ -78,17 +75,17 @@ For IdP-initiated SSO, the user will be created if it doesn't exist, but for SP-
     ```python
     # These are the SAML2 related URLs. You can change "^saml2_auth/" regex to
     # any path you want, like "^sso/", "^sso_auth/", "^sso_login/", etc. (required)
-    url(r'^sso/', include('django_saml2_auth.urls')),
+    re_path(r'^sso/', include('django_saml2_auth.urls')),
 
     # The following line will replace the default user login with SAML2 (optional)
     # If you want to specific the after-login-redirect-URL, use parameter "?next=/the/path/you/want"
     # with this view.
-    url(r'^accounts/login/$', django_saml2_auth.views.signin),
+    re_path(r'^accounts/login/$', django_saml2_auth.views.signin),
 
     # The following line will replace the admin login with SAML2 (optional)
     # If you want to specific the after-login-redirect-URL, use parameter "?next=/the/path/you/want"
     # with this view.
-    url(r'^admin/login/$', django_saml2_auth.views.signin),
+    re_path(r'^admin/login/$', django_saml2_auth.views.signin),
     ```
 
 3. Add `'django_saml2_auth'` to `INSTALLED_APPS` in your django `settings.py`:
@@ -109,8 +106,51 @@ For IdP-initiated SSO, the user will be created if it doesn't exist, but for SP-
         # Metadata is required, choose either remote url or local file path
         'METADATA_AUTO_CONF_URL': '[The auto(dynamic) metadata configuration URL of SAML2]',
         'METADATA_LOCAL_FILE_PATH': '[The metadata configuration file path]',
+        'KEY_FILE': '[The key file path]',
+        'CERT_FILE': '[The certificate file path]',
+        
+        # If both `KEY_FILE` and `CERT_FILE` are provided, `ENCRYPTION_KEYPAIRS` will be added automatically. There is no need to provide it unless you wish to override the default value.
+        'ENCRYPTION_KEYPAIRS': [
+            {
+                "key_file": '[The key file path]',
+                "cert_file": '[The certificate file path]',
+            }
+        ],
 
         'DEBUG': False,  # Send debug information to a log file
+        # Optional logging configuration.
+        # By default, it won't log anything.
+        # The following configuration is an example of how to configure the logger,
+        # which can be used together with the DEBUG option above. Please note that
+        # the logger configuration follows the Python's logging configuration schema:
+        # https://docs.python.org/3/library/logging.config.html#logging-config-dictschema
+        'LOGGING': {
+            'version': 1,
+            'formatters': {
+                'simple': {
+                    'format': '[%(asctime)s] [%(levelname)s] [%(name)s.%(funcName)s] %(message)s',
+                },
+            },
+            'handlers': {
+                'stdout': {
+                    'class': 'logging.StreamHandler',
+                    'stream': 'ext://sys.stdout',
+                    'level': 'DEBUG',
+                    'formatter': 'simple',
+                },
+            },
+            'loggers': {
+                'saml2': {
+                    'level': 'DEBUG'
+                },
+            },
+            'root': {
+                'level': 'DEBUG',
+                'handlers': [
+                    'stdout',
+                ],
+            },
+        },
 
         # Optional settings below
         'DEFAULT_NEXT_URL': '/admin',  # Custom target redirect URL after the user get logged in. Default to /admin if not set. This setting will be overwritten if you have parameter ?next= specificed in the login URL.
@@ -133,11 +173,16 @@ For IdP-initiated SSO, the user will be created if it doesn't exist, but for SP-
             'SAML Group Name': 'Django Group Name',
         },
         'TRIGGER': {
+            # Optional: needs to return a User Model instance or None
+            'GET_USER': 'path.to.your.get.user.hook.method',
             'CREATE_USER': 'path.to.your.new.user.hook.method',
             'BEFORE_LOGIN': 'path.to.your.login.hook.method',
             'AFTER_LOGIN': 'path.to.your.after.login.hook.method',
+            # Optional. This is executed right before METADATA_AUTO_CONF_URL.
+            # For systems with many metadata files registered allows to narrow the search scope.
+            'GET_USER_ID_FROM_SAML_RESPONSE': 'path.to.your.get.user.from.saml.hook.method',
             # This can override the METADATA_AUTO_CONF_URL to enumerate all existing metadata autoconf URLs
-            'GET_METADATA_AUTO_CONF_URLS': 'path.to.your.after.metadata.conf.hook.method',
+            'GET_METADATA_AUTO_CONF_URLS': 'path.to.your.get.metadata.conf.hook.method',
         },
         'ASSERTION_URL': 'https://mysite.com',  # Custom URL to validate incoming SAML requests against
         'ENTITY_ID': 'https://mysite.com/saml2_auth/acs/',  # Populates the Issuer element in authn request
@@ -151,8 +196,10 @@ For IdP-initiated SSO, the user will be created if it doesn't exist, but for SP-
         'JWT_EXP': 60,  # JWT expiry time in seconds
         'FRONTEND_URL': 'https://myfrontendclient.com',  # Redirect URL for the client if you are using JWT auth with DRF. See explanation below
         'LOGIN_CASE_SENSITIVE': True,  # whether of not to get the user in case_sentive mode
+        'AUTHN_REQUESTS_SIGNED': True, # Require each authentication request to be signed
+        'LOGOUT_REQUESTS_SIGNED': True,  # Require each logout request to be signed
         'WANT_ASSERTIONS_SIGNED': True,  # Require each assertion to be signed
-        'WANT_RESPONSE_SIGNED': False,  # Require response to be signed
+        'WANT_RESPONSE_SIGNED': True,  # Require response to be signed
         'ACCEPTED_TIME_DIFF': None,  # Accepted time difference between your server and the Identity Provider
         'ALLOWED_REDIRECT_HOSTS': ["https://myfrontendclient.com"], # Allowed hosts to redirect to using the ?next parameter
         'TOKEN_REQUIRED': True,  # Whether or not to require the token parameter in the SAML assertion
@@ -161,37 +208,67 @@ For IdP-initiated SSO, the user will be created if it doesn't exist, but for SP-
 
 5. In your SAML2 SSO identity provider, set the Single-sign-on URL and Audience URI (SP Entity ID) to <http://your-domain/saml2_auth/acs/>
 
-### Explanation
-| **Field name**                              | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                             | **Data type(s)** | **Default value(s)**                                                                                                                     | **Example**                                              |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| **METADATA\_AUTO\_CONF\_URL**               | Auto SAML2 metadata configuration URL                                                                                                                                                                                                                                                                                                                                                                                                                       | `str`            | `None`                                                                                                                                   | `https://ORG.okta.com/app/APP-ID/sso/saml/metadata`      |
-| **METADATA\_LOCAL\_FILE\_PATH**             | SAML2 metadata configuration file path                                                                                                                                                                                                                                                                                                                                                                                                                      | `str`            | `None`                                                                                                                                   | `/path/to/the/metadata.xml`                              |
-| **DEBUG**                                   | Send debug information to a log file                                                                                                                                                                                                                                                                                                                                                                                                                        | `bool`           | `False`                                                                                                                                  |                                                          |
-| **DEFAULT\_NEXT\_URL**                      | Custom target redirect URL after the user get logged in. Default to /admin if not set. This setting will be overwritten if you have parameter `?next=` specificed in the login URL.                                                                                                                                                                                                                                                                         | `str`            | `admin:index`                                                                                                                            | `https://app.example.com/account/login`                  |
-| **CREATE\_USER**                            | Determines if a new Django user should be created for new users                                                                                                                                                                                                                                                                                                                                                                                             | `bool`           | `True`                                                                                                                                   |                                                          |
-| **NEW\_USER\_PROFILE**                      | Default settings for newly created users                                                                                                                                                                                                                                                                                                                                                                                                                    | `dict`           | `{'USER_GROUPS': [], 'ACTIVE_STATUS': True, 'STAFF_STATUS': False, 'SUPERUSER_STATUS': False}`                                           |                                                          |
-| **ATTRIBUTES\_MAP**                         | Mapping of Django user attributes to SAML2 user attributes                                                                                                                                                                                                                                                                                                                                                                                                  | `dict`           | `{'email': 'user.email', 'username': 'user.username', 'first_name': 'user.first_name', 'last_name': 'user.last_name', 'token': 'token'}` | `{'your.field': 'SAML.field'}`                           |
-| **TOKEN\_REQUIRED**                         | Set this to `False` if you don't require the token parameter in the SAML assertion (in the attributes map)                                                                                                                                                                                                                                                                                                                                                  | `bool`           | `True`                                                                                                                                   |                                                          |
-| **TRIGGER**                                 | Hooks to trigger additional actions during user login and creation flows. These `TRIGGER` hooks are strings containing a [dotted module name](https://docs.python.org/3/tutorial/modules.html#packages) which point to a method to be called. The referenced method should accept a single argument: a dictionary of attributes and values sent by the identity provider, representing the user's identity. Triggers will be executed only if they are set. | `dict`           | `{}`                                                                                                                                     |                                                          |
-| **TRIGGER.CREATE\_USER**                    | A method to be called upon new user creation. This method will be called before the new user is logged in and after the user's record is created. This method should accept ONE parameter of user dict.                                                                                                                                                                                                                                                     | `str`            | `None`                                                                                                                                   | `my_app.models.users.create`                             |
-| **TRIGGER.BEFORE\_LOGIN**                   | A method to be called when an existing user logs in. This method will be called before the user is logged in and after the SAML2 identity provider returns user attributes. This method should accept ONE parameter of user dict.                                                                                                                                                                                                                           | `str`            | `None`                                                                                                                                   | `my_app.models.users.before_login`                       |
-| **TRIGGER.AFTER\_LOGIN**                    | A method to be called when an existing user logs in. This method will be called after the user is logged in and after the SAML2 identity provider returns user attributes. This method should accept TWO parameters of session and user dict.                                                                                                                                                                                                               | `str`            | `None`                                                                                                                                   | `my_app.models.users.after_login`                        |
-| **TRIGGER.GET\_METADATA\_AUTO\_CONF\_URLS** | A hook function that returns a list of metadata Autoconf URLs. This can override the `METADATA_AUTO_CONF_URL` to enumerate all existing metadata autoconf URLs.                                                                                                                                                                                                                                                                                             | `str`            | `None`                                                                                                                                   | `my_app.models.users.get_metadata_autoconf_urls`         |
-| **ASSERTION\_URL**                          | A URL to validate incoming SAML responses against. By default, `django-saml2-auth` will validate the SAML response's Service Provider address against the actual HTTP request's host and scheme. If this value is set, it will validate against `ASSERTION_URL` instead - perfect for when Django is running behind a reverse proxy.                                                                                                                        | `str`            | `https://example.com`                                                                                                                    |                                                          |
-| **ENTITY\_ID**                              | The optional entity ID string to be passed in the 'Issuer' element of authentication request, if required by the IDP.                                                                                                                                                                                                                                                                                                                                       | `str`            | `None`                                                                                                                                   | `https://exmaple.com/sso/acs`                            |
-| **NAME\_ID\_FORMAT**                        | Set to the string `'None'`, to exclude sending the `'Format'` property of the `'NameIDPolicy'` element in authentication requests.                                                                                                                                                                                                                                                                                                                          | `str`            | `<urn:oasis:names:tc:SAML:2.0:nameid-format:transient>`                                                                                  |                                                          |
-| **USE\_JWT**                                | Set this to the boolean `True` if you are using Django with JWT authentication                                                                                                                                                                                                                                                                                                                                                                              | `bool`           | `False`                                                                                                                                  |                                                          |
-| **JWT\_ALGORITHM**                          | JWT algorithm (str) to sign the message with: [supported algorithms](https://pyjwt.readthedocs.io/en/stable/algorithms.html).                                                                                                                                                                                                                                                                                                                               | `str`            | `HS512` or `RS512`                                                                                                                       |                                                          |
-| **JWT\_SECRET**                             | JWT secret to sign the message if an HMAC is used with the SHA hash algorithm (`HS*`).                                                                                                                                                                                                                                                                                                                                                                      | `str`            | `None`                                                                                                                                   |                                                          |
-| **JWT\_PRIVATE\_KEY**                       | Private key (str) to sign the message with. The algorithm should be set to `RSA256` or a more secure alternative.                                                                                                                                                                                                                                                                                                                                           | `str` or `bytes` | `--- YOUR PRIVATE KEY ---`                                                                                                               |                                                          |
-| **JWT\_PRIVATE\_KEY\_PASSPHRASE**           | If your private key is encrypted, you must provide a passphrase for decryption.                                                                                                                                                                                                                                                                                                                                                                             | `str` or `bytes` | `None`                                                                                                                                   |                                                          |
-| **JWT\_PUBLIC\_KEY**                        | Public key to decode the signed JWT token.                                                                                                                                                                                                                                                                                                                                                                                                                  | `str` or `bytes` | `'--- YOUR PUBLIC KEY ---'`                                                                                                              |                                                          |
-| **JWT\_EXP**                                | JWT expiry time in seconds                                                                                                                                                                                                                                                                                                                                                                                                                                  | `int`            | 60                                                                                                                                       |                                                          |
-| **FRONTEND\_URL**                           | If `USE_JWT` is `True`, you should set the URL to where your frontend is located (will default to `DEFAULT_NEXT_URL` if you fail to do so). Once the client is authenticated through the SAML SSO, your client is redirected to the `FRONTEND_URL` with the JWT token as `token` query parameter. Example: `https://app.example.com/?&token=<your.jwt.token`. With the token, your SPA can now authenticate with your API.                                  | `str`            | `admin:index`                                                                                                                            |                                                          |
-| **WANT\_ASSERTIONS\_SIGNED**                | Set this to `False` if your provider doesn't sign each assertion.                                                                                                                                                                                                                                                                                                                                                                                           | `bool`           | `True`                                                                                                                                   |                                                          |
-| **WANT\_RESPONSE\_SIGNED**                  | Set this to `False` if you don't want your provider to sign the response.                                                                                                                                                                                                                                                                                                                                                                                   | `bool`           | `True`                                                                                                                                   |                                                          |
-| **ACCEPTED\_TIME\_DIFF**                    | Sets the [accepted time diff](https://pysaml2.readthedocs.io/en/latest/howto/config.html#accepted-time-diff) in seconds                                                                                                                                                                                                                                                                                                                                     | `int` or `None`  | `None`                                                                                                                                   |                                                          |
-| **ALLOWED\_REDIRECT\_HOSTS**                | Allowed hosts to redirect to using the `?next=` parameter                                                                                                                                                                                                                                                                                                                                                                                                   | `list`           | `[]`                                                                                                                                     | `['https://app.example.com', 'https://api.exmaple.com']` |
+## How to debug?
+
+To debug what's happening between the SAMLP Identity Provider and your Django application, you can use SAML-tracer for [Firefox](https://addons.mozilla.org/en-US/firefox/addon/saml-tracer/) or [Chrome](https://chrome.google.com/webstore/detail/saml-tracer/mpdajninpobndbfcldcmbpnnbhibjmch?hl=en). Using this tool, you can see the SAML requests and responses that are being sent back and forth.
+
+Also, you can enable the debug mode in the `settings.py` file by setting the `DEBUG` flag to `True` and enabling the `LOGGING` configuration. See above for configuration examples.
+
+*Note:* Don't forget to disable the debug mode in production and also remove the logging configuration if you don't want to see internal logs of pysaml2 library.
+
+## Module Settings
+
+Some of the following settings are related to how this module operates. The rest are passed as options to the pysaml2 library. For more information on the pysaml2 library, see the [pysaml2 documentation](https://pysaml2.readthedocs.io/en/latest/howto/config.html), which contains examples of available settings. Also, note that all settings are not implemented in this module.
+
+| **Field name**                              | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                             | **Data type(s)** | **Default value(s)**                                                                                                                     | **Example**                                                                             |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **METADATA\_AUTO\_CONF\_URL**               | Auto SAML2 metadata configuration URL                                                                                                                                                                                                                                                                                                                                                                                                                       | `str`            | `None`                                                                                                                                   | `https://ORG.okta.com/app/APP-ID/sso/saml/metadata`                                     |
+| **METADATA\_LOCAL\_FILE\_PATH**             | SAML2 metadata configuration file path                                                                                                                                                                                                                                                                                                                                                                                                                      | `str`            | `None`                                                                                                                                   | `/path/to/the/metadata.xml`                                                             |
+| **KEY_FILE**                                | SAML2 private key file path                                                                                                                                                                                                                                                                                                                                                                                                                                 | `str`            | `None`                                                                                                                                   | `/path/to/the/key.pem`                                                                  |
+| **CERT_FILE**                               | SAML2 public certificate file path                                                                                                                                                                                                                                                                                                                                                                                                                          | `str`            | `None`                                                                                                                                   | `/path/to/the/cert.pem`                                                                 |
+| **ENCRYPTION_KEYPAIRS**                     | Required for handling encrypted assertions. Will be automatically set if both `KEY_FILE` and `CERT_FILE` are set.                                                                                                                                                                                                                                                                                                                                           | `list`           | Not set.                                                                                                                                 | `[ { 'key_file': '[The key file path]', 'cert_file': '[The certificate file path]' } ]` |
+| **DEBUG**                                   | Send debug information to a log file                                                                                                                                                                                                                                                                                                                                                                                                                        | `bool`           | `False`                                                                                                                                  |                                                                                         |
+| **LOGGING**                                 | Logging configuration dictionary                                                                                                                                                                                                                                                                                                                                                                                                                            | `dict`           | Not set.                                                                                                                                 |                                                                                         |
+| **DEFAULT\_NEXT\_URL**                      | Custom target redirect URL after the user get logged in. Default to /admin if not set. This setting will be overwritten if you have parameter `?next=` specificed in the login URL.                                                                                                                                                                                                                                                                         | `str`            | `admin:index`                                                                                                                            | `https://app.example.com/account/login`                                                 |
+| **CREATE\_USER**                            | Determines if a new Django user should be created for new users                                                                                                                                                                                                                                                                                                                                                                                             | `bool`           | `True`                                                                                                                                   |                                                                                         |
+| **CREATE\_GROUPS**                          | Determines if a new Django group should be created if the SAML2 Group does not exist                                                                                                                                                                                                                                                                                                                                                                        | `bool`           | `False`                                                                                                                                  |                                                                                         |
+| **NEW\_USER\_PROFILE**                      | Default settings for newly created users                                                                                                                                                                                                                                                                                                                                                                                                                    | `dict`           | `{'USER_GROUPS': [], 'ACTIVE_STATUS': True, 'STAFF_STATUS': False, 'SUPERUSER_STATUS': False}`                                           |                                                                                         |
+| **ATTRIBUTES\_MAP**                         | Mapping of Django user attributes to SAML2 user attributes                                                                                                                                                                                                                                                                                                                                                                                                  | `dict`           | `{'email': 'user.email', 'username': 'user.username', 'first_name': 'user.first_name', 'last_name': 'user.last_name', 'token': 'token'}` | `{'your.field': 'SAML.field'}`                                                          |
+| **TOKEN\_REQUIRED**                         | Set this to `False` if you don't require the token parameter in the SAML assertion (in the attributes map)                                                                                                                                                                                                                                                                                                                                                  | `bool`           | `True`                                                                                                                                   |                                                                                         |
+| **TRIGGER**                                 | Hooks to trigger additional actions during user login and creation flows. These `TRIGGER` hooks are strings containing a [dotted module name](https://docs.python.org/3/tutorial/modules.html#packages) which point to a method to be called. The referenced method should accept a single argument: a dictionary of attributes and values sent by the identity provider, representing the user's identity. Triggers will be executed only if they are set. | `dict`           | `{}`                                                                                                                                     |                                                                                         |
+| **TRIGGER.GET\_USER**                       | A method to be called upon getting an existing user. This method will be called before the new user is logged in and is used to customize the retrieval of an existing user record. This method should accept ONE parameter of user dict and return a User model instance or none.                                                                                                                                                                          | `str`            | `None`                                                                                                                                   | `my_app.models.users.get`                                                               |
+| **TRIGGER.CREATE\_USER**                    | A method to be called upon new user creation. This method will be called before the new user is logged in and after the user's record is created. This method should accept ONE parameter of user dict.                                                                                                                                                                                                                                                     | `str`            | `None`                                                                                                                                   | `my_app.models.users.create`                                                            |
+| **TRIGGER.BEFORE\_LOGIN**                   | A method to be called when an existing user logs in. This method will be called before the user is logged in and after the SAML2 identity provider returns user attributes. This method should accept ONE parameter of user dict.                                                                                                                                                                                                                           | `str`            | `None`                                                                                                                                   | `my_app.models.users.before_login`                                                      |
+| **TRIGGER.AFTER\_LOGIN**                    | A method to be called when an existing user logs in. This method will be called after the user is logged in and after the SAML2 identity provider returns user attributes. This method should accept TWO parameters of session and user dict.                                                                                                                                                                                                               | `str`            | `None`                                                                                                                                   | `my_app.models.users.after_login`                                                       |
+| **TRIGGER.GET\_METADATA\_AUTO\_CONF\_URLS** | A hook function that returns a list of metadata Autoconf URLs. This can override the `METADATA_AUTO_CONF_URL` to enumerate all existing metadata autoconf URLs.                                                                                                                                                                                                                                                                                             | `str`            | `None`                                                                                                                                   | `my_app.models.users.get_metadata_autoconf_urls`                                        |
+| **TRIGGER.CUSTOM\_DECODE\_JWT**             | A hook function to decode the user JWT. This method will be called instead of the `decode_jwt_token` default function and should return the user_model.USERNAME_FIELD. This method accepts one parameter: `token`.                                                                                                                                                                                                                                          | `str`            | `None`                                                                                                                                   | `my_app.models.users.decode_custom_token`                                               |
+| **TRIGGER.CUSTOM\_CREATE\_JWT**             | A hook function to create a custom JWT for the user. This method will be called instead of the `create_jwt_token` default function and should return the token. This method accepts one parameter: `user`.                                                                                                                                                                                                                                                  | `str`            | `None`                                                                                                                                   | `my_app.models.users.create_custom_token`                                               |
+| **TRIGGER.CUSTOM\_TOKEN\_QUERY**            | A hook function to create a custom query params with the JWT for the user. This method will be called after `CUSTOM_CREATE_JWT` to populate a query and attach it to a URL; should return the query params containing the token (e.g., `?token=encoded.jwt.token`). This method accepts one parameter: `token`.                                                                                                                                             | `str`            | `None`                                                                                                                                   | `my_app.models.users.get_custom_token_query`                                            |
+| **ASSERTION\_URL**                          | A URL to validate incoming SAML responses against. By default, `django-saml2-auth` will validate the SAML response's Service Provider address against the actual HTTP request's host and scheme. If this value is set, it will validate against `ASSERTION_URL` instead - perfect for when Django is running behind a reverse proxy.                                                                                                                        | `str`            | `https://example.com`                                                                                                                    |                                                                                         |
+| **ENTITY\_ID**                              | The optional entity ID string to be passed in the 'Issuer' element of authentication request, if required by the IDP.                                                                                                                                                                                                                                                                                                                                       | `str`            | `None`                                                                                                                                   | `https://exmaple.com/sso/acs`                                                           |
+| **NAME\_ID\_FORMAT**                        | Set to the string `'None'`, to exclude sending the `'Format'` property of the `'NameIDPolicy'` element in authentication requests.                                                                                                                                                                                                                                                                                                                          | `str`            | `<urn:oasis:names:tc:SAML:2.0:nameid-format:transient>`                                                                                  |                                                                                         |
+| **USE\_JWT**                                | Set this to the boolean `True` if you are using Django with JWT authentication                                                                                                                                                                                                                                                                                                                                                                              | `bool`           | `False`                                                                                                                                  |                                                                                         |
+| **JWT\_ALGORITHM**                          | JWT algorithm (str) to sign the message with: [supported algorithms](https://pyjwt.readthedocs.io/en/stable/algorithms.html).                                                                                                                                                                                                                                                                                                                               | `str`            | `HS512` or `RS512`                                                                                                                       |                                                                                         |
+| **JWT\_SECRET**                             | JWT secret to sign the message if an HMAC is used with the SHA hash algorithm (`HS*`).                                                                                                                                                                                                                                                                                                                                                                      | `str`            | `None`                                                                                                                                   |                                                                                         |
+| **JWT\_PRIVATE\_KEY**                       | Private key (str) to sign the message with. The algorithm should be set to `RSA256` or a more secure alternative.                                                                                                                                                                                                                                                                                                                                           | `str` or `bytes` | `--- YOUR PRIVATE KEY ---`                                                                                                               |                                                                                         |
+| **JWT\_PRIVATE\_KEY\_PASSPHRASE**           | If your private key is encrypted, you must provide a passphrase for decryption.                                                                                                                                                                                                                                                                                                                                                                             | `str` or `bytes` | `None`                                                                                                                                   |                                                                                         |
+| **JWT\_PUBLIC\_KEY**                        | Public key to decode the signed JWT token.                                                                                                                                                                                                                                                                                                                                                                                                                  | `str` or `bytes` | `'--- YOUR PUBLIC KEY ---'`                                                                                                              |                                                                                         |
+| **JWT\_EXP**                                | JWT expiry time in seconds                                                                                                                                                                                                                                                                                                                                                                                                                                  | `int`            | 60                                                                                                                                       |                                                                                         |
+| **FRONTEND\_URL**                           | If `USE_JWT` is `True`, you should set the URL to where your frontend is located (will default to `DEFAULT_NEXT_URL` if you fail to do so). Once the client is authenticated through the SAML SSO, your client is redirected to the `FRONTEND_URL` with the JWT token as `token` query parameter. Example: `https://app.example.com/?&token=<your.jwt.token`. With the token, your SPA can now authenticate with your API.                                  | `str`            | `admin:index`                                                                                                                            |                                                                                         |
+| **AUTHN\_REQUESTS\_SIGNED**                 | Set this to `False` if your provider doesn't sign each authorization request.                                                                                                                                                                                                                                                                                                                                                                               | `bool`           | `True`                                                                                                                                   |
+| **LOGOUT\_REQUESTS\_SIGNED**                | Set this to `False` if your provider doesn't sign each logout request.                                                                                                                                                                                                                                                                                                                                                                                      | `bool`           | `True`                                                                                                                                   |                                                                                         |
+| **WANT\_ASSERTIONS\_SIGNED**                | Set this to `False` if your provider doesn't sign each assertion.                                                                                                                                                                                                                                                                                                                                                                                           | `bool`           | `True`                                                                                                                                   |                                                                                         |
+| **WANT\_RESPONSE\_SIGNED**                  | Set this to `False` if you don't want your provider to sign the response.                                                                                                                                                                                                                                                                                                                                                                                   | `bool`           | `True`                                                                                                                                   |                                                                                         |
+| **ACCEPTED\_TIME\_DIFF**                    | Sets the [accepted time diff](https://pysaml2.readthedocs.io/en/latest/howto/config.html#accepted-time-diff) in seconds                                                                                                                                                                                                                                                                                                                                     | `int` or `None`  | `None`                                                                                                                                   |                                                                                         |
+| **ALLOWED\_REDIRECT\_HOSTS**                | Allowed hosts to redirect to using the `?next=` parameter                                                                                                                                                                                                                                                                                                                                                                                                   | `list`           | `[]`                                                                                                                                     | `['https://app.example.com', 'https://api.exmaple.com']`                                |
+
+### Triggers
+| **Setting name**                       | **Description**                                                                                                                             | **Interface**                                                                                |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **GET\_METADATA\_AUTO\_CONF\_URLS**    | Auto SAML2 metadata configuration URL                                                                                                       | get_metadata_auto_conf_urls(user_id: Optional[str] = None) -> Optional[List[Dict[str, str]]] |
+| **GET\_USER_ID\_FROM\_SAML\_RESPONSE** | Allows retrieving a user ID before GET_METADATA_AUTO_CONF_URLS gets triggered. Warning: SAML response still not verified. Use with caution! | get_user_id_from_saml_response(saml_response: str, user_id: Optional[str]) -> Optional[str]  |
+
+
 
 ## JWT Signing Algorithm and Settings
 
@@ -240,7 +317,26 @@ Otherwise if you want to use your PKI key-pair to sign JWT tokens, use either of
 
 *Note:* If both PKI fields and `JWT_SECRET` are defined, the `JWT_ALGORITHM` decides which method to use for signing tokens.
 
-## Customize
+### Custom token triggers
+
+This is an example of the functions that could be passed to the `TRIGGER.CUSTOM_CREATE_JWT` (it uses the [DRF Simple JWT library](https://github.com/jazzband/djangorestframework-simplejwt/blob/master/docs/index.rst)) and to `TRIGGER.CUSTOM_TOKEN_QUERY`:
+
+``` python
+from rest_framework_simplejwt.tokens import RefreshToken
+
+
+def get_custom_jwt(user):
+    """Create token for user and return it"""
+    return RefreshToken.for_user(user)
+
+
+def get_custom_token_query(refresh):
+    """Create url query with refresh and access token"""
+    return "?%s%s%s%s%s" % ("refresh=", str(refresh), "&", "access=", str(refresh.access_token))
+
+```
+
+## Customize Error Messages
 
 The default permission `denied`, `error` and user `welcome` page can be overridden.
 
@@ -272,49 +368,12 @@ The `Identity Provider metadata` link is the `METADATA_AUTO_CONF_URL`.
 
 More information can be found in the [Okta Developer Documentation](https://developer.okta.com/docs/guides/saml-application-setup/overview/).
 
-## How to Contribute
+## Release Process
 
-1. Check for open issues or open a fresh issue to start a discussion around a feature idea or a bug.
-2. Fork [the repository](http://github.com/loadimpact/django-saml2-auth) on GitHub to start making your changes to the **master** branch (or branch off of it).
-3. Write a test which shows that the bug was fixed or that the feature works as expected.
-4. Send a pull request and bug the maintainer until it gets merged and published. :) Make sure to add yourself to [AUTHORS](https://github.com/grafana/django-saml2-auth/blob/master/AUTHORS.md).
+I adopted a reasonably simple release process, which is almost automated, except for two actions that needed to be taken to start a release:
 
-## Release Log
-
-3.4.0: Add support for Django 3.2 and 4.0 and remove support for older Python and Django versions
-
-3.3.0: Add support for PKI in JWT
-
-3.2.0: Update dependencies (#22)
-
-3.1.0: Make `token` field optional in the attribute statement by introducing `REQUIRE_TOKEN` settings (default: `True`)
-
-3.0.1: Minor fixes
-
-3.0.0: Extensive refactoring of the library (check the commit logs) - incompatible with previous versions
-
-2.3.0: Merge of PRs plus bugfixes and (manual) testing
-
-2.2.1: Fixed is\_safe\_url parameters issue for django 2.1
-
-2.2.0: ADFS SAML compatibility and fixed some issue for Django2.0
-
-2.1.2: Merged \#35
-
-2.1.1: Added ASSERTION\_URL in settings.
-
-2.1.0: Add DEFAULT\_NEXT\_URL. Issue \#19.
-
-2.0.4: Fixed compatibility with Windows.
-
-2.0.3: Fixed a vulnerabilities in the login flow, thanks qwrrty.
-
-2.0.1: Add support for Django 1.10
-
-1.1.4: Fixed urllib bug
-
-1.1.2: Added support for Python 2.7/3.x
-
-1.1.0: Added support for Django 1.6/1.7/1.8/1.9
-
-1.0.4: Fixed English grammar mistakes
+1. Update [setup.py](setup.py) and increase the version number in the `setup` function. Unless something backward-incompatible is introduced, only the minor version is upgraded: 3.8.0 becomes 3.9.0.
+2. Tag the `main` branch with the the `vSEMVER`, e.g. `v3.9.0`, and git-push the tag.
+3. The release and publish to PyPI is handled in the CI/CD using GitHub Actions.
+4. Create a new release with auto-generated (and polished) release notes on the tag.
+5. Download [SBOM artifacts](https://github.com/grafana/django-saml2-auth/actions/runs/3227336576) generated by GitHub Actions for the corresponding run, and add them to the [release files](https://github.com/grafana/django-saml2-auth/releases/tag/v3.9.0).

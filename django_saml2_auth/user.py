@@ -22,17 +22,16 @@ from jwt.algorithms import (get_default_algorithms, has_crypto,
                             requires_cryptography)
 from jwt.exceptions import PyJWTError
 
+FIRST_NAME_FIELD_NAME = "first_name"
+LAST_NAME_FIELD_NAME = "last_name"
 
-def create_new_user(email: str,
-                    first_name: Optional[str] = None,
-                    last_name: Optional[str] = None,
-                    **kwargs) -> User:
+
+def create_new_user(user_id: str, user: dict, **kwargs) -> User:
     """Create a new user with the given information
 
     Args:
-        email (str): Email
-        first_name (str): First name
-        last_name (str): Last name
+        user_id (str): User ID
+        user (dict): User informations
 
     Keyword Args:
         **kwargs: Additional keyword arguments
@@ -52,12 +51,16 @@ def create_new_user(email: str,
     is_superuser = dictor(saml2_auth_settings, "NEW_USER_PROFILE.SUPERUSER_STATUS", default=False)
     user_groups = dictor(saml2_auth_settings, "NEW_USER_PROFILE.USER_GROUPS", default=[])
 
-    if first_name and last_name:
-        kwargs['first_name'] = first_name
-        kwargs['last_name'] = last_name
+    for field in [
+        FIRST_NAME_FIELD_NAME,
+        LAST_NAME_FIELD_NAME,
+        user_model.EMAIL_FIELD,
+    ]:
+        if field in user:
+            kwargs[field] = user[field]
 
     try:
-        user = user_model.objects.create_user(email, **kwargs)
+        user = user_model.objects.create_user(user_id, **kwargs)
         user.is_active = is_active
         user.is_staff = is_staff
         user.is_superuser = is_superuser
@@ -119,7 +122,7 @@ def get_or_create_user(user: Dict[str, Any]) -> Tuple[bool, User]:
                     "reason": "Cannot create user. Missing user_id.",
                     "status_code": 400
                 })
-            target_user = create_new_user(user_id, user["first_name"], user["last_name"])
+            target_user = create_new_user(user_id, user)
 
             create_user_trigger = dictor(saml2_auth_settings, "TRIGGER.CREATE_USER")
             if create_user_trigger:

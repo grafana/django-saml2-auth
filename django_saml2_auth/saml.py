@@ -407,10 +407,6 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
     user["first_name"] = dictor(user_identity, f"{firstname_field}|0", pathsep="|")
     user["last_name"] = dictor(user_identity, f"{lastname_field}|0", pathsep="|")
 
-    print(email_field, 'email_field')
-    print(user_identity, 'user_identity')
-    print(user, 'user')
-
     token_required = dictor(saml2_auth_settings, "TOKEN_REQUIRED", default=True)
     if token_required:
         token_field = dictor(saml2_auth_settings, "ATTRIBUTES_MAP.token", default="token")

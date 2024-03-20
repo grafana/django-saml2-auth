@@ -185,7 +185,7 @@ python setup.py install
             'GET_METADATA_AUTO_CONF_URLS': 'path.to.your.get.metadata.conf.hook.method',
         },
         'ASSERTION_URL': 'https://mysite.com',  # Custom URL to validate incoming SAML requests against
-        'ENTITY_ID': 'https://mysite.com/saml2_auth/acs/',  # Populates the Issuer element in authn request
+        'ENTITY_ID': 'https://mysite.com/sso/acs/',  # Populates the Issuer element in authn request
         'NAME_ID_FORMAT': FormatString,  # Sets the Format property of authn NameIDPolicy element, e.g. 'user.email'
         'USE_JWT': True,  # Set this to True if you are running a Single Page Application (SPA) with Django Rest Framework (DRF), and are using JWT authentication to authorize client users
         'JWT_ALGORITHM': 'HS256',  # JWT algorithm to sign the message with
@@ -206,7 +206,7 @@ python setup.py install
     }
     ```
 
-5. In your SAML2 SSO identity provider, set the Single-sign-on URL and Audience URI (SP Entity ID) to <http://your-domain/saml2_auth/acs/>
+5. In your SAML2 SSO identity provider, set the Single-sign-on URL and Audience URI (SP Entity ID) to <http://your-domain/sso/acs/>
 
 ## How to debug?
 

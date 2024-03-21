@@ -73,8 +73,7 @@ python setup.py install
 2. Override the default login page in the root `urls.py` file, by adding these lines **BEFORE** any `urlpatterns`:
 
     ```python
-    # These are the SAML2 related URLs. You can change "^saml2_auth/" regex to
-    # any path you want, like "^sso/", "^sso_auth/", "^sso_login/", etc. (required)
+    # These are the SAML2 related URLs. (required)
     re_path(r'^sso/', include('django_saml2_auth.urls')),
 
     # The following line will replace the default user login with SAML2 (optional)

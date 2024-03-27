@@ -31,7 +31,7 @@ def create_new_user(user_id: str, user: dict, **kwargs) -> User:
 
     Args:
         user_id (str): User ID
-        user (dict): User informations
+        user (dict): User information
 
     Keyword Args:
         **kwargs: Additional keyword arguments

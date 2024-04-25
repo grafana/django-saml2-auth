@@ -36,7 +36,7 @@ jobs:
           python -m pip install poetry
           poetry install --with dev
       - name: Install Django ${{ matrix.versions.djangoVersion }} 📦
-        run: poetry add Django==${{ matrix.versions.djangoVersion }}
+        run: pip install Django==${{ matrix.versions.djangoVersion }}
       - name: Check types, syntax and duckstrings 🦆
         run: |
           poetry run mypy --explicit-package-bases .

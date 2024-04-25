@@ -16,10 +16,11 @@ For IdP-initiated SSO, the user will be created if it doesn't exist. Still, for 
 - Original Author: Fang Li ([@fangli](https://github.com/fangli))
 - Maintainer: Mostafa Moradian ([@mostafa](https://github.com/mostafa))
 - Version support matrix:
-    | **Python**                    | **Django** | **django-saml2-auth** | **End of Support<br/>(django-saml2-auth)** | **End of extended support<br/>(Django)** |
-    | ----------------------------- | ---------- | --------------------- | ------------------------------------------ | ---------------------------------------- |
-    | 3.9.x, 3.10.x                 | 3.2.x      | >=3.4.0               |                                            | April 2024                               |
-    | 3.9.x, 3.10.x, 3.11.x, 3.12.x | 4.2.x      | >=3.4.0               |                                            | April 2026                               |
+    | **Python**             | **Django** | **django-saml2-auth** | **End of extended support<br/>(Django)** |
+    | ---------------------- | ---------- | --------------------- | ---------------------------------------- |
+    | 3.10.x                 | 3.2.x      | >=3.4.0               | April 2024                               |
+    | 3.10.x, 3.11.x, 3.12.x | 4.2.x      | >=3.4.0               | April 2026                               |
+    | 3.10.x, 3.11.x, 3.12.x | 5.0.x      | >3.12.0               | April 2026                               |
 
 - Release logs are available [here](https://github.com/grafana/django-saml2-auth/releases).
 

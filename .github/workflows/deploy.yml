@@ -15,12 +15,13 @@ jobs:
     strategy:
       matrix:
         versions:
-          - { "djangoVersion": "3.2.23", "pythonVersion": "3.9" }
-          - { "djangoVersion": "3.2.23", "pythonVersion": "3.10" }
-          - { "djangoVersion": "4.2.7", "pythonVersion": "3.9" }
-          - { "djangoVersion": "4.2.7", "pythonVersion": "3.10" }
-          - { "djangoVersion": "4.2.7", "pythonVersion": "3.11" }
-          - { "djangoVersion": "4.2.7", "pythonVersion": "3.12" }
+          - { "djangoVersion": "3.2.25", "pythonVersion": "3.10" }
+          - { "djangoVersion": "4.2.12", "pythonVersion": "3.10" }
+          - { "djangoVersion": "4.2.12", "pythonVersion": "3.11" }
+          - { "djangoVersion": "4.2.12", "pythonVersion": "3.12" }
+          - { "djangoVersion": "5.0.5", "pythonVersion": "3.10" }
+          - { "djangoVersion": "5.0.5", "pythonVersion": "3.11" }
+          - { "djangoVersion": "5.0.5", "pythonVersion": "3.12" }
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v4

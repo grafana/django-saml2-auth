@@ -43,7 +43,7 @@ jobs:
           poetry run ruff check .
           poetry run interrogate --ignore-init-module --quiet --fail-under=95 .
       - name: Test Django ${{ matrix.versions.djangoVersion }} with coverage 🧪
-        run: poetry run coverage run --source=django_saml2_auth -m pytest . && coverage lcov -o coverage.lcov
+        run: poetry run coverage run --source=django_saml2_auth -m pytest . && poetry run coverage lcov -o coverage.lcov
       - name: Submit coverage report to Coveralls 📈
         if: ${{ success() }}
         uses: coverallsapp/github-action@v2

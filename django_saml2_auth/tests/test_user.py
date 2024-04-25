@@ -8,9 +8,14 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, User
 from django_saml2_auth.exceptions import SAMLAuthError
-from django_saml2_auth.user import (create_custom_or_default_jwt, create_new_user,
-                                    decode_custom_or_default_jwt, get_or_create_user,
-                                    get_user, get_user_id)
+from django_saml2_auth.user import (
+    create_custom_or_default_jwt,
+    create_new_user,
+    decode_custom_or_default_jwt,
+    get_or_create_user,
+    get_user,
+    get_user_id,
+)
 from jwt.exceptions import PyJWTError
 from pytest_django.fixtures import SettingsWrapper
 
@@ -105,7 +110,7 @@ def trigger_get_user(user: Dict) -> User:
         user (Union[str, Dict[str, str]]): User information
     """
     user_model = get_user_model()
-    return user_model.objects.get(email=user['username'])
+    return user_model.objects.get(email=user["username"])
 
 
 @pytest.mark.django_db
@@ -148,10 +153,7 @@ def test_create_new_user_with_dict_success(settings: SettingsWrapper):
 
     # Create a group for the users to join
     Group.objects.create(name="users")
-    params = {
-        "first_name": "test_John",
-        "last_name": "test_Doe"
-    }
+    params = {"first_name": "test_John", "last_name": "test_Doe"}
     user = create_new_user("user_test@example.com", **params)
     # It can also be email depending on USERNAME_FIELD setting
     assert user.username == "user_test@example.com"
@@ -229,23 +231,23 @@ def test_get_or_create_user_success(settings: SettingsWrapper):
         "ATTRIBUTES_MAP": {
             "groups": "groups",
         },
-        "GROUPS_MAP": {
-            "consumers": "users"
-        }
+        "GROUPS_MAP": {"consumers": "users"},
     }
 
     Group.objects.create(name="users")
-    created, user = get_or_create_user({
-        "username": "test@example.com",
-        "first_name": "John",
-        "last_name": "Doe",
-        "user_identity": {
-            "user.username": "test@example.com",
-            "user.first_name": "John",
-            "user.last_name": "Doe",
-            "groups": ["consumers"]
+    created, user = get_or_create_user(
+        {
+            "username": "test@example.com",
+            "first_name": "John",
+            "last_name": "Doe",
+            "user_identity": {
+                "user.username": "test@example.com",
+                "user.first_name": "John",
+                "user.last_name": "Doe",
+                "groups": ["consumers"],
+            },
         }
-    })
+    )
     assert created
     assert user.username == "test@example.com"
     assert user.is_active is True
@@ -268,14 +270,13 @@ def test_get_or_create_user_trigger_error(settings: SettingsWrapper):
     }
 
     with pytest.raises(SAMLAuthError) as exc_info:
-        get_or_create_user({
-            "username": "test@example.com",
-            "first_name": "John",
-            "last_name": "Doe"
-        })
+        get_or_create_user(
+            {"username": "test@example.com", "first_name": "John", "last_name": "Doe"}
+        )
 
     assert str(exc_info.value) == (
-        "module 'django_saml2_auth.tests.test_user' has no attribute 'nonexistent_trigger'")
+        "module 'django_saml2_auth.tests.test_user' has no attribute 'nonexistent_trigger'"
+    )
     assert exc_info.value.extra is not None
     assert isinstance(exc_info.value.extra["exc"], AttributeError)
 
@@ -294,34 +295,27 @@ def test_get_user_trigger_error(settings: SettingsWrapper):
         }
     }
     with pytest.raises(SAMLAuthError) as exc_info:
-        get_user({
-            "username": "test@example.com",
-            "first_name": "John",
-            "last_name": "Doe"
-        })
+        get_user({"username": "test@example.com", "first_name": "John", "last_name": "Doe"})
 
     assert str(exc_info.value) == (
-        "module 'django_saml2_auth.tests.test_user' has no attribute 'nonexistent_trigger'")
+        "module 'django_saml2_auth.tests.test_user' has no attribute 'nonexistent_trigger'"
+    )
     assert exc_info.value.extra is not None
     assert isinstance(exc_info.value.extra["exc"], AttributeError)
 
 
 @pytest.mark.django_db
 def test_get_user_trigger(settings: SettingsWrapper):
-
     settings.SAML2_AUTH = {
         "TRIGGER": {
             "GET_USER": "django_saml2_auth.tests.test_user.trigger_get_user",
         }
     }
     user_model = get_user_model()
-    user_model.objects.create(
-        username="test_example_com", email="test@example.com")
-    created, user = get_or_create_user({
-        "username": "test@example.com",
-        "first_name": "John",
-        "last_name": "Doe"
-    })
+    user_model.objects.create(username="test_example_com", email="test@example.com")
+    created, user = get_or_create_user(
+        {"username": "test@example.com", "first_name": "John", "last_name": "Doe"}
+    )
     assert created is False
     assert user.username == "test_example_com"
 
@@ -340,11 +334,9 @@ def test_get_or_create_user_trigger_change_first_name(settings: SettingsWrapper)
         }
     }
 
-    created, user = get_or_create_user({
-        "username": "test@example.com",
-        "first_name": "John",
-        "last_name": "Doe"
-    })
+    created, user = get_or_create_user(
+        {"username": "test@example.com", "first_name": "John", "last_name": "Doe"}
+    )
 
     assert created
     assert user.username == "test@example.com"
@@ -366,16 +358,15 @@ def test_get_or_create_user_should_not_create_user(settings: SettingsWrapper):
     }
 
     with pytest.raises(SAMLAuthError) as exc_info:
-        get_or_create_user({
-            "username": "test@example.com",
-            "first_name": "John",
-            "last_name": "Doe"
-        })
+        get_or_create_user(
+            {"username": "test@example.com", "first_name": "John", "last_name": "Doe"}
+        )
 
     assert str(exc_info.value) == "Cannot create user."
     assert exc_info.value.extra is not None
     assert exc_info.value.extra["reason"] == (
-        "Due to current config, a new user should not be created.")
+        "Due to current config, a new user should not be created."
+    )
 
 
 @pytest.mark.django_db
@@ -393,17 +384,19 @@ def test_get_or_create_user_should_not_create_group(settings: SettingsWrapper):
     }
 
     Group.objects.create(name="users")
-    created, user = get_or_create_user({
-        "username": "test@example.com",
-        "first_name": "John",
-        "last_name": "Doe",
-        "user_identity": {
-            "user.username": "test@example.com",
-            "user.first_name": "John",
-            "user.last_name": "Doe",
-            "groups": ["users", "consumers"]
+    created, user = get_or_create_user(
+        {
+            "username": "test@example.com",
+            "first_name": "John",
+            "last_name": "Doe",
+            "user_identity": {
+                "user.username": "test@example.com",
+                "user.first_name": "John",
+                "user.last_name": "Doe",
+                "groups": ["users", "consumers"],
+            },
         }
-    })
+    )
     assert created
     assert user.username == "test@example.com"
     assert user.is_active is True
@@ -429,17 +422,19 @@ def test_get_or_create_user_should_create_group(settings: SettingsWrapper):
     }
 
     Group.objects.create(name="users")
-    created, user = get_or_create_user({
-        "username": "test@example.com",
-        "first_name": "John",
-        "last_name": "Doe",
-        "user_identity": {
-            "user.username": "test@example.com",
-            "user.first_name": "John",
-            "user.last_name": "Doe",
-            "groups": ["users", "consumers"]
+    created, user = get_or_create_user(
+        {
+            "username": "test@example.com",
+            "first_name": "John",
+            "last_name": "Doe",
+            "user_identity": {
+                "user.username": "test@example.com",
+                "user.first_name": "John",
+                "user.last_name": "Doe",
+                "groups": ["users", "consumers"],
+            },
         }
-    })
+    )
     assert created
     assert user.username == "test@example.com"
     assert user.is_active is True
@@ -508,23 +503,26 @@ def test_get_user_success():
     assert user_1 == user_2
 
 
-@pytest.mark.parametrize("saml2_settings", [
-    {
-        "JWT_ALGORITHM": "HS256",
-        "JWT_SECRET": "secret"
-    },
-    {
-        "JWT_ALGORITHM": "RS256",
-        "JWT_PRIVATE_KEY": private_key,
-        "JWT_PRIVATE_KEY_PASSPHRASE": passphrase,
-        "JWT_PUBLIC_KEY": public_key},
-    {
-        "JWT_ALGORITHM": "RS256",
-        "JWT_PRIVATE_KEY": unencrypted_private_key,
-        "JWT_PUBLIC_KEY": public_key},
-])
+@pytest.mark.parametrize(
+    "saml2_settings",
+    [
+        {"JWT_ALGORITHM": "HS256", "JWT_SECRET": "secret"},
+        {
+            "JWT_ALGORITHM": "RS256",
+            "JWT_PRIVATE_KEY": private_key,
+            "JWT_PRIVATE_KEY_PASSPHRASE": passphrase,
+            "JWT_PUBLIC_KEY": public_key,
+        },
+        {
+            "JWT_ALGORITHM": "RS256",
+            "JWT_PRIVATE_KEY": unencrypted_private_key,
+            "JWT_PUBLIC_KEY": public_key,
+        },
+    ],
+)
 def test_create_and_decode_jwt_token_success(
-        settings: SettingsWrapper, saml2_settings: Dict[str, Any]):
+    settings: SettingsWrapper, saml2_settings: Dict[str, Any]
+):
     """Test create_jwt_token and decode_jwt_token functions by verifying if the newly created
     JWT token using is valid.
 
@@ -539,32 +537,40 @@ def test_create_and_decode_jwt_token_success(
     assert user_id == "test@example.com"
 
 
-@pytest.mark.parametrize('saml2_settings,error_msg', [
-    ({
-        "JWT_ALGORITHM": None
-    }, "Cannot encode/decode JWT token. Specify an algorithm."),
-    ({
-        "JWT_ALGORITHM": "HS256",
-        "JWT_SECRET": None
-    }, "Cannot encode/decode JWT token. Specify a secret."),
-    ({
-        "JWT_ALGORITHM": "HS256",
-        "JWT_SECRET": "",
-    }, "Cannot encode/decode JWT token. Specify a secret."),
-    ({
-        "JWT_ALGORITHM": "HS256",
-        "JWT_PRIVATE_KEY": "-- PRIVATE KEY --"
-    }, "Cannot encode/decode JWT token. Specify a secret."),
-    ({
-        "JWT_ALGORITHM": "RS256",
-    }, "Cannot encode/decode JWT token. Specify a private key."),
-    ({
-        "JWT_ALGORITHM": "RS256",
-        "JWT_SECRET": "A_SECRET_PHRASE"
-    }, "Cannot encode/decode JWT token. Specify a private key."),
-])
+@pytest.mark.parametrize(
+    "saml2_settings,error_msg",
+    [
+        ({"JWT_ALGORITHM": None}, "Cannot encode/decode JWT token. Specify an algorithm."),
+        (
+            {"JWT_ALGORITHM": "HS256", "JWT_SECRET": None},
+            "Cannot encode/decode JWT token. Specify a secret.",
+        ),
+        (
+            {
+                "JWT_ALGORITHM": "HS256",
+                "JWT_SECRET": "",
+            },
+            "Cannot encode/decode JWT token. Specify a secret.",
+        ),
+        (
+            {"JWT_ALGORITHM": "HS256", "JWT_PRIVATE_KEY": "-- PRIVATE KEY --"},
+            "Cannot encode/decode JWT token. Specify a secret.",
+        ),
+        (
+            {
+                "JWT_ALGORITHM": "RS256",
+            },
+            "Cannot encode/decode JWT token. Specify a private key.",
+        ),
+        (
+            {"JWT_ALGORITHM": "RS256", "JWT_SECRET": "A_SECRET_PHRASE"},
+            "Cannot encode/decode JWT token. Specify a private key.",
+        ),
+    ],
+)
 def test_create_jwt_token_with_incorrect_jwt_settings(
-        settings: SettingsWrapper, saml2_settings: Dict[str, str], error_msg: str):
+    settings: SettingsWrapper, saml2_settings: Dict[str, str], error_msg: str
+):
     """Test create_jwt_token function by trying to create a JWT token with incorrect settings.
 
     Args:
@@ -580,37 +586,44 @@ def test_create_jwt_token_with_incorrect_jwt_settings(
     assert str(exc_info.value) == error_msg
 
 
-@pytest.mark.parametrize('saml2_settings,error_msg', [
-    ({
-        "JWT_ALGORITHM": None
-    }, "Cannot encode/decode JWT token. Specify an algorithm."),
-    ({
-        "JWT_ALGORITHM": "HS256",
-        "JWT_SECRET": None
-    }, "Cannot encode/decode JWT token. Specify a secret."),
-    ({
-        "JWT_ALGORITHM": "HS256",
-        "JWT_SECRET": "",
-    }, "Cannot encode/decode JWT token. Specify a secret."),
-    ({
-        "JWT_ALGORITHM": "HS256",
-        "JWT_PRIVATE_KEY": "-- PRIVATE KEY --"
-    }, "Cannot encode/decode JWT token. Specify a secret."),
-    ({
-        "JWT_ALGORITHM": "HS256",
-        "JWT_SECRET": "secret",
-        "JWT_EXP": -60
-    }, "Cannot decode JWT token."),
-    ({
-        "JWT_ALGORITHM": "RS256",
-    }, "Cannot encode/decode JWT token. Specify a public key."),
-    ({
-        "JWT_ALGORITHM": "RS256",
-        "JWT_SECRET": "A_SECRET_PHRASE"
-    }, "Cannot encode/decode JWT token. Specify a public key.",),
-])
+@pytest.mark.parametrize(
+    "saml2_settings,error_msg",
+    [
+        ({"JWT_ALGORITHM": None}, "Cannot encode/decode JWT token. Specify an algorithm."),
+        (
+            {"JWT_ALGORITHM": "HS256", "JWT_SECRET": None},
+            "Cannot encode/decode JWT token. Specify a secret.",
+        ),
+        (
+            {
+                "JWT_ALGORITHM": "HS256",
+                "JWT_SECRET": "",
+            },
+            "Cannot encode/decode JWT token. Specify a secret.",
+        ),
+        (
+            {"JWT_ALGORITHM": "HS256", "JWT_PRIVATE_KEY": "-- PRIVATE KEY --"},
+            "Cannot encode/decode JWT token. Specify a secret.",
+        ),
+        (
+            {"JWT_ALGORITHM": "HS256", "JWT_SECRET": "secret", "JWT_EXP": -60},
+            "Cannot decode JWT token.",
+        ),
+        (
+            {
+                "JWT_ALGORITHM": "RS256",
+            },
+            "Cannot encode/decode JWT token. Specify a public key.",
+        ),
+        (
+            {"JWT_ALGORITHM": "RS256", "JWT_SECRET": "A_SECRET_PHRASE"},
+            "Cannot encode/decode JWT token. Specify a public key.",
+        ),
+    ],
+)
 def test_decode_jwt_token_with_incorrect_jwt_settings(
-        settings: SettingsWrapper, saml2_settings: Dict[str, str], error_msg: str):
+    settings: SettingsWrapper, saml2_settings: Dict[str, str], error_msg: str
+):
     """Test decode_jwt_token function by trying to create a JWT token with incorrect settings.
 
     Args:

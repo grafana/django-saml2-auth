@@ -1,5 +1,4 @@
-"""Utility functions for getting or creating user accounts
-"""
+"""Utility functions for getting or creating user accounts"""
 
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple, Union
@@ -10,23 +9,27 @@ from dictor import dictor  # type: ignore
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, User
-from django_saml2_auth.errors import (CANNOT_DECODE_JWT_TOKEN,
-                                      CREATE_USER_ERROR, GROUP_JOIN_ERROR,
-                                      INVALID_JWT_ALGORITHM, NO_JWT_ALGORITHM,
-                                      NO_JWT_PRIVATE_KEY, NO_JWT_PUBLIC_KEY,
-                                      NO_JWT_SECRET, NO_USER_ID,
-                                      SHOULD_NOT_CREATE_USER)
+from django_saml2_auth.errors import (
+    CANNOT_DECODE_JWT_TOKEN,
+    CREATE_USER_ERROR,
+    GROUP_JOIN_ERROR,
+    INVALID_JWT_ALGORITHM,
+    NO_JWT_ALGORITHM,
+    NO_JWT_PRIVATE_KEY,
+    NO_JWT_PUBLIC_KEY,
+    NO_JWT_SECRET,
+    NO_USER_ID,
+    SHOULD_NOT_CREATE_USER,
+)
 from django_saml2_auth.exceptions import SAMLAuthError
 from django_saml2_auth.utils import run_hook
-from jwt.algorithms import (get_default_algorithms, has_crypto,
-                            requires_cryptography)
+from jwt.algorithms import get_default_algorithms, has_crypto, requires_cryptography
 from jwt.exceptions import PyJWTError
 
 
-def create_new_user(email: str,
-                    first_name: Optional[str] = None,
-                    last_name: Optional[str] = None,
-                    **kwargs) -> User:
+def create_new_user(
+    email: str, first_name: Optional[str] = None, last_name: Optional[str] = None, **kwargs
+) -> User:
     """Create a new user with the given information
 
     Args:
@@ -53,8 +56,8 @@ def create_new_user(email: str,
     user_groups = dictor(saml2_auth_settings, "NEW_USER_PROFILE.USER_GROUPS", default=[])
 
     if first_name and last_name:
-        kwargs['first_name'] = first_name
-        kwargs['last_name'] = last_name
+        kwargs["first_name"] = first_name
+        kwargs["last_name"] = last_name
 
     try:
         user = user_model.objects.create_user(email, **kwargs)
@@ -63,26 +66,32 @@ def create_new_user(email: str,
         user.is_superuser = is_superuser
         user.save()
     except Exception as exc:
-        raise SAMLAuthError("There was an error creating the new user.", extra={
-            "exc": exc,
-            "exc_type": type(exc),
-            "error_code": CREATE_USER_ERROR,
-            "reason": "There was an error processing your request.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            "There was an error creating the new user.",
+            extra={
+                "exc": exc,
+                "exc_type": type(exc),
+                "error_code": CREATE_USER_ERROR,
+                "reason": "There was an error processing your request.",
+                "status_code": 500,
+            },
+        )
 
     try:
         groups = [Group.objects.get(name=group) for group in user_groups]
         if groups:
             user.groups.set(groups)
     except Exception as exc:
-        raise SAMLAuthError("There was an error joining the user to the group.", extra={
-            "exc": exc,
-            "exc_type": type(exc),
-            "error_code": GROUP_JOIN_ERROR,
-            "reason": "There was an error processing your request.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            "There was an error joining the user to the group.",
+            extra={
+                "exc": exc,
+                "exc_type": type(exc),
+                "error_code": GROUP_JOIN_ERROR,
+                "reason": "There was an error processing your request.",
+                "status_code": 500,
+            },
+        )
 
     user.save()
     user.refresh_from_db()
@@ -114,11 +123,14 @@ def get_or_create_user(user: Dict[str, Any]) -> Tuple[bool, User]:
         if should_create_new_user:
             user_id = get_user_id(user)
             if not user_id:
-                raise SAMLAuthError("Cannot create user. Missing user_id.", extra={
-                    "error_code": SHOULD_NOT_CREATE_USER,
-                    "reason": "Cannot create user. Missing user_id.",
-                    "status_code": 400
-                })
+                raise SAMLAuthError(
+                    "Cannot create user. Missing user_id.",
+                    extra={
+                        "error_code": SHOULD_NOT_CREATE_USER,
+                        "reason": "Cannot create user. Missing user_id.",
+                        "status_code": 400,
+                    },
+                )
             target_user = create_new_user(user_id, user["first_name"], user["last_name"])
 
             create_user_trigger = dictor(saml2_auth_settings, "TRIGGER.CREATE_USER")
@@ -128,12 +140,15 @@ def get_or_create_user(user: Dict[str, Any]) -> Tuple[bool, User]:
             target_user.refresh_from_db()
             created = True
         else:
-            raise SAMLAuthError("Cannot create user.", extra={
-                "exc_type": Exception,
-                "error_code": SHOULD_NOT_CREATE_USER,
-                "reason": "Due to current config, a new user should not be created.",
-                "status_code": 500
-            })
+            raise SAMLAuthError(
+                "Cannot create user.",
+                extra={
+                    "exc_type": Exception,
+                    "error_code": SHOULD_NOT_CREATE_USER,
+                    "reason": "Due to current config, a new user should not be created.",
+                    "status_code": 500,
+                },
+            )
 
     # Optionally update this user's group assignments by updating group memberships from SAML groups
     # to Django equivalents
@@ -210,7 +225,8 @@ def get_user(user: Union[str, Dict[str, str]]) -> User:
     id_field = (
         user_model.USERNAME_FIELD
         if login_case_sensitive
-        else f"{user_model.USERNAME_FIELD}__iexact")
+        else f"{user_model.USERNAME_FIELD}__iexact"
+    )
     return user_model.objects.get(**{id_field: user_id})
 
 
@@ -225,20 +241,26 @@ def validate_jwt_algorithm(jwt_algorithm: str) -> None:
         SAMLAuthError: Cannot encode/decode JWT token. Specify a valid algorithm.
     """
     if not jwt_algorithm:
-        raise SAMLAuthError("Cannot encode/decode JWT token. Specify an algorithm.", extra={
-            "exc_type": Exception,
-            "error_code": NO_JWT_ALGORITHM,
-            "reason": "Cannot create JWT token for login.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            "Cannot encode/decode JWT token. Specify an algorithm.",
+            extra={
+                "exc_type": Exception,
+                "error_code": NO_JWT_ALGORITHM,
+                "reason": "Cannot create JWT token for login.",
+                "status_code": 500,
+            },
+        )
 
     if jwt_algorithm not in list(get_default_algorithms()):
-        raise SAMLAuthError("Cannot encode/decode JWT token. Specify a valid algorithm.", extra={
-            "exc_type": Exception,
-            "error_code": INVALID_JWT_ALGORITHM,
-            "reason": "Cannot encode/decode JWT token for login.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            "Cannot encode/decode JWT token. Specify a valid algorithm.",
+            extra={
+                "exc_type": Exception,
+                "error_code": INVALID_JWT_ALGORITHM,
+                "reason": "Cannot encode/decode JWT token for login.",
+                "status_code": 500,
+            },
+        )
 
 
 def validate_secret(jwt_algorithm: str, jwt_secret: str) -> None:
@@ -252,12 +274,15 @@ def validate_secret(jwt_algorithm: str, jwt_secret: str) -> None:
         SAMLAuthError: Cannot encode/decode JWT token. Specify a secret.
     """
     if jwt_algorithm not in requires_cryptography and not jwt_secret:
-        raise SAMLAuthError("Cannot encode/decode JWT token. Specify a secret.", extra={
-            "exc_type": Exception,
-            "error_code": NO_JWT_SECRET,
-            "reason": "Cannot encode/decode JWT token for login.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            "Cannot encode/decode JWT token. Specify a secret.",
+            extra={
+                "exc_type": Exception,
+                "error_code": NO_JWT_SECRET,
+                "reason": "Cannot encode/decode JWT token for login.",
+                "status_code": 500,
+            },
+        )
 
 
 def validate_private_key(jwt_algorithm: str, jwt_private_key: str) -> None:
@@ -271,12 +296,15 @@ def validate_private_key(jwt_algorithm: str, jwt_private_key: str) -> None:
         SAMLAuthError: Cannot encode/decode JWT token. Specify a private key.
     """
     if (jwt_algorithm in requires_cryptography and has_crypto) and not jwt_private_key:
-        raise SAMLAuthError("Cannot encode/decode JWT token. Specify a private key.", extra={
-            "exc_type": Exception,
-            "error_code": NO_JWT_PRIVATE_KEY,
-            "reason": "Cannot encode/decode JWT token for login.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            "Cannot encode/decode JWT token. Specify a private key.",
+            extra={
+                "exc_type": Exception,
+                "error_code": NO_JWT_PRIVATE_KEY,
+                "reason": "Cannot encode/decode JWT token for login.",
+                "status_code": 500,
+            },
+        )
 
 
 def validate_public_key(jwt_algorithm: str, jwt_public_key: str) -> None:
@@ -290,12 +318,15 @@ def validate_public_key(jwt_algorithm: str, jwt_public_key: str) -> None:
         SAMLAuthError: Cannot encode/decode JWT token. Specify a public key.
     """
     if (jwt_algorithm in requires_cryptography and has_crypto) and not jwt_public_key:
-        raise SAMLAuthError("Cannot encode/decode JWT token. Specify a public key.", extra={
-            "exc_type": Exception,
-            "error_code": NO_JWT_PUBLIC_KEY,
-            "reason": "Cannot encode/decode JWT token for login.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            "Cannot encode/decode JWT token. Specify a public key.",
+            extra={
+                "exc_type": Exception,
+                "error_code": NO_JWT_PUBLIC_KEY,
+                "reason": "Cannot encode/decode JWT token for login.",
+                "status_code": 500,
+            },
+        )
 
 
 def create_jwt_token(user_id: str) -> Optional[str]:
@@ -324,8 +355,7 @@ def create_jwt_token(user_id: str) -> Optional[str]:
 
     payload = {
         user_model.USERNAME_FIELD: user_id,
-        "exp": (datetime.now(tz=timezone.utc) +
-                timedelta(seconds=jwt_expiration)).timestamp()
+        "exp": (datetime.now(tz=timezone.utc) + timedelta(seconds=jwt_expiration)).timestamp(),
     }
 
     # If a passphrase is specified, we need to use a PEM-encoded private key
@@ -338,13 +368,14 @@ def create_jwt_token(user_id: str) -> Optional[str]:
 
         # load_pem_private_key requires data and password to be in bytes
         jwt_private_key = serialization.load_pem_private_key(
-            data=jwt_private_key,
-            password=jwt_private_key_passphrase
+            data=jwt_private_key, password=jwt_private_key_passphrase
         )
 
-    secret = jwt_secret if (
-        jwt_secret and
-        jwt_algorithm not in requires_cryptography) else jwt_private_key
+    secret = (
+        jwt_secret
+        if (jwt_secret and jwt_algorithm not in requires_cryptography)
+        else jwt_private_key
+    )
 
     return jwt.encode(payload, secret, algorithm=jwt_algorithm)
 
@@ -378,9 +409,7 @@ def create_custom_or_default_jwt(user: Union[str, User]):
         # If user is user_id, get user instance
         if user_id:
             user_model = get_user_model()
-            _user = {
-                user_model.USERNAME_FIELD: user_id
-            }
+            _user = {user_model.USERNAME_FIELD: user_id}
             target_user = get_user(_user)
         jwt_token = run_hook(custom_create_jwt_trigger, target_user)  # type: ignore
     else:
@@ -389,12 +418,15 @@ def create_custom_or_default_jwt(user: Union[str, User]):
             user_id = getattr(user, user_model.USERNAME_FIELD)
         # Create a new JWT token with PyJWT
         if not user_id:
-            raise SAMLAuthError("Cannot create JWT token. Specify a user.", extra={
-                "exc_type": Exception,
-                "error_code": NO_USER_ID,
-                "reason": "Cannot create JWT token for login.",
-                "status_code": 500
-            })
+            raise SAMLAuthError(
+                "Cannot create JWT token. Specify a user.",
+                extra={
+                    "exc_type": Exception,
+                    "error_code": NO_USER_ID,
+                    "reason": "Cannot create JWT token for login.",
+                    "status_code": 500,
+                },
+            )
         jwt_token = create_jwt_token(user_id)
 
     return jwt_token
@@ -423,22 +455,27 @@ def decode_jwt_token(jwt_token: str) -> Optional[str]:
     jwt_public_key = dictor(saml2_auth_settings, "JWT_PUBLIC_KEY")
     validate_public_key(jwt_algorithm, jwt_public_key)
 
-    secret = jwt_secret if (
-        jwt_secret and
-        jwt_algorithm not in requires_cryptography) else jwt_public_key
+    secret = (
+        jwt_secret
+        if (jwt_secret and jwt_algorithm not in requires_cryptography)
+        else jwt_public_key
+    )
 
     try:
         data = jwt.decode(jwt_token, secret, algorithms=jwt_algorithm)
         user_model = get_user_model()
         return data[user_model.USERNAME_FIELD]
     except PyJWTError as exc:
-        raise SAMLAuthError("Cannot decode JWT token.", extra={
-            "exc": exc,
-            "exc_type": type(exc),
-            "error_code": CANNOT_DECODE_JWT_TOKEN,
-            "reason": "Cannot decode JWT token.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            "Cannot decode JWT token.",
+            extra={
+                "exc": exc,
+                "exc_type": type(exc),
+                "error_code": CANNOT_DECODE_JWT_TOKEN,
+                "reason": "Cannot decode JWT token.",
+                "status_code": 500,
+            },
+        )
 
 
 def decode_custom_or_default_jwt(jwt_token: str) -> Optional[str]:

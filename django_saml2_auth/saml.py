@@ -1,5 +1,5 @@
-"""Utility functions for various SAML client functions.
-"""
+"""Utility functions for various SAML client functions."""
+
 import base64
 from typing import Any, Callable, Dict, Mapping, Optional, Union
 
@@ -7,18 +7,20 @@ from dictor import dictor  # type: ignore
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.urls import NoReverseMatch
-from django_saml2_auth.errors import (ERROR_CREATING_SAML_CONFIG_OR_CLIENT,
-                                      INVALID_METADATA_URL,
-                                      NO_ISSUER_IN_SAML_RESPONSE,
-                                      NO_METADATA_URL_ASSOCIATED,
-                                      NO_METADATA_URL_OR_FILE,
-                                      NO_NAME_ID_IN_SAML_RESPONSE,
-                                      NO_SAML_CLIENT,
-                                      NO_SAML_RESPONSE_FROM_CLIENT,
-                                      NO_SAML_RESPONSE_FROM_IDP,
-                                      NO_TOKEN_SPECIFIED,
-                                      NO_USER_IDENTITY_IN_SAML_RESPONSE,
-                                      NO_USERNAME_OR_EMAIL_SPECIFIED)
+from django_saml2_auth.errors import (
+    ERROR_CREATING_SAML_CONFIG_OR_CLIENT,
+    INVALID_METADATA_URL,
+    NO_ISSUER_IN_SAML_RESPONSE,
+    NO_METADATA_URL_ASSOCIATED,
+    NO_METADATA_URL_OR_FILE,
+    NO_NAME_ID_IN_SAML_RESPONSE,
+    NO_SAML_CLIENT,
+    NO_SAML_RESPONSE_FROM_CLIENT,
+    NO_SAML_RESPONSE_FROM_IDP,
+    NO_TOKEN_SPECIFIED,
+    NO_USER_IDENTITY_IN_SAML_RESPONSE,
+    NO_USERNAME_OR_EMAIL_SPECIFIED,
+)
 from django_saml2_auth.exceptions import SAMLAuthError
 from django_saml2_auth.utils import get_reverse, run_hook
 from saml2 import BINDING_HTTP_POST, BINDING_HTTP_REDIRECT, entity
@@ -109,16 +111,19 @@ def get_metadata(user_id: Optional[str] = None) -> Mapping[str, Any]:
         if metadata_urls:
             # Filter invalid metadata URLs
             filtered_metadata_urls = list(
-                filter(lambda md: validate_metadata_url(md["url"]), metadata_urls))
+                filter(lambda md: validate_metadata_url(md["url"]), metadata_urls)
+            )
             return {"remote": filtered_metadata_urls}
         else:
-            raise SAMLAuthError("No metadata URL associated with the given user identifier.",
-                                extra={
-                                    "exc_type": ValueError,
-                                    "error_code": NO_METADATA_URL_ASSOCIATED,
-                                    "reason": "There was an error processing your request.",
-                                    "status_code": 500
-                                })
+            raise SAMLAuthError(
+                "No metadata URL associated with the given user identifier.",
+                extra={
+                    "exc_type": ValueError,
+                    "error_code": NO_METADATA_URL_ASSOCIATED,
+                    "reason": "There was an error processing your request.",
+                    "status_code": 500,
+                },
+            )
 
     metadata_local_file_path = dictor(saml2_auth_settings, "METADATA_LOCAL_FILE_PATH")
     if metadata_local_file_path:
@@ -128,18 +133,23 @@ def get_metadata(user_id: Optional[str] = None) -> Mapping[str, Any]:
         if validate_metadata_url(single_metadata_url):
             return {"remote": [{"url": single_metadata_url}]}
         else:
-            raise SAMLAuthError("Invalid metadata URL.", extra={
-                "exc_type": ValueError,
-                "error_code": INVALID_METADATA_URL,
-                "reason": "There was an error processing your request.",
-                "status_code": 500
-            })
+            raise SAMLAuthError(
+                "Invalid metadata URL.",
+                extra={
+                    "exc_type": ValueError,
+                    "error_code": INVALID_METADATA_URL,
+                    "reason": "There was an error processing your request.",
+                    "status_code": 500,
+                },
+            )
 
 
-def get_saml_client(domain: str,
-                    acs: Callable[..., HttpResponse],
-                    user_id: Optional[str] = None,
-                    saml_response: Optional[str] = None) -> Optional[Saml2Client]:
+def get_saml_client(
+    domain: str,
+    acs: Callable[..., HttpResponse],
+    user_id: Optional[str] = None,
+    saml_response: Optional[str] = None,
+) -> Optional[Saml2Client]:
     """Create a new Saml2Config object with the given config and return an initialized Saml2Client
     using the config object. The settings are read from django settings key: SAML2_AUTH.
 
@@ -161,22 +171,26 @@ def get_saml_client(domain: str,
     # get_reverse raises an exception if the view is not found, so we can safely ignore type errors
     acs_url = domain + get_reverse([acs, "acs", "django_saml2_auth:acs"])  # type: ignore
 
-    get_user_id_from_saml_response = dictor(settings.SAML2_AUTH,
-                                            "TRIGGER.GET_USER_ID_FROM_SAML_RESPONSE")
+    get_user_id_from_saml_response = dictor(
+        settings.SAML2_AUTH, "TRIGGER.GET_USER_ID_FROM_SAML_RESPONSE"
+    )
     if get_user_id_from_saml_response and saml_response:
         user_id = run_hook(get_user_id_from_saml_response, saml_response, user_id)  # type: ignore
 
     metadata = get_metadata(user_id)
-    if (metadata and (
-            ("local" in metadata and not metadata["local"]) or
-            ("remote" in metadata and not metadata["remote"])
-    )):
-        raise SAMLAuthError("Metadata URL/file is missing.", extra={
-            "exc_type": NoReverseMatch,
-            "error_code": NO_METADATA_URL_OR_FILE,
-            "reason": "There was an error processing your request.",
-            "status_code": 500
-        })
+    if metadata and (
+        ("local" in metadata and not metadata["local"])
+        or ("remote" in metadata and not metadata["remote"])
+    ):
+        raise SAMLAuthError(
+            "Metadata URL/file is missing.",
+            extra={
+                "exc_type": NoReverseMatch,
+                "error_code": NO_METADATA_URL_OR_FILE,
+                "reason": "There was an error processing your request.",
+                "status_code": 500,
+            },
+        )
 
     saml2_auth_settings = settings.SAML2_AUTH
 
@@ -189,18 +203,22 @@ def get_saml_client(domain: str,
                 "endpoints": {
                     "assertion_consumer_service": [
                         (acs_url, BINDING_HTTP_REDIRECT),
-                        (acs_url, BINDING_HTTP_POST)
+                        (acs_url, BINDING_HTTP_POST),
                     ],
                 },
                 "allow_unsolicited": True,
                 "authn_requests_signed": dictor(
-                    saml2_auth_settings, "AUTHN_REQUESTS_SIGNED", default=True),
+                    saml2_auth_settings, "AUTHN_REQUESTS_SIGNED", default=True
+                ),
                 "logout_requests_signed": dictor(
-                    saml2_auth_settings, "LOGOUT_REQUESTS_SIGNED", default=True),
+                    saml2_auth_settings, "LOGOUT_REQUESTS_SIGNED", default=True
+                ),
                 "want_assertions_signed": dictor(
-                    saml2_auth_settings, "WANT_ASSERTIONS_SIGNED", default=True),
+                    saml2_auth_settings, "WANT_ASSERTIONS_SIGNED", default=True
+                ),
                 "want_response_signed": dictor(
-                    saml2_auth_settings, "WANT_RESPONSE_SIGNED", default=True),
+                    saml2_auth_settings, "WANT_RESPONSE_SIGNED", default=True
+                ),
             },
         },
     }
@@ -215,7 +233,7 @@ def get_saml_client(domain: str,
 
     accepted_time_diff = saml2_auth_settings.get("ACCEPTED_TIME_DIFF")
     if accepted_time_diff:
-        saml_settings['accepted_time_diff'] = accepted_time_diff
+        saml_settings["accepted_time_diff"] = accepted_time_diff
 
     # Enable logging with a custom logger. See below for more details:
     # https://pysaml2.readthedocs.io/en/latest/howto/config.html?highlight=debug#logging
@@ -225,11 +243,11 @@ def get_saml_client(domain: str,
 
     key_file = saml2_auth_settings.get("KEY_FILE")
     if key_file:
-        saml_settings['key_file'] = key_file
+        saml_settings["key_file"] = key_file
 
     cert_file = saml2_auth_settings.get("CERT_FILE")
     if cert_file:
-        saml_settings['cert_file'] = cert_file
+        saml_settings["cert_file"] = cert_file
 
     encryption_keypairs = saml2_auth_settings.get("ENCRYPTION_KEYPAIRS")
     if encryption_keypairs:
@@ -248,19 +266,21 @@ def get_saml_client(domain: str,
         saml_client = Saml2Client(config=sp_config)
         return saml_client
     except Exception as exc:
-        raise SAMLAuthError(str(exc), extra={
-            "exc": exc,
-            "exc_type": type(exc),
-            "error_code": ERROR_CREATING_SAML_CONFIG_OR_CLIENT,
-            "reason": "There was an error processing your request.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            str(exc),
+            extra={
+                "exc": exc,
+                "exc_type": type(exc),
+                "error_code": ERROR_CREATING_SAML_CONFIG_OR_CLIENT,
+                "reason": "There was an error processing your request.",
+                "status_code": 500,
+            },
+        )
 
 
 def decode_saml_response(
-        request: HttpRequest,
-        acs: Callable[..., HttpResponse]) -> Union[
-            HttpResponseRedirect, Optional[AuthnResponse], None]:
+    request: HttpRequest, acs: Callable[..., HttpResponse]
+) -> Union[HttpResponseRedirect, Optional[AuthnResponse], None]:
     """Given a request, the authentication response inside the SAML response body is parsed,
     decoded and returned. If there are any issues parsing the request, the identity or the issuer,
     an exception is raised.
@@ -282,58 +302,76 @@ def decode_saml_response(
     """
     response = request.POST.get("SAMLResponse") or None
     if not response:
-        raise SAMLAuthError("There was no response from SAML client.", extra={
-            "exc_type": ValueError,
-            "error_code": NO_SAML_RESPONSE_FROM_CLIENT,
-            "reason": "There was an error processing your request.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            "There was no response from SAML client.",
+            extra={
+                "exc_type": ValueError,
+                "error_code": NO_SAML_RESPONSE_FROM_CLIENT,
+                "reason": "There was an error processing your request.",
+                "status_code": 500,
+            },
+        )
 
     try:
-        saml_response = base64.b64decode(response).decode('UTF-8')
+        saml_response = base64.b64decode(response).decode("UTF-8")
     except Exception:
         saml_response = None
     saml_client = get_saml_client(get_assertion_url(request), acs, saml_response=saml_response)
     if not saml_client:
-        raise SAMLAuthError("There was an error creating the SAML client.", extra={
-            "exc_type": ValueError,
-            "error_code": NO_SAML_CLIENT,
-            "reason": "There was an error processing your request.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            "There was an error creating the SAML client.",
+            extra={
+                "exc_type": ValueError,
+                "error_code": NO_SAML_CLIENT,
+                "reason": "There was an error processing your request.",
+                "status_code": 500,
+            },
+        )
 
     authn_response = saml_client.parse_authn_request_response(response, entity.BINDING_HTTP_POST)
     if not authn_response:
-        raise SAMLAuthError("There was no response from SAML identity provider.", extra={
-            "exc_type": ValueError,
-            "error_code": NO_SAML_RESPONSE_FROM_IDP,
-            "reason": "There was an error processing your request.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            "There was no response from SAML identity provider.",
+            extra={
+                "exc_type": ValueError,
+                "error_code": NO_SAML_RESPONSE_FROM_IDP,
+                "reason": "There was an error processing your request.",
+                "status_code": 500,
+            },
+        )
 
     if not authn_response.name_id:
-        raise SAMLAuthError("No name_id in SAML response.", extra={
-            "exc_type": ValueError,
-            "error_code": NO_NAME_ID_IN_SAML_RESPONSE,
-            "reason": "There was an error processing your request.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            "No name_id in SAML response.",
+            extra={
+                "exc_type": ValueError,
+                "error_code": NO_NAME_ID_IN_SAML_RESPONSE,
+                "reason": "There was an error processing your request.",
+                "status_code": 500,
+            },
+        )
 
     if not authn_response.issuer():
-        raise SAMLAuthError("No issuer/entity_id in SAML response.", extra={
-            "exc_type": ValueError,
-            "error_code": NO_ISSUER_IN_SAML_RESPONSE,
-            "reason": "There was an error processing your request.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            "No issuer/entity_id in SAML response.",
+            extra={
+                "exc_type": ValueError,
+                "error_code": NO_ISSUER_IN_SAML_RESPONSE,
+                "reason": "There was an error processing your request.",
+                "status_code": 500,
+            },
+        )
 
     if not authn_response.get_identity():
-        raise SAMLAuthError("No user identity in SAML response.", extra={
-            "exc_type": ValueError,
-            "error_code": NO_USER_IDENTITY_IN_SAML_RESPONSE,
-            "reason": "There was an error processing your request.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            "No user identity in SAML response.",
+            extra={
+                "exc_type": ValueError,
+                "error_code": NO_USER_IDENTITY_IN_SAML_RESPONSE,
+                "reason": "There was an error processing your request.",
+                "status_code": 500,
+            },
+        )
 
     return authn_response
 
@@ -354,14 +392,14 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
     """
     saml2_auth_settings = settings.SAML2_AUTH
 
-    email_field = dictor(
-        saml2_auth_settings, "ATTRIBUTES_MAP.email", default="user.email")
-    username_field = dictor(
-        saml2_auth_settings, "ATTRIBUTES_MAP.username", default="user.username")
+    email_field = dictor(saml2_auth_settings, "ATTRIBUTES_MAP.email", default="user.email")
+    username_field = dictor(saml2_auth_settings, "ATTRIBUTES_MAP.username", default="user.username")
     firstname_field = dictor(
-        saml2_auth_settings, "ATTRIBUTES_MAP.first_name", default="user.first_name")
+        saml2_auth_settings, "ATTRIBUTES_MAP.first_name", default="user.first_name"
+    )
     lastname_field = dictor(
-        saml2_auth_settings, "ATTRIBUTES_MAP.last_name", default="user.last_name")
+        saml2_auth_settings, "ATTRIBUTES_MAP.last_name", default="user.last_name"
+    )
 
     user = {}
     user["email"] = dictor(user_identity, f"{email_field}/0", pathsep="/")  # Path includes "."
@@ -383,19 +421,25 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
     user["user_identity"] = user_identity
 
     if not user["email"] and not user["username"]:
-        raise SAMLAuthError("No username or email provided.", extra={
-            "exc_type": ValueError,
-            "error_code": NO_USERNAME_OR_EMAIL_SPECIFIED,
-            "reason": "Username or email must be configured on the SAML app before logging in.",
-            "status_code": 422
-        })
+        raise SAMLAuthError(
+            "No username or email provided.",
+            extra={
+                "exc_type": ValueError,
+                "error_code": NO_USERNAME_OR_EMAIL_SPECIFIED,
+                "reason": "Username or email must be configured on the SAML app before logging in.",
+                "status_code": 422,
+            },
+        )
 
     if token_required and not user.get("token"):
-        raise SAMLAuthError("No token specified.", extra={
-            "exc_type": ValueError,
-            "error_code": NO_TOKEN_SPECIFIED,
-            "reason": "Token must be configured on the SAML app before logging in.",
-            "status_code": 422
-        })
+        raise SAMLAuthError(
+            "No token specified.",
+            extra={
+                "exc_type": ValueError,
+                "error_code": NO_TOKEN_SPECIFIED,
+                "reason": "Token must be configured on the SAML app before logging in.",
+                "status_code": 422,
+            },
+        )
 
     return user

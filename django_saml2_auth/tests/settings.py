@@ -79,19 +79,18 @@ SAML2_AUTH = {
         "USER_GROUPS": [],
         "ACTIVE_STATUS": True,
         "STAFF_STATUS": False,
-        "SUPERUSER_STATUS": False
+        "SUPERUSER_STATUS": False,
     },
     "ATTRIBUTES_MAP": {
         "email": "user.email",
         "username": "user.username",
         "first_name": "user.first_name",
         "last_name": "user.last_name",
-        "token": "token"
+        "token": "token",
     },
     "TRIGGER": {
         "BEFORE_LOGIN": "django_saml2_auth.tests.test_user.saml_user_setup",
-        "GET_METADATA_AUTO_CONF_URLS":
-        "django_saml2_auth.tests.test_saml.get_metadata_auto_conf_urls"
+        "GET_METADATA_AUTO_CONF_URLS": "django_saml2_auth.tests.test_saml.get_metadata_auto_conf_urls",
     },
     "ASSERTION_URL": "https://api.example.com",
     "ENTITY_ID": "https://api.example.com/sso/acs/",
@@ -104,8 +103,10 @@ SAML2_AUTH = {
     "LOGIN_CASE_SENSITIVE": False,
     "WANT_ASSERTIONS_SIGNED": True,
     "WANT_RESPONSE_SIGNED": True,
-    "ALLOWED_REDIRECT_HOSTS": ["https://app.example.com",
-                               "https://api.example.com",
-                               "https://example.com"],
-    "TOKEN_REQUIRED": True
+    "ALLOWED_REDIRECT_HOSTS": [
+        "https://app.example.com",
+        "https://api.example.com",
+        "https://example.com",
+    ],
+    "TOKEN_REQUIRED": True,
 }

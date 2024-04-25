@@ -1,6 +1,5 @@
 """Custom exception class for handling extra arguments."""
 
-
 from typing import Any, Dict, Optional
 
 

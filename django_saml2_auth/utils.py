@@ -9,6 +9,7 @@ import logging
 from typing import (Any, Callable, Dict, Iterable, Mapping, Optional, Tuple,
                     Union)
 
+from dictor import dictor  # type: ignore
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
@@ -152,7 +153,7 @@ def exception_handler(
             HttpResponse: Rendered error page with details
         """
         logger = logging.getLogger(__name__)
-        if getattr(settings.SAML2_AUTH, "DEBUG", False):
+        if dictor(settings.SAML2_AUTH, "DEBUG", False):
             # Log the exception with traceback
             logger.exception(exc)
         else:

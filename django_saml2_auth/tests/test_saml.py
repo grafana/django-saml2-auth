@@ -12,10 +12,15 @@ from django.http import HttpRequest
 from django.test.client import RequestFactory
 from django.urls import NoReverseMatch
 from django_saml2_auth.exceptions import SAMLAuthError
-from django_saml2_auth.saml import (decode_saml_response,
-                                    extract_user_identity, get_assertion_url,
-                                    get_default_next_url, get_metadata,
-                                    get_saml_client, validate_metadata_url)
+from django_saml2_auth.saml import (
+    decode_saml_response,
+    extract_user_identity,
+    get_assertion_url,
+    get_default_next_url,
+    get_metadata,
+    get_saml_client,
+    validate_metadata_url,
+)
 from django_saml2_auth.views import acs
 from pytest_django.fixtures import SettingsWrapper
 from saml2.client import Saml2Client
@@ -23,7 +28,9 @@ from saml2.response import AuthnResponse
 from django_saml2_auth import user
 
 
-GET_METADATA_AUTO_CONF_URLS = "django_saml2_auth.tests.test_saml.get_metadata_auto_conf_urls"
+GET_METADATA_AUTO_CONF_URLS = (
+    "django_saml2_auth.tests.test_saml.get_metadata_auto_conf_urls"
+)
 METADATA_URL1 = "https://testserver1.com/saml/sso/metadata"
 METADATA_URL2 = "https://testserver2.com/saml/sso/metadata"
 # Ref: https://en.wikipedia.org/wiki/SAML_metadata#Entity_metadata
@@ -85,7 +92,9 @@ METADATA2 = b"""
 </md:EntityDescriptor>"""
 
 
-def get_metadata_auto_conf_urls(user_id: Optional[str] = None) -> List[Optional[Mapping[str, str]]]:
+def get_metadata_auto_conf_urls(
+    user_id: Optional[str] = None,
+) -> List[Optional[Mapping[str, str]]]:
     """Fixture for returning metadata autoconf URL(s) based on the user_id.
 
     Args:
@@ -112,20 +121,22 @@ def get_user_identity() -> Mapping[str, List[str]]:
         "user.email": ["test@example.com"],
         "user.first_name": ["John"],
         "user.last_name": ["Doe"],
-        "token": ["TOKEN"]
+        "token": ["TOKEN"],
     }
 
 
 def mock_parse_authn_request_response(
-        self: Saml2Client, response: AuthnResponse, binding: str
-) -> "MockAuthnResponse":  # type: ignore
+    self: Saml2Client, response: AuthnResponse, binding: str
+) -> "MockAuthnResponse":  # type: ignore # noqa: F821
     """Mock function to return an mocked instance of AuthnResponse.
 
     Returns:
         MockAuthnResponse: A mocked instance of AuthnResponse
     """
+
     class MockAuthnRequest:
         """Mock class for AuthnRequest."""
+
         name_id = "Username"
 
         @staticmethod
@@ -142,8 +153,7 @@ def mock_parse_authn_request_response(
 
 
 def test_get_assertion_url_success():
-    """Test get_assertion_url function to verify if it correctly returns the default assertion URL.
-    """
+    """Test get_assertion_url function to verify if it correctly returns the default assertion URL."""
     assertion_url = get_assertion_url(HttpRequest())
     assert assertion_url == "https://api.example.com"
 
@@ -241,7 +251,9 @@ def test_get_metadata_success_with_multiple_metadata_urls(settings: SettingsWrap
     Args:
         settings (SettingsWrapper): Fixture for django settings
     """
-    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
+    settings.SAML2_AUTH["TRIGGER"][
+        "GET_METADATA_AUTO_CONF_URLS"
+    ] = GET_METADATA_AUTO_CONF_URLS
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
     responses.add(responses.GET, METADATA_URL2, body=METADATA2)
 
@@ -256,7 +268,9 @@ def test_get_metadata_success_with_user_id(settings: SettingsWrapper):
     Args:
         settings (SettingsWrapper): Fixture for django settings
     """
-    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
+    settings.SAML2_AUTH["TRIGGER"][
+        "GET_METADATA_AUTO_CONF_URLS"
+    ] = GET_METADATA_AUTO_CONF_URLS
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
 
     result = get_metadata("test@example.com")
@@ -269,11 +283,16 @@ def test_get_metadata_failure_with_nonexistent_user_id(settings: SettingsWrapper
     Args:
         settings (SettingsWrapper): Fixture for django settings
     """
-    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
+    settings.SAML2_AUTH["TRIGGER"][
+        "GET_METADATA_AUTO_CONF_URLS"
+    ] = GET_METADATA_AUTO_CONF_URLS
 
     with pytest.raises(SAMLAuthError) as exc_info:
         get_metadata("nonexistent_user@example.com")
-    assert str(exc_info.value) == "No metadata URL associated with the given user identifier."
+    assert (
+        str(exc_info.value)
+        == "No metadata URL associated with the given user identifier."
+    )
 
 
 def test_get_metadata_success_with_local_file(settings: SettingsWrapper):
@@ -296,7 +315,9 @@ def test_get_saml_client_success(settings: SettingsWrapper):
     Args:
         settings (SettingsWrapper): Fixture for django settings
     """
-    settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "django_saml2_auth/tests/metadata.xml"
+    settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = (
+        "django_saml2_auth/tests/metadata.xml"
+    )
     result = get_saml_client("example.com", acs)
     assert isinstance(result, Saml2Client)
 
@@ -309,7 +330,9 @@ def test_get_saml_client_success_with_user_id(settings: SettingsWrapper):
     Args:
         settings (SettingsWrapper): Fixture for django settings
     """
-    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
+    settings.SAML2_AUTH["TRIGGER"][
+        "GET_METADATA_AUTO_CONF_URLS"
+    ] = GET_METADATA_AUTO_CONF_URLS
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
 
     result = get_saml_client("example.com", acs, "test@example.com")
@@ -323,7 +346,9 @@ def test_get_saml_client_failure_with_missing_metadata_url(settings: SettingsWra
     Args:
         settings (SettingsWrapper): Fixture for django settings
     """
-    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
+    settings.SAML2_AUTH["TRIGGER"][
+        "GET_METADATA_AUTO_CONF_URLS"
+    ] = GET_METADATA_AUTO_CONF_URLS
 
     with pytest.raises(SAMLAuthError) as exc_info:
         get_saml_client("example.com", acs, "test@example.com")
@@ -344,7 +369,10 @@ def test_get_saml_client_failure_with_invalid_file(settings: SettingsWrapper):
     with pytest.raises(SAMLAuthError) as exc_info:
         get_saml_client("example.com", acs)
 
-    assert str(exc_info.value) == "[Errno 2] No such file or directory: '/invalid/metadata.xml'"
+    assert (
+        str(exc_info.value)
+        == "[Errno 2] No such file or directory: '/invalid/metadata.xml'"
+    )
     assert exc_info.value.extra is not None
     assert isinstance(exc_info.value.extra["exc"], FileNotFoundError)
 
@@ -390,7 +418,9 @@ def test_get_saml_client_success_with_key_and_cert_files(
         settings (SettingsWrapper): Fixture for django settings
     """
 
-    settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "django_saml2_auth/tests/metadata.xml"
+    settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = (
+        "django_saml2_auth/tests/metadata.xml"
+    )
 
     for key, value in supplied_config_values.items():
         settings.SAML2_AUTH[key] = value
@@ -406,7 +436,9 @@ def test_get_saml_client_success_with_key_and_cert_files(
 
 @responses.activate
 def test_decode_saml_response_success(
-        settings: SettingsWrapper, monkeypatch: "MonkeyPatch"):  # type: ignore
+    settings: SettingsWrapper,
+    monkeypatch: "MonkeyPatch",  # type: ignore # noqa: F821
+):
     """Test decode_saml_response function to verify if it correctly decodes the SAML response.
 
     Args:
@@ -415,12 +447,16 @@ def test_decode_saml_response_success(
     """
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
     settings.SAML2_AUTH["ASSERTION_URL"] = "https://api.example.com"
-    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
+    settings.SAML2_AUTH["TRIGGER"][
+        "GET_METADATA_AUTO_CONF_URLS"
+    ] = GET_METADATA_AUTO_CONF_URLS
 
-    post_request = RequestFactory().post(METADATA_URL1, {"SAMLResponse": "SAML RESPONSE"})
-    monkeypatch.setattr(Saml2Client,
-                        "parse_authn_request_response",
-                        mock_parse_authn_request_response)
+    post_request = RequestFactory().post(
+        METADATA_URL1, {"SAMLResponse": "SAML RESPONSE"}
+    )
+    monkeypatch.setattr(
+        Saml2Client, "parse_authn_request_response", mock_parse_authn_request_response
+    )
     result = decode_saml_response(post_request, acs)
     assert len(result.get_identity()) > 0  # type: ignore
 
@@ -449,9 +485,11 @@ def test_extract_user_identity_token_not_required(settings: SettingsWrapper):
 
 @pytest.mark.django_db
 @responses.activate
-def test_acs_view_when_next_url_is_none(settings: SettingsWrapper, monkeypatch: "MonkeyPatch"):  # type: ignore
-    """Test Acs view when login_next_url is None in the session
-    """
+def test_acs_view_when_next_url_is_none(
+    settings: SettingsWrapper,
+    monkeypatch: "MonkeyPatch",  # type: ignore # noqa: F821
+):
+    """Test Acs view when login_next_url is None in the session"""
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
     settings.SAML2_AUTH = {
         "ASSERTION_URL": "https://api.example.com",
@@ -460,25 +498,29 @@ def test_acs_view_when_next_url_is_none(settings: SettingsWrapper, monkeypatch: 
         "TRIGGER": {
             "BEFORE_LOGIN": None,
             "AFTER_LOGIN": None,
-            "GET_METADATA_AUTO_CONF_URLS": GET_METADATA_AUTO_CONF_URLS
-        }
+            "GET_METADATA_AUTO_CONF_URLS": GET_METADATA_AUTO_CONF_URLS,
+        },
     }
-    post_request = RequestFactory().post(METADATA_URL1,
-                                         {"SAMLResponse": "SAML RESPONSE"})
+    post_request = RequestFactory().post(
+        METADATA_URL1, {"SAMLResponse": "SAML RESPONSE"}
+    )
 
-    monkeypatch.setattr(Saml2Client,
-                        "parse_authn_request_response",
-                        mock_parse_authn_request_response)
+    monkeypatch.setattr(
+        Saml2Client, "parse_authn_request_response", mock_parse_authn_request_response
+    )
 
-    created, mock_user = user.get_or_create_user({
-        "username": "test@example.com",
-        "first_name": "John",
-        "last_name": "Doe"
-    })
+    created, mock_user = user.get_or_create_user(
+        {"username": "test@example.com", "first_name": "John", "last_name": "Doe"}
+    )
 
-    monkeypatch.setattr(user,
-                        "get_or_create_user",
-                        (created, mock_user,))
+    monkeypatch.setattr(
+        user,
+        "get_or_create_user",
+        (
+            created,
+            mock_user,
+        ),
+    )
 
     middleware = SessionMiddleware(MagicMock())
     middleware.process_request(post_request)
@@ -486,14 +528,16 @@ def test_acs_view_when_next_url_is_none(settings: SettingsWrapper, monkeypatch: 
     post_request.session.save()
 
     result = acs(post_request)
-    assert result['Location'] == "default_next_url"
+    assert result["Location"] == "default_next_url"
 
 
 @pytest.mark.django_db
 @responses.activate
-def test_acs_view_when_redirection_state_is_passed_in_relay_state(settings: SettingsWrapper, monkeypatch: "MonkeyPatch"):  # type: ignore
-    """Test Acs view when login_next_url is None and redirection state in POST request
-    """
+def test_acs_view_when_redirection_state_is_passed_in_relay_state(
+    settings: SettingsWrapper,
+    monkeypatch: "MonkeyPatch",  # type: ignore # noqa: F821
+):
+    """Test Acs view when login_next_url is None and redirection state in POST request"""
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
     settings.SAML2_AUTH = {
         "ASSERTION_URL": "https://api.example.com",
@@ -502,26 +546,29 @@ def test_acs_view_when_redirection_state_is_passed_in_relay_state(settings: Sett
         "TRIGGER": {
             "BEFORE_LOGIN": None,
             "AFTER_LOGIN": None,
-            "GET_METADATA_AUTO_CONF_URLS": GET_METADATA_AUTO_CONF_URLS
-        }
+            "GET_METADATA_AUTO_CONF_URLS": GET_METADATA_AUTO_CONF_URLS,
+        },
     }
-    post_request = RequestFactory().post(METADATA_URL1,
-                                         {"SAMLResponse": "SAML RESPONSE",
-                                          "RelayState": '/admin/logs'})
+    post_request = RequestFactory().post(
+        METADATA_URL1, {"SAMLResponse": "SAML RESPONSE", "RelayState": "/admin/logs"}
+    )
 
-    monkeypatch.setattr(Saml2Client,
-                        "parse_authn_request_response",
-                        mock_parse_authn_request_response)
+    monkeypatch.setattr(
+        Saml2Client, "parse_authn_request_response", mock_parse_authn_request_response
+    )
 
-    created, mock_user = user.get_or_create_user({
-        "username": "test@example.com",
-        "first_name": "John",
-        "last_name": "Doe"
-    })
+    created, mock_user = user.get_or_create_user(
+        {"username": "test@example.com", "first_name": "John", "last_name": "Doe"}
+    )
 
-    monkeypatch.setattr(user,
-                        "get_or_create_user",
-                        (created, mock_user,))
+    monkeypatch.setattr(
+        user,
+        "get_or_create_user",
+        (
+            created,
+            mock_user,
+        ),
+    )
 
     middleware = SessionMiddleware(MagicMock())
     middleware.process_request(post_request)
@@ -529,4 +576,4 @@ def test_acs_view_when_redirection_state_is_passed_in_relay_state(settings: Sett
     post_request.session.save()
 
     result = acs(post_request)
-    assert result['Location'] == "/admin/logs"
+    assert result["Location"] == "/admin/logs"

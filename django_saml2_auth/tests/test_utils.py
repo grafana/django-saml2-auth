@@ -19,7 +19,7 @@ def divide(a: int, b: int = 1) -> int:
     Returns:
         int: Quotient
     """
-    return int(a/b)
+    return int(a / b)
 
 
 def hello(_: HttpRequest) -> HttpResponse:
@@ -43,13 +43,16 @@ def goodbye(_: HttpRequest) -> None:
     Raises:
         SAMLAuthError: Goodbye, world!
     """
-    raise SAMLAuthError("Goodbye, world!", extra={
-        "exc": RuntimeError("World not found!"),
-        "exc_type": RuntimeError,
-        "error_code": 0,
-        "reason": "Internal world error!",
-        "status_code": 500
-    })
+    raise SAMLAuthError(
+        "Goodbye, world!",
+        extra={
+            "exc": RuntimeError("World not found!"),
+            "exc_type": RuntimeError,
+            "error_code": 0,
+            "reason": "Internal world error!",
+            "status_code": 500,
+        },
+    )
 
 
 def test_run_hook_success():
@@ -82,7 +85,8 @@ def test_run_hook_import_error():
         run_hook("django_saml2_auth.tests.test_utils.nonexistent_divide", 2, b=2)
 
     assert str(exc_info.value) == (
-        "module 'django_saml2_auth.tests.test_utils' has no attribute 'nonexistent_divide'")
+        "module 'django_saml2_auth.tests.test_utils' has no attribute 'nonexistent_divide'"
+    )
     assert isinstance(exc_info.value.extra["exc"], AttributeError)
     assert exc_info.value.extra["exc_type"] == AttributeError
 
@@ -132,8 +136,8 @@ def test_exception_handler_handle_exception():
 
 def test_jwt_well_formed():
     """Test if passed RelayState is a well formed JWT"""
-    token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI0MjQyIiwibmFtZSI6Ikplc3NpY2EgVGVtcG9yYWwiLCJuaWNrbmFtZSI6Ikplc3MifQ.EDkUUxaM439gWLsQ8a8mJWIvQtgZe0et3O3z4Fd_J8o'  # noqa
+    token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI0MjQyIiwibmFtZSI6Ikplc3NpY2EgVGVtcG9yYWwiLCJuaWNrbmFtZSI6Ikplc3MifQ.EDkUUxaM439gWLsQ8a8mJWIvQtgZe0et3O3z4Fd_J8o"  # noqa
     res = is_jwt_well_formed(token)  # True
     assert res is True
-    res = is_jwt_well_formed('/')  # False
+    res = is_jwt_well_formed("/")  # False
     assert res is False

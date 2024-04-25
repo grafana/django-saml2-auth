@@ -6,8 +6,7 @@ import base64
 from functools import wraps
 from importlib import import_module
 import logging
-from typing import (Any, Callable, Dict, Iterable, Mapping, Optional, Tuple,
-                    Union)
+from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Tuple, Union
 
 from dictor import dictor  # type: ignore
 from django.conf import settings
@@ -15,15 +14,19 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import NoReverseMatch, reverse
 from django.utils.module_loading import import_string
-from django_saml2_auth.errors import (EMPTY_FUNCTION_PATH, GENERAL_EXCEPTION,
-                                      IMPORT_ERROR, NO_REVERSE_MATCH,
-                                      PATH_ERROR)
+from django_saml2_auth.errors import (
+    EMPTY_FUNCTION_PATH,
+    GENERAL_EXCEPTION,
+    IMPORT_ERROR,
+    NO_REVERSE_MATCH,
+    PATH_ERROR,
+)
 from django_saml2_auth.exceptions import SAMLAuthError
 
 
-def run_hook(function_path: str,
-             *args: Optional[Tuple[Any]],
-             **kwargs: Optional[Mapping[str, Any]]) -> Optional[Any]:
+def run_hook(
+    function_path: str, *args: Optional[Tuple[Any]], **kwargs: Optional[Mapping[str, Any]]
+) -> Optional[Any]:
     """Runs a hook function with given args and kwargs. For example, given
     "models.User.create_new_user", the "create_new_user" function is imported from
     the "models.User" module and run with args and kwargs. Functions can be
@@ -44,22 +47,28 @@ def run_hook(function_path: str,
             of any exceptions, errors in arguments and related issues.
     """
     if not function_path:
-        raise SAMLAuthError("function_path isn't specified", extra={
-            "exc_type": ValueError,
-            "error_code": EMPTY_FUNCTION_PATH,
-            "reason": "There was an error processing your request.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            "function_path isn't specified",
+            extra={
+                "exc_type": ValueError,
+                "error_code": EMPTY_FUNCTION_PATH,
+                "reason": "There was an error processing your request.",
+                "status_code": 500,
+            },
+        )
 
     path = function_path.split(".")
     if len(path) < 2:
         # Nothing to import
-        raise SAMLAuthError("There's nothing to import. Check your hook's import path!", extra={
-            "exc_type": ValueError,
-            "error_code": PATH_ERROR,
-            "reason": "There was an error processing your request.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            "There's nothing to import. Check your hook's import path!",
+            extra={
+                "exc_type": ValueError,
+                "error_code": PATH_ERROR,
+                "reason": "There was an error processing your request.",
+                "status_code": 500,
+            },
+        )
 
     module_path = ".".join(path[:-1])
     result = None
@@ -69,34 +78,43 @@ def run_hook(function_path: str,
         try:
             cls = import_string(module_path)
         except ImportError as exc:
-            raise SAMLAuthError(str(exc), extra={
-                "exc": exc,
-                "exc_type": type(exc),
-                "error_code": IMPORT_ERROR,
-                "reason": "There was an error processing your request.",
-                "status_code": 500
-            })
+            raise SAMLAuthError(
+                str(exc),
+                extra={
+                    "exc": exc,
+                    "exc_type": type(exc),
+                    "error_code": IMPORT_ERROR,
+                    "reason": "There was an error processing your request.",
+                    "status_code": 500,
+                },
+            )
     try:
         result = getattr(cls, path[-1])(*args, **kwargs)
     except SAMLAuthError as exc:
         # Re-raise the exception
         raise exc
     except AttributeError as exc:
-        raise SAMLAuthError(str(exc), extra={
-            "exc": exc,
-            "exc_type": type(exc),
-            "error_code": IMPORT_ERROR,
-            "reason": "There was an error processing your request.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            str(exc),
+            extra={
+                "exc": exc,
+                "exc_type": type(exc),
+                "error_code": IMPORT_ERROR,
+                "reason": "There was an error processing your request.",
+                "status_code": 500,
+            },
+        )
     except Exception as exc:
-        raise SAMLAuthError(str(exc), extra={
-            "exc": exc,
-            "exc_type": type(exc),
-            "error_code": GENERAL_EXCEPTION,
-            "reason": "There was an error processing your request.",
-            "status_code": 500
-        })
+        raise SAMLAuthError(
+            str(exc),
+            extra={
+                "exc": exc,
+                "exc_type": type(exc),
+                "error_code": GENERAL_EXCEPTION,
+                "reason": "There was an error processing your request.",
+                "status_code": 500,
+            },
+        )
 
     return result
 
@@ -121,17 +139,20 @@ def get_reverse(objects: Union[Any, Iterable[Any]]) -> Optional[str]:
             return reverse(obj)
         except NoReverseMatch:
             pass
-    raise SAMLAuthError(f"We got a URL reverse issue: {str(objects)}", extra={
-        "exc_type": NoReverseMatch,
-        "error_code": NO_REVERSE_MATCH,
-        "reason": "There was an error processing your request.",
-        "status_code": 500
-    })
+    raise SAMLAuthError(
+        f"We got a URL reverse issue: {str(objects)}",
+        extra={
+            "exc_type": NoReverseMatch,
+            "error_code": NO_REVERSE_MATCH,
+            "reason": "There was an error processing your request.",
+            "status_code": 500,
+        },
+    )
 
 
 def exception_handler(
-    function: Callable[..., Union[HttpResponse, HttpResponseRedirect]]) -> \
-        Callable[..., Union[HttpResponse, HttpResponseRedirect]]:
+    function: Callable[..., Union[HttpResponse, HttpResponseRedirect]],
+) -> Callable[..., Union[HttpResponse, HttpResponseRedirect]]:
     """This decorator can be used by view function to handle exceptions
 
     Args:
@@ -142,6 +163,7 @@ def exception_handler(
         Callable[..., Union[HttpResponse, HttpResponseRedirect]]:
             Decorated view function with exception handling
     """
+
     def handle_exception(exc: Exception, request: HttpRequest) -> HttpResponse:
         """Render page with exception details
 
@@ -166,12 +188,9 @@ def exception_handler(
         else:
             status = 500
 
-        return render(request,
-                      "django_saml2_auth/error.html",
-                      context=context,
-                      status=status)
+        return render(request, "django_saml2_auth/error.html", context=context, status=status)
 
-    @ wraps(function)
+    @wraps(function)
     def wrapper(request: HttpRequest) -> HttpResponse:
         """Decorated function is wrapped and called here
 
@@ -187,6 +206,7 @@ def exception_handler(
         except (SAMLAuthError, Exception) as exc:
             result = handle_exception(exc, request)
         return result
+
     return wrapper
 
 
@@ -201,14 +221,14 @@ def is_jwt_well_formed(jwt: str):
     """
     if isinstance(jwt, str):
         # JWT should contain three segments, separated by two period ('.') characters.
-        jwt_segments = jwt.split('.')
+        jwt_segments = jwt.split(".")
         if len(jwt_segments) == 3:
             jose_header = jwt_segments[0]
             # base64-encoded string length should be a multiple of 4
             if len(jose_header) % 4 == 0:
                 try:
-                    jh_decoded = base64.b64decode(jose_header).decode('utf-8')
-                    if jh_decoded and jh_decoded.find('JWT') > -1:
+                    jh_decoded = base64.b64decode(jose_header).decode("utf-8")
+                    if jh_decoded and jh_decoded.find("JWT") > -1:
                         return True
                 except Exception:
                     return False

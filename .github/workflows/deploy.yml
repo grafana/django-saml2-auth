@@ -16,9 +16,9 @@ jobs:
       matrix:
         versions:
           - { "djangoVersion": "3.2.25", "pythonVersion": "3.10" }
-          - { "djangoVersion": "4.2.12", "pythonVersion": "3.10" }
-          - { "djangoVersion": "4.2.12", "pythonVersion": "3.11" }
-          - { "djangoVersion": "4.2.12", "pythonVersion": "3.12" }
+          - { "djangoVersion": "4.2.11", "pythonVersion": "3.10" }
+          - { "djangoVersion": "4.2.11", "pythonVersion": "3.11" }
+          - { "djangoVersion": "4.2.11", "pythonVersion": "3.12" }
           - { "djangoVersion": "5.0.4", "pythonVersion": "3.10" }
           - { "djangoVersion": "5.0.4", "pythonVersion": "3.11" }
           - { "djangoVersion": "5.0.4", "pythonVersion": "3.12" }

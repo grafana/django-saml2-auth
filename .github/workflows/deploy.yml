@@ -33,7 +33,7 @@ jobs:
       - name: Install dependencies 📦
         run: |
           python -m pip install poetry
-          poetry install
+          poetry install --with dev
       - name: Install Django ${{ matrix.versions.djangoVersion }} 📦
         run: poetry add Django==${{ matrix.versions.djangoVersion }}
       - name: Check types, syntax and duckstrings 🦆

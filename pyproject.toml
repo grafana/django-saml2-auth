@@ -10,7 +10,7 @@ readme = "README.md"
 python = "^3.10"
 dictor = "0.1.11"
 PyJWT = "2.8.0"
-pysaml2 = "7.4.2"
+pysaml2 = "7.5.0"
 setuptools = "67.8.0"
 
 [tool.poetry.group.dev.dependencies]

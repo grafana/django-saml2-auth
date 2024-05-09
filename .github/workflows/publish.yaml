@@ -1,0 +1,45 @@
+name: Python CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  package_repository:
+    runs-on: fool-runners
+    steps:
+      - name: Assume role
+        with:
+          role-to-assume: arn:aws:iam::653197303645:role/tmf/github-runner-role
+          aws-region: us-east-1
+        uses: aws-actions/configure-aws-credentials@v4
+        
+      - name: set_vars
+        id: set_vars
+        shell: bash
+        run: |
+          CODEARTIFACT_AUTH_TOKEN=$(aws codeartifact get-authorization-token --domain tmf --query authorizationToken --output text)
+          echo "token=${CODEARTIFACT_AUTH_TOKEN}" >> $GITHUB_OUTPUT
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        # with:
+        #   fetch-depth: 0
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install python dependencies
+        run: |
+          pip install -U pip
+          pip install .
+          pip install build
+          pip install setuptools_scm
+          pip install twine
+
+      - name: Upload package
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        run: |
+          python -m build --sdist --wheel --outdir dist/ .
+          twine upload --skip-existing --repository-url https://tmf-653197303645.d.codeartifact.us-east-1.amazonaws.com/pypi/fool-python/ -u aws -p ${{needs.package_repository.outputs.codeartifact_auth_token}} dist/*

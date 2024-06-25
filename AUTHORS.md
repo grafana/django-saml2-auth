@@ -59,3 +59,4 @@ an issue.
 - [Santiago Gandolfo](https://github.com/santigandolfo)
 - [Greg Wong](https://github.com/gregorywong)
 - [Michael V. Battista](https://github.com/mvbattista)
+- [William Abbott](https://github.com/wrabit)

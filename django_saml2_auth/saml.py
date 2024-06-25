@@ -229,7 +229,7 @@ def get_saml_client(
 
     name_id_format = saml2_auth_settings.get("NAME_ID_FORMAT")
     if name_id_format:
-        saml_settings["service"]["sp"]["name_id_format"] = name_id_format
+        saml_settings["service"]["sp"]["name_id_policy_format"] = name_id_format
 
     accepted_time_diff = saml2_auth_settings.get("ACCEPTED_TIME_DIFF")
     if accepted_time_diff:

@@ -15,7 +15,7 @@ setuptools = "69.5.1"
 
 [tool.poetry.group.dev.dependencies]
 coverage = "7.5.0"
-cyclonedx-bom = "4.4.3"
+cyclonedx-bom = "4.5.0"
 django-stubs = "4.2.0"
 interrogate = "1.7.0"
 mypy = "1.4.1"

@@ -134,7 +134,7 @@ def get_user_identify_with_slashed_keys() -> Mapping[str, List[str]]:
         "http://schemas.org/user/claim2.0/email": ["test@example.com"],
         "http://schemas.org/user/claim2.0/first_name": ["John"],
         "http://schemas.org/user/claim2.0/last_name": ["Doe"],
-        "http://schemas.org/auth/server/token": ["TOKEN"]
+        "http://schemas.org/auth/server/token": ["TOKEN"],
     }
 
 
@@ -466,13 +466,13 @@ def test_extract_user_identity_with_slashed_attribute_keys_success(settings: Set
     """Test extract_user_identity function to verify if it correctly extracts user identity
     information from a (pysaml2) parsed SAML response with slashed attribute keys."""
     settings.SAML2_AUTH = {
-            "ATTRIBUTES_MAP": {
-                "email": "http://schemas.org/user/claim2.0/email",
-                "username": "http://schemas.org/user/username",
-                "first_name": "http://schemas.org/user/claim2.0/first_name",
-                "last_name": "http://schemas.org/user/claim2.0/last_name",
-                "token": "http://schemas.org/auth/server/token"
-            }
+        "ATTRIBUTES_MAP": {
+            "email": "http://schemas.org/user/claim2.0/email",
+            "username": "http://schemas.org/user/username",
+            "first_name": "http://schemas.org/user/claim2.0/first_name",
+            "last_name": "http://schemas.org/user/claim2.0/last_name",
+            "token": "http://schemas.org/auth/server/token",
+        }
     }
 
     result = extract_user_identity(get_user_identify_with_slashed_keys())  # type: ignore

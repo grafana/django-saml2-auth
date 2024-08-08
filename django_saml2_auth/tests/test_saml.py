@@ -28,9 +28,7 @@ from saml2.response import AuthnResponse
 from django_saml2_auth import user
 
 
-GET_METADATA_AUTO_CONF_URLS = (
-    "django_saml2_auth.tests.test_saml.get_metadata_auto_conf_urls"
-)
+GET_METADATA_AUTO_CONF_URLS = "django_saml2_auth.tests.test_saml.get_metadata_auto_conf_urls"
 METADATA_URL1 = "https://testserver1.com/saml/sso/metadata"
 METADATA_URL2 = "https://testserver2.com/saml/sso/metadata"
 # Ref: https://en.wikipedia.org/wiki/SAML_metadata#Entity_metadata
@@ -251,9 +249,7 @@ def test_get_metadata_success_with_multiple_metadata_urls(settings: SettingsWrap
     Args:
         settings (SettingsWrapper): Fixture for django settings
     """
-    settings.SAML2_AUTH["TRIGGER"][
-        "GET_METADATA_AUTO_CONF_URLS"
-    ] = GET_METADATA_AUTO_CONF_URLS
+    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
     responses.add(responses.GET, METADATA_URL2, body=METADATA2)
 
@@ -268,9 +264,7 @@ def test_get_metadata_success_with_user_id(settings: SettingsWrapper):
     Args:
         settings (SettingsWrapper): Fixture for django settings
     """
-    settings.SAML2_AUTH["TRIGGER"][
-        "GET_METADATA_AUTO_CONF_URLS"
-    ] = GET_METADATA_AUTO_CONF_URLS
+    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
 
     result = get_metadata("test@example.com")
@@ -283,16 +277,11 @@ def test_get_metadata_failure_with_nonexistent_user_id(settings: SettingsWrapper
     Args:
         settings (SettingsWrapper): Fixture for django settings
     """
-    settings.SAML2_AUTH["TRIGGER"][
-        "GET_METADATA_AUTO_CONF_URLS"
-    ] = GET_METADATA_AUTO_CONF_URLS
+    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
 
     with pytest.raises(SAMLAuthError) as exc_info:
         get_metadata("nonexistent_user@example.com")
-    assert (
-        str(exc_info.value)
-        == "No metadata URL associated with the given user identifier."
-    )
+    assert str(exc_info.value) == "No metadata URL associated with the given user identifier."
 
 
 def test_get_metadata_success_with_local_file(settings: SettingsWrapper):
@@ -315,9 +304,7 @@ def test_get_saml_client_success(settings: SettingsWrapper):
     Args:
         settings (SettingsWrapper): Fixture for django settings
     """
-    settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = (
-        "django_saml2_auth/tests/metadata.xml"
-    )
+    settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "django_saml2_auth/tests/metadata.xml"
     result = get_saml_client("example.com", acs)
     assert isinstance(result, Saml2Client)
 
@@ -330,9 +317,7 @@ def test_get_saml_client_success_with_user_id(settings: SettingsWrapper):
     Args:
         settings (SettingsWrapper): Fixture for django settings
     """
-    settings.SAML2_AUTH["TRIGGER"][
-        "GET_METADATA_AUTO_CONF_URLS"
-    ] = GET_METADATA_AUTO_CONF_URLS
+    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
 
     result = get_saml_client("example.com", acs, "test@example.com")
@@ -346,9 +331,7 @@ def test_get_saml_client_failure_with_missing_metadata_url(settings: SettingsWra
     Args:
         settings (SettingsWrapper): Fixture for django settings
     """
-    settings.SAML2_AUTH["TRIGGER"][
-        "GET_METADATA_AUTO_CONF_URLS"
-    ] = GET_METADATA_AUTO_CONF_URLS
+    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
 
     with pytest.raises(SAMLAuthError) as exc_info:
         get_saml_client("example.com", acs, "test@example.com")
@@ -369,10 +352,7 @@ def test_get_saml_client_failure_with_invalid_file(settings: SettingsWrapper):
     with pytest.raises(SAMLAuthError) as exc_info:
         get_saml_client("example.com", acs)
 
-    assert (
-        str(exc_info.value)
-        == "[Errno 2] No such file or directory: '/invalid/metadata.xml'"
-    )
+    assert str(exc_info.value) == "[Errno 2] No such file or directory: '/invalid/metadata.xml'"
     assert exc_info.value.extra is not None
     assert isinstance(exc_info.value.extra["exc"], FileNotFoundError)
 
@@ -418,9 +398,7 @@ def test_get_saml_client_success_with_key_and_cert_files(
         settings (SettingsWrapper): Fixture for django settings
     """
 
-    settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = (
-        "django_saml2_auth/tests/metadata.xml"
-    )
+    settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "django_saml2_auth/tests/metadata.xml"
 
     for key, value in supplied_config_values.items():
         settings.SAML2_AUTH[key] = value
@@ -447,13 +425,9 @@ def test_decode_saml_response_success(
     """
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
     settings.SAML2_AUTH["ASSERTION_URL"] = "https://api.example.com"
-    settings.SAML2_AUTH["TRIGGER"][
-        "GET_METADATA_AUTO_CONF_URLS"
-    ] = GET_METADATA_AUTO_CONF_URLS
+    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = GET_METADATA_AUTO_CONF_URLS
 
-    post_request = RequestFactory().post(
-        METADATA_URL1, {"SAMLResponse": "SAML RESPONSE"}
-    )
+    post_request = RequestFactory().post(METADATA_URL1, {"SAMLResponse": "SAML RESPONSE"})
     monkeypatch.setattr(
         Saml2Client, "parse_authn_request_response", mock_parse_authn_request_response
     )
@@ -501,9 +475,7 @@ def test_acs_view_when_next_url_is_none(
             "GET_METADATA_AUTO_CONF_URLS": GET_METADATA_AUTO_CONF_URLS,
         },
     }
-    post_request = RequestFactory().post(
-        METADATA_URL1, {"SAMLResponse": "SAML RESPONSE"}
-    )
+    post_request = RequestFactory().post(METADATA_URL1, {"SAMLResponse": "SAML RESPONSE"})
 
     monkeypatch.setattr(
         Saml2Client, "parse_authn_request_response", mock_parse_authn_request_response

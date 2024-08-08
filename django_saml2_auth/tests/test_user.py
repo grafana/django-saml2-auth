@@ -297,9 +297,7 @@ def test_get_user_trigger_error(settings: SettingsWrapper):
         }
     }
     with pytest.raises(SAMLAuthError) as exc_info:
-        get_user(
-            {"username": "test@example.com", "first_name": "John", "last_name": "Doe"}
-        )
+        get_user({"username": "test@example.com", "first_name": "John", "last_name": "Doe"})
 
     assert str(exc_info.value) == (
         "module 'django_saml2_auth.tests.test_user' has no attribute 'nonexistent_trigger'"

@@ -153,9 +153,7 @@ def acs(request: HttpRequest):
     if use_jwt and target_user.is_active:
         # Create a new JWT token for IdP-initiated login (acs)
         jwt_token = create_custom_or_default_jwt(target_user)
-        custom_token_query_trigger = dictor(
-            saml2_auth_settings, "TRIGGER.CUSTOM_TOKEN_QUERY"
-        )
+        custom_token_query_trigger = dictor(saml2_auth_settings, "TRIGGER.CUSTOM_TOKEN_QUERY")
         if custom_token_query_trigger:
             query = run_hook(custom_token_query_trigger, jwt_token)
         else:
@@ -168,10 +166,7 @@ def acs(request: HttpRequest):
 
     if target_user.is_active:
         # Try to load from the `AUTHENTICATION_BACKENDS` setting in settings.py
-        if (
-            hasattr(settings, "AUTHENTICATION_BACKENDS")
-            and settings.AUTHENTICATION_BACKENDS
-        ):
+        if hasattr(settings, "AUTHENTICATION_BACKENDS") and settings.AUTHENTICATION_BACKENDS:
             model_backend = settings.AUTHENTICATION_BACKENDS[0]
         else:
             model_backend = "django.contrib.auth.backends.ModelBackend"
@@ -208,9 +203,7 @@ def acs(request: HttpRequest):
 
     if is_new_user:
         try:
-            return render(
-                request, "django_saml2_auth/welcome.html", {"user": request.user}
-            )
+            return render(request, "django_saml2_auth/welcome.html", {"user": request.user})
         except TemplateDoesNotExist:
             return redirect(next_url)
     else:
@@ -296,9 +289,7 @@ def signin(request: HttpRequest) -> HttpResponseRedirect:
 
     try:
         if "next=" in unquote(next_url):
-            parsed_next_url = urlparse.parse_qs(
-                urlparse.urlparse(unquote(next_url)).query
-            )
+            parsed_next_url = urlparse.parse_qs(urlparse.urlparse(unquote(next_url)).query)
             next_url = dictor(parsed_next_url, "next.0")
     except Exception:
         next_url = request.GET.get("next") or get_default_next_url()

@@ -80,10 +80,7 @@ def test_run_hook_nothing_to_import():
     with pytest.raises(SAMLAuthError) as exc_info:
         run_hook("divide")
 
-    assert (
-        str(exc_info.value)
-        == "There's nothing to import. Check your hook's import path!"
-    )
+    assert str(exc_info.value) == "There's nothing to import. Check your hook's import path!"
 
 
 def test_run_hook_import_error():

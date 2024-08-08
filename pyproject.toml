@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-saml2-auth"
-version = "0.1.0"
+version = "0.0.0"
 description = "Django SAML2 Authentication Made Easy."
 authors = ["Mostafa Moradian <mostafa@grafana.com>"]
 license = "Apache 2.0"
@@ -57,6 +57,9 @@ plugins = ["mypy_django_plugin.main"]
 [tool.django-stubs]
 django_settings_module = "django_saml2_auth.tests.settings"
 
+[tool.poetry-dynamic-versioning]
+enable = true
+
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"

@@ -24,6 +24,9 @@ jobs:
         poetry-version: ["1.8.3"]
     permissions:
       id-token: write
+    environment:
+      name: pypi
+      url: https://pypi.org/p/grafana-django-saml2-auth
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v4

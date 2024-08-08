@@ -1,3 +1,0 @@
-include LICENSE README.rst AUTHORS.rst
-recursive-include django_saml2_auth/templates/django_saml2_auth *.html
-global-exclude *.pyc[co]

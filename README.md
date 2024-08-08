@@ -100,6 +100,9 @@ python setup.py install
 
     Please note, the only required setting is **METADATA\_AUTO\_CONF\_URL** or the existence of a **GET\_METADATA\_AUTO\_CONF\_URLS** trigger function. The following block shows all required and optional configuration settings and their default values.
 
+    <details>
+        <summary>Click to see the entire settings block</summary>
+
     ```python
     SAML2_AUTH = {
         # Metadata is required, choose either remote url or local file path
@@ -107,7 +110,7 @@ python setup.py install
         'METADATA_LOCAL_FILE_PATH': '[The metadata configuration file path]',
         'KEY_FILE': '[The key file path]',
         'CERT_FILE': '[The certificate file path]',
-        
+
         # If both `KEY_FILE` and `CERT_FILE` are provided, `ENCRYPTION_KEYPAIRS` will be added automatically. There is no need to provide it unless you wish to override the default value.
         'ENCRYPTION_KEYPAIRS': [
             {
@@ -203,7 +206,10 @@ python setup.py install
         'ALLOWED_REDIRECT_HOSTS': ["https://myfrontendclient.com"], # Allowed hosts to redirect to using the ?next parameter
         'TOKEN_REQUIRED': True,  # Whether or not to require the token parameter in the SAML assertion
     }
+
     ```
+
+    </details>
 
 5. In your SAML2 SSO identity provider, set the Single-sign-on URL and Audience URI (SP Entity ID) to <http://your-domain/sso/acs/>
 
@@ -218,6 +224,9 @@ Also, you can enable the debug mode in the `settings.py` file by setting the `DE
 ## Module Settings
 
 Some of the following settings are related to how this module operates. The rest are passed as options to the pysaml2 library. For more information on the pysaml2 library, see the [pysaml2 documentation](https://pysaml2.readthedocs.io/en/latest/howto/config.html), which contains examples of available settings. Also, note that all settings are not implemented in this module.
+
+<details>
+    <summary>Click to see the module settings</summary>
 
 | **Field name**                              | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                             | **Data type(s)** | **Default value(s)**                                                                                                                     | **Example**                                                                             |
 | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
@@ -267,6 +276,8 @@ Some of the following settings are related to how this module operates. The rest
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | **GET\_METADATA\_AUTO\_CONF\_URLS**    | Auto SAML2 metadata configuration URL                                                                                                       | get_metadata_auto_conf_urls(user_id: Optional[str] = None) -> Optional[List[Dict[str, str]]] |
 | **GET\_USER_ID\_FROM\_SAML\_RESPONSE** | Allows retrieving a user ID before GET_METADATA_AUTO_CONF_URLS gets triggered. Warning: SAML response still not verified. Use with caution! | get_user_id_from_saml_response(saml_response: str, user_id: Optional[str]) -> Optional[str]  |
+
+</details>
 
 ## JWT Signing Algorithm and Settings
 
@@ -370,8 +381,11 @@ More information can be found in the [Okta Developer Documentation](https://deve
 
 I adopted a reasonably simple release process, which is almost automated, except for two actions that needed to be taken to start a release:
 
-1. Update [setup.py](setup.py) and increase the version number in the `setup` function. Unless something backward-incompatible is introduced, only the minor version is upgraded: 3.8.0 becomes 3.9.0.
-2. Tag the `main` branch with the the `vSEMVER`, e.g. `v3.9.0`, and git-push the tag.
-3. The release and publish to PyPI is handled in the CI/CD using GitHub Actions.
-4. Create a new release with auto-generated (and polished) release notes on the tag.
-5. Download [SBOM artifacts](https://github.com/grafana/django-saml2-auth/actions/runs/3227336576) generated by GitHub Actions for the corresponding run, and add them to the [release files](https://github.com/grafana/django-saml2-auth/releases/tag/v3.9.0).
+1. Tag the `main` branch locally with the the `vSEMVER`, e.g. `v3.9.0`, and push the tag.
+2. After the tag is pushed, the release process will be triggered automatically.
+3. The release process will:
+   1. run the linters and tests.
+   2. build the binary and source package.
+   3. publish the package to PyPI.
+   4. create a new release with auto-generated release notes on the tag.
+   5. upload the SBOM artifacts and build artifacts to the release.

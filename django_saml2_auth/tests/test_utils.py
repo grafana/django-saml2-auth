@@ -6,7 +6,12 @@ import pytest
 from django.http import HttpRequest, HttpResponse
 from django.urls import NoReverseMatch
 from django_saml2_auth.exceptions import SAMLAuthError
-from django_saml2_auth.utils import exception_handler, get_reverse, run_hook, is_jwt_well_formed
+from django_saml2_auth.utils import (
+    exception_handler,
+    get_reverse,
+    run_hook,
+    is_jwt_well_formed,
+)
 
 
 def divide(a: int, b: int = 1) -> int:
@@ -75,7 +80,10 @@ def test_run_hook_nothing_to_import():
     with pytest.raises(SAMLAuthError) as exc_info:
         run_hook("divide")
 
-    assert str(exc_info.value) == "There's nothing to import. Check your hook's import path!"
+    assert (
+        str(exc_info.value)
+        == "There's nothing to import. Check your hook's import path!"
+    )
 
 
 def test_run_hook_import_error():
@@ -88,7 +96,7 @@ def test_run_hook_import_error():
         "module 'django_saml2_auth.tests.test_utils' has no attribute 'nonexistent_divide'"
     )
     assert isinstance(exc_info.value.extra["exc"], AttributeError)
-    assert exc_info.value.extra["exc_type"] == AttributeError
+    assert exc_info.value.extra["exc_type"] is AttributeError
 
 
 def test_run_hook_division_by_zero():
@@ -99,7 +107,7 @@ def test_run_hook_division_by_zero():
     assert str(exc_info.value) == "division by zero"
     # Actually a ZeroDivisionError wrapped in SAMLAuthError
     assert isinstance(exc_info.value.extra["exc"], ZeroDivisionError)
-    assert exc_info.value.extra["exc_type"] == ZeroDivisionError
+    assert exc_info.value.extra["exc_type"] is ZeroDivisionError
 
 
 def test_get_reverse_success():

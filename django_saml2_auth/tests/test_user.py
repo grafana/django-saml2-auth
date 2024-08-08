@@ -163,7 +163,9 @@ def test_create_new_user_with_dict_success(settings: SettingsWrapper):
 
 
 @pytest.mark.django_db
-def test_create_new_user_with_dict_success__no_first_and_last_name(settings: SettingsWrapper):
+def test_create_new_user_with_dict_success__no_first_and_last_name(
+    settings: SettingsWrapper,
+):
     """Test create_new_user function to verify if it works and correctly joins the user to the
     respective group.
 
@@ -216,7 +218,7 @@ def test_create_new_user_value_error():
         create_new_user("", "John", "Doe")
 
     assert str(exc_info.value) == "There was an error creating the new user."
-    assert exc_info.value.extra["exc_type"] == ValueError
+    assert exc_info.value.extra["exc_type"] is ValueError
 
 
 @pytest.mark.django_db
@@ -295,7 +297,9 @@ def test_get_user_trigger_error(settings: SettingsWrapper):
         }
     }
     with pytest.raises(SAMLAuthError) as exc_info:
-        get_user({"username": "test@example.com", "first_name": "John", "last_name": "Doe"})
+        get_user(
+            {"username": "test@example.com", "first_name": "John", "last_name": "Doe"}
+        )
 
     assert str(exc_info.value) == (
         "module 'django_saml2_auth.tests.test_user' has no attribute 'nonexistent_trigger'"
@@ -540,7 +544,10 @@ def test_create_and_decode_jwt_token_success(
 @pytest.mark.parametrize(
     "saml2_settings,error_msg",
     [
-        ({"JWT_ALGORITHM": None}, "Cannot encode/decode JWT token. Specify an algorithm."),
+        (
+            {"JWT_ALGORITHM": None},
+            "Cannot encode/decode JWT token. Specify an algorithm.",
+        ),
         (
             {"JWT_ALGORITHM": "HS256", "JWT_SECRET": None},
             "Cannot encode/decode JWT token. Specify a secret.",
@@ -589,7 +596,10 @@ def test_create_jwt_token_with_incorrect_jwt_settings(
 @pytest.mark.parametrize(
     "saml2_settings,error_msg",
     [
-        ({"JWT_ALGORITHM": None}, "Cannot encode/decode JWT token. Specify an algorithm."),
+        (
+            {"JWT_ALGORITHM": None},
+            "Cannot encode/decode JWT token. Specify an algorithm.",
+        ),
         (
             {"JWT_ALGORITHM": "HS256", "JWT_SECRET": None},
             "Cannot encode/decode JWT token. Specify a secret.",

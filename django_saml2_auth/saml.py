@@ -402,15 +402,15 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
     )
 
     user = {}
-    user["email"] = dictor(user_identity, f"{email_field}/0", pathsep="/")  # Path includes "."
-    user["username"] = dictor(user_identity, f"{username_field}/0", pathsep="/")
-    user["first_name"] = dictor(user_identity, f"{firstname_field}/0", pathsep="/")
-    user["last_name"] = dictor(user_identity, f"{lastname_field}/0", pathsep="/")
+    user["email"] = dictor(user_identity, f"{email_field}|0", pathsep="|")  # Path includes "."
+    user["username"] = dictor(user_identity, f"{username_field}|0", pathsep="|")
+    user["first_name"] = dictor(user_identity, f"{firstname_field}|0", pathsep="|")
+    user["last_name"] = dictor(user_identity, f"{lastname_field}|0", pathsep="|")
 
     token_required = dictor(saml2_auth_settings, "TOKEN_REQUIRED", default=True)
     if token_required:
         token_field = dictor(saml2_auth_settings, "ATTRIBUTES_MAP.token", default="token")
-        user["token"] = dictor(user_identity, f"{token_field}.0")
+        user["token"] = dictor(user_identity, f"{token_field}|0", pathsep="|")
 
     if user["email"]:
         user["email"] = user["email"].lower()

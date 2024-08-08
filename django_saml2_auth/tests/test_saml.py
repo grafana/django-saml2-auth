@@ -123,6 +123,21 @@ def get_user_identity() -> Mapping[str, List[str]]:
     }
 
 
+def get_user_identify_with_slashed_keys() -> Mapping[str, List[str]]:
+    """Fixture for returning user identity produced by pysaml2 with slashed, claim-like keys.
+
+    Returns:
+        dict: keys are SAML attributes and values are lists of attribute values
+    """
+    return {
+        "http://schemas.org/user/username": ["test@example.com"],
+        "http://schemas.org/user/claim2.0/email": ["test@example.com"],
+        "http://schemas.org/user/claim2.0/first_name": ["John"],
+        "http://schemas.org/user/claim2.0/last_name": ["Doe"],
+        "http://schemas.org/auth/server/token": ["TOKEN"],
+    }
+
+
 def mock_parse_authn_request_response(
     self: Saml2Client, response: AuthnResponse, binding: str
 ) -> "MockAuthnResponse":  # type: ignore # noqa: F821
@@ -445,6 +460,29 @@ def test_extract_user_identity_success():
     assert result["last_name"] == "Doe"
     assert result["token"] == "TOKEN"
     assert result["user_identity"] == get_user_identity()
+
+
+def test_extract_user_identity_with_slashed_attribute_keys_success(settings: SettingsWrapper):
+    """Test extract_user_identity function to verify if it correctly extracts user identity
+    information from a (pysaml2) parsed SAML response with slashed attribute keys."""
+    settings.SAML2_AUTH = {
+        "ATTRIBUTES_MAP": {
+            "email": "http://schemas.org/user/claim2.0/email",
+            "username": "http://schemas.org/user/username",
+            "first_name": "http://schemas.org/user/claim2.0/first_name",
+            "last_name": "http://schemas.org/user/claim2.0/last_name",
+            "token": "http://schemas.org/auth/server/token",
+        }
+    }
+
+    result = extract_user_identity(get_user_identify_with_slashed_keys())  # type: ignore
+
+    assert len(result) == 6
+    assert result["username"] == result["email"] == "test@example.com"
+    assert result["first_name"] == "John"
+    assert result["last_name"] == "Doe"
+    assert result["token"] == "TOKEN"
+    assert result["user_identity"] == get_user_identify_with_slashed_keys()
 
 
 def test_extract_user_identity_token_not_required(settings: SettingsWrapper):

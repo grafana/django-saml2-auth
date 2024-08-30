@@ -21,6 +21,7 @@ from django_saml2_auth.saml import (
     get_saml_client,
     validate_metadata_url,
 )
+from django_saml2_auth.utils import run_hook
 from django_saml2_auth.views import acs
 from pytest_django.fixtures import SettingsWrapper
 from saml2.client import Saml2Client
@@ -88,6 +89,11 @@ METADATA2 = b"""
     <md:EmailAddress>mailto:technical-support@example.info</md:EmailAddress>
     </md:ContactPerson>
 </md:EntityDescriptor>"""
+DOMAIN_PATH_MAP = {
+    "example.org": "django_saml2_auth/tests/metadata.xml",
+    "example.com": "django_saml2_auth/tests/metadata2.xml",
+    "api.example.com": "django_saml2_auth/tests/metadata.xml",
+}
 
 
 def get_metadata_auto_conf_urls(
@@ -587,3 +593,54 @@ def test_acs_view_when_redirection_state_is_passed_in_relay_state(
 
     result = acs(post_request)
     assert result["Location"] == "/admin/logs"
+
+
+def get_custom_metadata_example(
+    user_id: Optional[str] = None,
+    domain:  Optional[str] = None,
+    saml_response: Optional[str] = None,
+):
+    """
+    Get metadata file locally depending on current SP domain
+    """
+    print('************')
+    print('get_custom_metadata_example')
+    print('************')
+    metadata_file_path = "/absolute/path/to/metadata.xml"
+    if domain:
+        protocol_idx = domain.find("https://")
+        if protocol_idx > -1:
+            domain = domain[protocol_idx + 8:]
+        if domain in DOMAIN_PATH_MAP:
+            print('metadata domain', domain)
+            metadata_file_path = DOMAIN_PATH_MAP[domain]
+            print('metadata path', metadata_file_path)
+        else:
+            raise SAMLAuthError(f"Domain {domain} not mapped!")
+    else:
+        # Fallback to local path
+        metadata_file_path = "/absolute/path/to/metadata.xml"
+    return {"local": [metadata_file_path]}
+
+
+# WARNING: leave this test at the end or add
+# settings.SAML2_AUTH["TRIGGER"]["GET_CUSTOM_METADATA"] = None
+# to following tests that uses settings, otherwise the TRIGGER.GET_CUSTOM_METADATA is always set
+# and used in the get_metadata function
+
+def test_get_metadata_success_with_custom_trigger(settings: SettingsWrapper):
+    """Test get_metadata function to verify if correctly returns path to local metadata file.
+
+    Args:
+        settings (SettingsWrapper): Fixture for django settings
+    """
+    settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = None
+    settings.SAML2_AUTH["TRIGGER"]["GET_CUSTOM_METADATA"] = "django_saml2_auth.tests.test_saml.get_custom_metadata_example"
+    
+    result = get_metadata(domain="https://example.com")
+    assert result == {"local": ["django_saml2_auth/tests/metadata2.xml"]}
+
+    with pytest.raises(SAMLAuthError) as exc_info:
+        get_metadata(domain="not-mapped-example.com")
+
+    assert str(exc_info.value) == "Domain not-mapped-example.com not mapped!"

@@ -603,9 +603,6 @@ def get_custom_metadata_example(
     """
     Get metadata file locally depending on current SP domain
     """
-    print('************')
-    print('get_custom_metadata_example')
-    print('************')
     metadata_file_path = "/absolute/path/to/metadata.xml"
     if domain:
         protocol_idx = domain.find("https://")

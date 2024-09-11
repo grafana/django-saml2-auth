@@ -1,10 +1,11 @@
 [tool.poetry]
-name = "django-saml2-auth"
+name = "grafana-django-saml2-auth"
 version = "0.0.0"
 description = "Django SAML2 Authentication Made Easy."
 authors = ["Mostafa Moradian <mostafa@grafana.com>"]
 license = "Apache 2.0"
 readme = "README.md"
+packages = [{ include = "django_saml2_auth", from = "." }]
 
 [tool.poetry.dependencies]
 python = "^3.10"

@@ -115,7 +115,7 @@ def get_metadata(
     # If there is a custom trigger, metadata is retrieved directly within the trigger
     get_custom_metadata_trigger = dictor(saml2_auth_settings, "TRIGGER.GET_CUSTOM_METADATA")
     if get_custom_metadata_trigger:
-        return run_hook(get_custom_metadata_trigger, user_id, domain, saml_response)
+        return run_hook(get_custom_metadata_trigger, user_id, domain, saml_response)  # type: ignore
 
     get_metadata_trigger = dictor(saml2_auth_settings, "TRIGGER.GET_METADATA_AUTO_CONF_URLS")
     if get_metadata_trigger:

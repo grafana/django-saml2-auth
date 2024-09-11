@@ -21,7 +21,6 @@ from django_saml2_auth.saml import (
     get_saml_client,
     validate_metadata_url,
 )
-from django_saml2_auth.utils import run_hook
 from django_saml2_auth.views import acs
 from pytest_django.fixtures import SettingsWrapper
 from saml2.client import Saml2Client

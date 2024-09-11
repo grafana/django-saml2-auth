@@ -86,7 +86,11 @@ def validate_metadata_url(url: str) -> bool:
     return True
 
 
-def get_metadata(user_id: Optional[str] = None) -> Mapping[str, Any]:
+def get_metadata(
+    user_id: Optional[str] = None,
+    domain:  Optional[str] = None,
+    saml_response: Optional[str] = None,
+) -> Mapping[str, Any]:
     """Returns metadata information, either by running the GET_METADATA_AUTO_CONF_URLS hook function
     if available, or by checking and returning a local file path or the METADATA_AUTO_CONF_URL. URLs
     are always validated and invalid URLs will be either filtered or raise a SAMLAuthError
@@ -96,6 +100,8 @@ def get_metadata(user_id: Optional[str] = None) -> Mapping[str, Any]:
         user_id (str, optional): If passed, it will be further processed by the
             GET_METADATA_AUTO_CONF_URLS trigger, which will return the metadata URL corresponding to
             the given user identifier, either email or username. Defaults to None.
+        domain (str, optional): Domain name to get SAML config for
+        saml_response (str or None): decoded XML SAML response.
 
     Raises:
         SAMLAuthError: No metadata URL associated with the given user identifier.
@@ -105,6 +111,12 @@ def get_metadata(user_id: Optional[str] = None) -> Mapping[str, Any]:
         Mapping[str, Any]: Returns a SAML metadata object as dictionary
     """
     saml2_auth_settings = settings.SAML2_AUTH
+
+    # If there is a custom trigger, metadata is retrieved directly within the trigger
+    get_custom_metadata_trigger = dictor(saml2_auth_settings, "TRIGGER.GET_CUSTOM_METADATA")
+    if get_custom_metadata_trigger:
+        return run_hook(get_custom_metadata_trigger, user_id, domain, saml_response)  # type: ignore
+
     get_metadata_trigger = dictor(saml2_auth_settings, "TRIGGER.GET_METADATA_AUTO_CONF_URLS")
     if get_metadata_trigger:
         metadata_urls = run_hook(get_metadata_trigger, user_id)  # type: ignore
@@ -177,7 +189,7 @@ def get_saml_client(
     if get_user_id_from_saml_response and saml_response:
         user_id = run_hook(get_user_id_from_saml_response, saml_response, user_id)  # type: ignore
 
-    metadata = get_metadata(user_id)
+    metadata = get_metadata(user_id, domain, saml_response)
     if metadata and (
         ("local" in metadata and not metadata["local"])
         or ("remote" in metadata and not metadata["remote"])

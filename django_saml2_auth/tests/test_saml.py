@@ -467,7 +467,9 @@ def test_extract_user_identity_success():
     assert result["user_identity"] == get_user_identity()
 
 
-def test_extract_user_identity_with_slashed_attribute_keys_success(settings: SettingsWrapper):
+def test_extract_user_identity_with_slashed_attribute_keys_success(
+    settings: SettingsWrapper,
+):
     """Test extract_user_identity function to verify if it correctly extracts user identity
     information from a (pysaml2) parsed SAML response with slashed attribute keys."""
     settings.SAML2_AUTH = {
@@ -596,7 +598,7 @@ def test_acs_view_when_redirection_state_is_passed_in_relay_state(
 
 def get_custom_metadata_example(
     user_id: Optional[str] = None,
-    domain:  Optional[str] = None,
+    domain: Optional[str] = None,
     saml_response: Optional[str] = None,
 ):
     """
@@ -606,11 +608,11 @@ def get_custom_metadata_example(
     if domain:
         protocol_idx = domain.find("https://")
         if protocol_idx > -1:
-            domain = domain[protocol_idx + 8:]
+            domain = domain[protocol_idx + 8 :]
         if domain in DOMAIN_PATH_MAP:
-            print('metadata domain', domain)
+            print("metadata domain", domain)
             metadata_file_path = DOMAIN_PATH_MAP[domain]
-            print('metadata path', metadata_file_path)
+            print("metadata path", metadata_file_path)
         else:
             raise SAMLAuthError(f"Domain {domain} not mapped!")
     else:
@@ -624,6 +626,7 @@ def get_custom_metadata_example(
 # to following tests that uses settings, otherwise the TRIGGER.GET_CUSTOM_METADATA is always set
 # and used in the get_metadata function
 
+
 def test_get_metadata_success_with_custom_trigger(settings: SettingsWrapper):
     """Test get_metadata function to verify if correctly returns path to local metadata file.
 
@@ -631,8 +634,10 @@ def test_get_metadata_success_with_custom_trigger(settings: SettingsWrapper):
         settings (SettingsWrapper): Fixture for django settings
     """
     settings.SAML2_AUTH["TRIGGER"]["GET_METADATA_AUTO_CONF_URLS"] = None
-    settings.SAML2_AUTH["TRIGGER"]["GET_CUSTOM_METADATA"] = "django_saml2_auth.tests.test_saml.get_custom_metadata_example"
-    
+    settings.SAML2_AUTH["TRIGGER"]["GET_CUSTOM_METADATA"] = (
+        "django_saml2_auth.tests.test_saml.get_custom_metadata_example"
+    )
+
     result = get_metadata(domain="https://example.com")
     assert result == {"local": ["django_saml2_auth/tests/metadata2.xml"]}
 

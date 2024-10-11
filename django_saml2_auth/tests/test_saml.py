@@ -534,7 +534,7 @@ def test_extract_user_identity_with_slashed_attribute_keys_success(
     monkeypatch.setattr(
         Saml2Client,
         "parse_authn_request_response",
-        lambda *args, **kwargs: mock_parse_authn_request_response(*args, **kwargs, slash_keys=True),
+        lambda *args, **kwargs: mock_parse_authn_request_response(*args, **kwargs, slash_keys=True),  # type: ignore
     )
     authn_response = decode_saml_response(post_request, acs)
 

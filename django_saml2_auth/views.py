@@ -109,7 +109,7 @@ def acs(request: HttpRequest):
     authn_response = decode_saml_response(request, acs)
     # decode_saml_response() will raise SAMLAuthError if the response is invalid,
     # so we can safely ignore the type check here.
-    user = extract_user_identity(authn_response.get_identity())  # type: ignore
+    user = extract_user_identity(authn_response)  # type: ignore
 
     next_url = request.session.get("login_next_url")
 

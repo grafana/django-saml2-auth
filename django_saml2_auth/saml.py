@@ -88,7 +88,7 @@ def validate_metadata_url(url: str) -> bool:
 
 def get_metadata(
     user_id: Optional[str] = None,
-    domain:  Optional[str] = None,
+    domain: Optional[str] = None,
     saml_response: Optional[str] = None,
 ) -> Mapping[str, Any]:
     """Returns metadata information, either by running the GET_METADATA_AUTO_CONF_URLS hook function
@@ -388,11 +388,16 @@ def decode_saml_response(
     return authn_response
 
 
-def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[Any]]:
-    """Extract user information from SAML user identity object
+def extract_user_identity(
+    authn_response: Union[HttpResponseRedirect, Optional[AuthnResponse], None],
+) -> Dict[str, Optional[Any]]:
+    """Extract user information from SAML user identity object and optionally
+    enriches the output with anything that can be extracted from the
+    authentication response, like issuer, name_id, etc.
 
     Args:
-        user_identity (Dict[str, Any]): SAML user identity object (dict)
+        authn_response (Union[HttpResponseRedirect, Optional[AuthnResponse], None]):
+            AuthnResponse object for extracting user identity from.
 
     Raises:
         SAMLAuthError: No token specified.
@@ -400,9 +405,12 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
 
     Returns:
         Dict[str, Optional[Any]]: Cleaned user information plus user_identity
-            for backwards compatibility
+            for backwards compatibility. Also, it can include any custom attributes
+            that are extracted from the SAML response.
     """
     saml2_auth_settings = settings.SAML2_AUTH
+
+    user_identity: Dict[str, Any] = authn_response.get_identity()  # type: ignore
 
     email_field = dictor(saml2_auth_settings, "ATTRIBUTES_MAP.email", default="user.email")
     username_field = dictor(saml2_auth_settings, "ATTRIBUTES_MAP.username", default="user.username")
@@ -454,4 +462,13 @@ def extract_user_identity(user_identity: Dict[str, Any]) -> Dict[str, Optional[A
             },
         )
 
+    # If there is a custom trigger, user identity is extracted directly within the trigger.
+    # This is useful when the user identity doesn't include custom attributes to determine
+    # the organization, project or team that the user belongs to. Hence, the trigger can use
+    # the user identity from the SAML response along with the whole authentication response.
+    extract_user_identity_trigger = dictor(saml2_auth_settings, "TRIGGER.EXTRACT_USER_IDENTITY")
+    if extract_user_identity_trigger:
+        return run_hook(extract_user_identity_trigger, user, authn_response)  # type: ignore
+
+    # If there is no custom trigger, the user identity is returned as is.
     return user

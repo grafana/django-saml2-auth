@@ -2,7 +2,7 @@
 Tests for saml.py
 """
 
-from typing import Dict, Optional, List, Mapping, Union
+from typing import Any, Dict, Optional, List, Mapping, Union
 
 import pytest
 import responses
@@ -113,6 +113,26 @@ def get_metadata_auto_conf_urls(
     return [{"url": METADATA_URL1}, {"url": METADATA_URL2}]
 
 
+def mock_extract_user_identity(
+    user: Dict[str, Optional[Any]], authn_response: AuthnResponse
+) -> Dict[str, Optional[Any]]:
+    """Fixture for enriching user identity information with SAML attributes.
+
+    Args:
+        authn_response (AuthnResponse): A parsed SAML response
+
+    Returns:
+        dict: keys are SAML attributes and values are lists of attribute values
+    """
+    return {
+        "user.username": ["test@example.com"],
+        "user.email": ["test@example.com"],
+        "user.first_name": ["John"],
+        "user.last_name": ["Doe"],
+        "issuer": authn_response.issuer(),  # Extra attribute
+    }
+
+
 def get_user_identity() -> Mapping[str, List[str]]:
     """Fixture for returning user identity produced by pysaml2.
 
@@ -144,7 +164,10 @@ def get_user_identify_with_slashed_keys() -> Mapping[str, List[str]]:
 
 
 def mock_parse_authn_request_response(
-    self: Saml2Client, response: AuthnResponse, binding: str
+    self: Saml2Client,
+    response: AuthnResponse,
+    binding: str,
+    slash_keys: bool = False,
 ) -> "MockAuthnResponse":  # type: ignore # noqa: F821
     """Mock function to return an mocked instance of AuthnResponse.
 
@@ -165,6 +188,8 @@ def mock_parse_authn_request_response(
         @staticmethod
         def get_identity():
             """Mock function for AuthnRequest.get_identity()."""
+            if slash_keys:
+                return get_user_identify_with_slashed_keys()
             return get_user_identity()
 
     return MockAuthnRequest()
@@ -455,10 +480,26 @@ def test_decode_saml_response_success(
     assert len(result.get_identity()) > 0  # type: ignore
 
 
-def test_extract_user_identity_success():
+@responses.activate
+def test_extract_user_identity_success(
+    settings: SettingsWrapper,
+    monkeypatch: "MonkeyPatch",  # type: ignore # noqa: F821
+):
     """Test extract_user_identity function to verify if it correctly extracts user identity
     information from a (pysaml2) parsed SAML response."""
-    result = extract_user_identity(get_user_identity())  # type: ignore
+    responses.add(responses.GET, METADATA_URL1, body=METADATA1)
+    settings.SAML2_AUTH["ASSERTION_URL"] = "https://api.example.com"
+    settings.SAML2_AUTH["TRIGGER"] = {
+        "GET_METADATA_AUTO_CONF_URLS": GET_METADATA_AUTO_CONF_URLS,
+    }
+
+    post_request = RequestFactory().post(METADATA_URL1, {"SAMLResponse": "SAML RESPONSE"})
+    monkeypatch.setattr(
+        Saml2Client, "parse_authn_request_response", mock_parse_authn_request_response
+    )
+    authn_response = decode_saml_response(post_request, acs)
+
+    result = extract_user_identity(authn_response)  # type: ignore
     assert len(result) == 6
     assert result["username"] == result["email"] == "test@example.com"
     assert result["first_name"] == "John"
@@ -467,8 +508,10 @@ def test_extract_user_identity_success():
     assert result["user_identity"] == get_user_identity()
 
 
+@responses.activate
 def test_extract_user_identity_with_slashed_attribute_keys_success(
     settings: SettingsWrapper,
+    monkeypatch: "MonkeyPatch",  # type: ignore # noqa: F821
 ):
     """Test extract_user_identity function to verify if it correctly extracts user identity
     information from a (pysaml2) parsed SAML response with slashed attribute keys."""
@@ -479,10 +522,23 @@ def test_extract_user_identity_with_slashed_attribute_keys_success(
             "first_name": "http://schemas.org/user/claim2.0/first_name",
             "last_name": "http://schemas.org/user/claim2.0/last_name",
             "token": "http://schemas.org/auth/server/token",
-        }
+        },
+        "ASSERTION_URL": "https://api.example.com",
+        "TRIGGER": {
+            "GET_METADATA_AUTO_CONF_URLS": GET_METADATA_AUTO_CONF_URLS,
+        },
     }
+    responses.add(responses.GET, METADATA_URL1, body=METADATA1)
 
-    result = extract_user_identity(get_user_identify_with_slashed_keys())  # type: ignore
+    post_request = RequestFactory().post(METADATA_URL1, {"SAMLResponse": "SAML RESPONSE"})
+    monkeypatch.setattr(
+        Saml2Client,
+        "parse_authn_request_response",
+        lambda *args, **kwargs: mock_parse_authn_request_response(*args, **kwargs, slash_keys=True),
+    )
+    authn_response = decode_saml_response(post_request, acs)
+
+    result = extract_user_identity(authn_response)  # type: ignore
 
     assert len(result) == 6
     assert result["username"] == result["email"] == "test@example.com"
@@ -492,14 +548,62 @@ def test_extract_user_identity_with_slashed_attribute_keys_success(
     assert result["user_identity"] == get_user_identify_with_slashed_keys()
 
 
-def test_extract_user_identity_token_not_required(settings: SettingsWrapper):
+@responses.activate
+def test_extract_user_identity_token_not_required(
+    settings: SettingsWrapper,
+    monkeypatch: "MonkeyPatch",  # type: ignore # noqa: F821
+):
     """Test extract_user_identity function to verify if it correctly extracts user identity
     information from a (pysaml2) parsed SAML response when token is not required."""
-    settings.SAML2_AUTH["TOKEN_REQUIRED"] = False
+    responses.add(responses.GET, METADATA_URL1, body=METADATA1)
+    settings.SAML2_AUTH = {
+        "TOKEN_REQUIRED": False,
+        "ASSERTION_URL": "https://api.example.com",
+        "TRIGGER": {
+            "GET_METADATA_AUTO_CONF_URLS": GET_METADATA_AUTO_CONF_URLS,
+        },
+    }
 
-    result = extract_user_identity(get_user_identity())  # type: ignore
+    post_request = RequestFactory().post(METADATA_URL1, {"SAMLResponse": "SAML RESPONSE"})
+    monkeypatch.setattr(
+        Saml2Client, "parse_authn_request_response", mock_parse_authn_request_response
+    )
+    authn_response = decode_saml_response(post_request, acs)
+
+    result = extract_user_identity(authn_response)  # type: ignore
     assert len(result) == 5
     assert "token" not in result
+
+
+@responses.activate
+def test_extract_user_identity_with_custom_trigger(
+    settings: SettingsWrapper,
+    monkeypatch: "MonkeyPatch",  # type: ignore # noqa: F821
+):
+    """Test extract_user_identity function to verify if it correctly extracts user identity
+    information from a (pysaml2) parsed SAML response when token is not required. The function
+    uses a custom trigger to enrich the user identity information with the issuer attribute.
+    """
+    responses.add(responses.GET, METADATA_URL1, body=METADATA1)
+    settings.SAML2_AUTH = {
+        "TOKEN_REQUIRED": False,
+        "ASSERTION_URL": "https://api.example.com",
+        "TRIGGER": {
+            "EXTRACT_USER_IDENTITY": "django_saml2_auth.tests.test_saml.mock_extract_user_identity",
+            "GET_METADATA_AUTO_CONF_URLS": GET_METADATA_AUTO_CONF_URLS,
+        },
+    }
+
+    post_request = RequestFactory().post(METADATA_URL1, {"SAMLResponse": "SAML RESPONSE"})
+    monkeypatch.setattr(
+        Saml2Client, "parse_authn_request_response", mock_parse_authn_request_response
+    )
+    authn_response = decode_saml_response(post_request, acs)
+
+    result = extract_user_identity(authn_response)  # type: ignore
+    assert len(result) == 5
+    assert "token" not in result
+    assert result["issuer"] == METADATA_URL1
 
 
 @pytest.mark.django_db

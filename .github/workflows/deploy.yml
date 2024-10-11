@@ -50,23 +50,22 @@ jobs:
       - name: Test Django ${{ matrix.versions.djangoVersion }} with coverage 🧪
         run: poetry run coverage run --source=django_saml2_auth -m pytest . && poetry run coverage lcov -o coverage.lcov
       - name: Submit coverage report to Coveralls 📈
-        if: ${{ success() }}  && ${{ matrix.versions.pythonVersion }} == '3.12' && ${{ matrix.versions.djangoVersion }} == '5.0.9'
+        if: ${{ success() }}
         uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ./coverage.lcov
       - name: Generate CycloneDX SBOM artifacts 📃
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && ${{ matrix.versions.pythonVersion }} == '3.12' && ${{ matrix.versions.djangoVersion }} == '5.0.9'
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
         run: |
           poetry run cyclonedx-py poetry --all-extras --of JSON -o django-saml2-auth-${{ github.ref_name }}.cyclonedx.json
       - name: Build and publish package to PyPI 🎉
-        # Build and publish the package just once for the latest Python and Django versions
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && ${{ matrix.versions.pythonVersion }} == '3.12' && ${{ matrix.versions.djangoVersion }} == '5.0.9'
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
         run: |
           poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
           poetry publish --build --skip-existing
       - name: Create release and add artifacts 🚀
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && ${{ matrix.versions.pythonVersion }} == '3.12' && ${{ matrix.versions.djangoVersion }} == '5.0.9'
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
         uses: softprops/action-gh-release@v1
         with:
           files: |

@@ -18,7 +18,7 @@ from django.template import TemplateDoesNotExist
 try:
     from django.utils.http import url_has_allowed_host_and_scheme as is_safe_url
 except ImportError:
-    from django.utils.http import is_safe_url
+    from django.utils.http import is_safe_url  # type: ignore
 
 from django.views.decorators.csrf import csrf_exempt
 from django_saml2_auth.errors import (
@@ -109,7 +109,7 @@ def acs(request: HttpRequest):
     authn_response = decode_saml_response(request, acs)
     # decode_saml_response() will raise SAMLAuthError if the response is invalid,
     # so we can safely ignore the type check here.
-    user = extract_user_identity(authn_response.get_identity())  # type: ignore
+    user = extract_user_identity(authn_response)  # type: ignore
 
     next_url = request.session.get("login_next_url")
 

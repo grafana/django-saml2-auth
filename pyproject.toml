@@ -16,14 +16,14 @@ pysaml2 = "7.5.0"
 [tool.poetry.group.dev.dependencies]
 coverage = "7.5.0"
 cyclonedx-bom = "4.5.0"
-django-stubs = "4.2.0"
+django-stubs = "5.1.0"
 interrogate = "1.7.0"
 mypy = "1.4.1"
 pytest = "8.3.2"
 pytest-django = "4.5.2"
 responses = "0.25.0"
-ruff = "^0.5.7"
-types-pkg-resources = "0.1.3"
+ruff = "^0.6.9"
+types-setuptools = "75.1.0.20240917"
 types-pysaml2 = "1.0.1"
 
 [tool.ruff]

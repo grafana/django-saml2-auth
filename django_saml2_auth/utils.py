@@ -25,7 +25,9 @@ from django_saml2_auth.exceptions import SAMLAuthError
 
 
 def run_hook(
-    function_path: str, *args: Optional[Tuple[Any]], **kwargs: Optional[Mapping[str, Any]]
+    function_path: str,
+    *args: Optional[Tuple[Any]],
+    **kwargs: Optional[Mapping[str, Any]],
 ) -> Optional[Any]:
     """Runs a hook function with given args and kwargs. For example, given
     "models.User.create_new_user", the "create_new_user" function is imported from

@@ -28,7 +28,10 @@ from jwt.exceptions import PyJWTError
 
 
 def create_new_user(
-    email: str, first_name: Optional[str] = None, last_name: Optional[str] = None, **kwargs
+    email: str,
+    first_name: Optional[str] = None,
+    last_name: Optional[str] = None,
+    **kwargs,
 ) -> User:
     """Create a new user with the given information
 

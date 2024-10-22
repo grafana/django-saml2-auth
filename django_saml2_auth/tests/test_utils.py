@@ -41,7 +41,7 @@ def hello(_: HttpRequest) -> HttpResponse:
     return HttpResponse(content="Hello, world!")
 
 
-def goodbye(_: HttpRequest) -> None:
+def goodbye(_: HttpRequest) -> HttpResponse:
     """Simple view function for testing exception_handler
 
     Args:
@@ -150,13 +150,13 @@ def test_exception_handler_diabled_success(settings: SettingsWrapper):
     assert result.content.decode("utf-8") == "Hello, world!"
 
 
-def test_exception_handler_disabled_on_excaption(settings: SettingsWrapper):
+def test_exception_handler_disabled_on_exception(settings: SettingsWrapper):
     """Test exception_handler decorator in a disabled state to make sure it raises the
     exception."""
     settings.SAML2_AUTH["DISABLE_EXCEPTION_HANDLER"] = True
 
     decorated_goodbye = exception_handler(goodbye)
-    with pytest.raises(SAMLAuthError) as exc_info:
+    with pytest.raises(SAMLAuthError):
         decorated_goodbye(HttpRequest())
 
 

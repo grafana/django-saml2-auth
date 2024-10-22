@@ -166,6 +166,9 @@ def exception_handler(
             Decorated view function with exception handling
     """
 
+    if dictor(settings.SAML2_AUTH, "DISABLE_EXCEPTION_HANDLER", False):
+        return function
+
     def handle_exception(exc: Exception, request: HttpRequest) -> HttpResponse:
         """Render page with exception details
 

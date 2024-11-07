@@ -115,11 +115,11 @@ def get_metadata_auto_conf_urls(
     return [{"url": METADATA_URL1}, {"url": METADATA_URL2}]
 
 
-def get_custom_assertion_uri():
+def get_custom_assertion_url():
     return "https://example.com/custom-tenant/acs"
 
 
-GET_CUSTOM_ASSERTION_URI = "django_saml2_auth.tests.test_saml.get_custom_assertion_uri"
+GET_CUSTOM_ASSERTION_URL = "django_saml2_auth.tests.test_saml.get_custom_assertion_url"
 
 
 def mock_extract_user_identity(
@@ -466,10 +466,10 @@ def test_get_saml_client_success_with_key_and_cert_files(
         del settings.SAML2_AUTH[key]
 
 
-def test_get_saml_client_success_with_custom_assertion_uri_hook(settings: SettingsWrapper):
+def test_get_saml_client_success_with_custom_assertion_url_hook(settings: SettingsWrapper):
     settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "django_saml2_auth/tests/metadata.xml"
 
-    settings.SAML2_AUTH["TRIGGER"]["GET_CUSTOM_ASSERTION_URI"] = GET_CUSTOM_ASSERTION_URI
+    settings.SAML2_AUTH["TRIGGER"]["GET_CUSTOM_ASSERTION_URL"] = GET_CUSTOM_ASSERTION_URL
 
     result = get_saml_client("example.com", acs, "test@example.com")
     assert result is not None

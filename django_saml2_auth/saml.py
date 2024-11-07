@@ -156,11 +156,9 @@ def get_metadata(
             )
 
 
-def get_custom_acs_uri() -> str:
+def get_custom_acs_uri() -> Optional[str]:
     get_custom_acs_url_hook = dictor(settings.SAML2_AUTH, "TRIGGER.GET_CUSTOM_ASSERTION_URI")
-    if get_custom_acs_url_hook:
-        return run_hook(get_custom_acs_url_hook)
-    return dictor(settings.SAML2_AUTH, "CUSTOM_ASSERTION_URI")
+    return run_hook(get_custom_acs_url_hook) if get_custom_acs_url_hook else None
 
 
 def get_saml_client(

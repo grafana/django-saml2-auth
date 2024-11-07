@@ -115,7 +115,10 @@ def get_metadata_auto_conf_urls(
     return [{"url": METADATA_URL1}, {"url": METADATA_URL2}]
 
 
-get_custom_assertion_uri = lambda: "https://example.com/custom-tenant/acs"
+def get_custom_assertion_uri():
+    return "https://example.com/custom-tenant/acs"
+
+
 GET_CUSTOM_ASSERTION_URI = "django_saml2_auth.tests.test_saml.get_custom_assertion_uri"
 
 

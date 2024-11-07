@@ -60,3 +60,4 @@ an issue.
 - [Greg Wong](https://github.com/gregorywong)
 - [Michael V. Battista](https://github.com/mvbattista)
 - [William Abbott](https://github.com/wrabit)
+- [Henry Harutyunyan](https://github.com/henryh9n) (Revolut)

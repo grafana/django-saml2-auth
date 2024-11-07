@@ -5,6 +5,8 @@ Tests for utils.py
 import pytest
 from django.http import HttpRequest, HttpResponse
 from django.urls import NoReverseMatch
+from pytest_django.fixtures import SettingsWrapper
+
 from django_saml2_auth.exceptions import SAMLAuthError
 from django_saml2_auth.utils import (
     exception_handler,
@@ -39,7 +41,7 @@ def hello(_: HttpRequest) -> HttpResponse:
     return HttpResponse(content="Hello, world!")
 
 
-def goodbye(_: HttpRequest) -> None:
+def goodbye(_: HttpRequest) -> HttpResponse:
     """Simple view function for testing exception_handler
 
     Args:
@@ -137,6 +139,25 @@ def test_exception_handler_handle_exception():
     contents = result.content.decode("utf-8")
     assert result.status_code == 500
     assert "Reason: Internal world error!" in contents
+
+
+def test_exception_handler_diabled_success(settings: SettingsWrapper):
+    """Test exception_handler decorator in disabled state with a valid function."""
+    settings.SAML2_AUTH["DISABLE_EXCEPTION_HANDLER"] = True
+
+    decorated_hello = exception_handler(hello)
+    result = decorated_hello(HttpRequest())
+    assert result.content.decode("utf-8") == "Hello, world!"
+
+
+def test_exception_handler_disabled_on_exception(settings: SettingsWrapper):
+    """Test exception_handler decorator in a disabled state to make sure it raises the
+    exception."""
+    settings.SAML2_AUTH["DISABLE_EXCEPTION_HANDLER"] = True
+
+    decorated_goodbye = exception_handler(goodbye)
+    with pytest.raises(SAMLAuthError):
+        decorated_goodbye(HttpRequest())
 
 
 def test_jwt_well_formed():

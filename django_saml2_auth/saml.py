@@ -156,6 +156,13 @@ def get_metadata(
             )
 
 
+def get_custom_acs_uri() -> str:
+    get_custom_acs_url_hook = dictor(settings.SAML2_AUTH, "TRIGGER.GET_CUSTOM_ASSERTION_URI")
+    if get_custom_acs_url_hook:
+        return run_hook(get_custom_acs_url_hook)
+    return dictor(settings.SAML2_AUTH, "CUSTOM_ASSERTION_URI")
+
+
 def get_saml_client(
     domain: str,
     acs: Callable[..., HttpResponse],
@@ -180,9 +187,6 @@ def get_saml_client(
     Returns:
         Optional[Saml2Client]: A Saml2Client or None
     """
-    # get_reverse raises an exception if the view is not found, so we can safely ignore type errors
-    acs_url = domain + get_reverse([acs, "acs", "django_saml2_auth:acs"])  # type: ignore
-
     get_user_id_from_saml_response = dictor(
         settings.SAML2_AUTH, "TRIGGER.GET_USER_ID_FROM_SAML_RESPONSE"
     )
@@ -203,6 +207,11 @@ def get_saml_client(
                 "status_code": 500,
             },
         )
+
+    acs_url = get_custom_acs_uri()
+    if not acs_url:
+        # get_reverse raises an exception if the view is not found, so we can safely ignore type errors
+        acs_url = domain + get_reverse([acs, "acs", "django_saml2_auth:acs"])  # type: ignore
 
     saml2_auth_settings = settings.SAML2_AUTH
 

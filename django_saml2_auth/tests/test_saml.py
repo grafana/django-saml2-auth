@@ -11,6 +11,8 @@ from unittest.mock import MagicMock
 from django.http import HttpRequest
 from django.test.client import RequestFactory
 from django.urls import NoReverseMatch
+from saml2 import BINDING_HTTP_POST
+
 from django_saml2_auth.exceptions import SAMLAuthError
 from django_saml2_auth.saml import (
     decode_saml_response,
@@ -111,6 +113,10 @@ def get_metadata_auto_conf_urls(
     if user_id == "test@example.com":
         return [{"url": METADATA_URL1}]
     return [{"url": METADATA_URL1}, {"url": METADATA_URL2}]
+
+
+get_custom_assertion_uri = lambda: "https://example.com/custom-tenant/acs"
+GET_CUSTOM_ASSERTION_URI = "django_saml2_auth.tests.test_saml.get_custom_assertion_uri"
 
 
 def mock_extract_user_identity(
@@ -456,6 +462,32 @@ def test_get_saml_client_success_with_key_and_cert_files(
         # ensure that the added settings do not get carried over to other tests
         del settings.SAML2_AUTH[key]
 
+
+def test_get_saml_client_success_with_custom_assertion_uri(settings: SettingsWrapper):
+    settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "django_saml2_auth/tests/metadata.xml"
+
+    custom_assertion_uri = "https://example.com/test-tenant/acs"
+    settings.SAML2_AUTH["CUSTOM_ASSERTION_URI"] = custom_assertion_uri
+
+    result = get_saml_client("example.com", acs, "test@example.com")
+    assert custom_assertion_uri in result.config.endpoint(
+        "assertion_consumer_service",
+        BINDING_HTTP_POST,
+        result.entity_type,
+    )
+
+
+def test_get_saml_client_success_with_custom_assertion_uri_hook(settings: SettingsWrapper):
+    settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "django_saml2_auth/tests/metadata.xml"
+
+    settings.SAML2_AUTH["TRIGGER"]["GET_CUSTOM_ASSERTION_URI"] = GET_CUSTOM_ASSERTION_URI
+
+    result = get_saml_client("example.com", acs, "test@example.com")
+    assert "https://example.com/custom-tenant/acs" in result.config.endpoint(
+        "assertion_consumer_service",
+        BINDING_HTTP_POST,
+        result.entity_type,
+    )
 
 @responses.activate
 def test_decode_saml_response_success(

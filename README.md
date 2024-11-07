@@ -209,6 +209,7 @@ python setup.py install
         'ACCEPTED_TIME_DIFF': None,  # Accepted time difference between your server and the Identity Provider
         'ALLOWED_REDIRECT_HOSTS': ["https://myfrontendclient.com"], # Allowed hosts to redirect to using the ?next parameter
         'TOKEN_REQUIRED': True,  # Whether or not to require the token parameter in the SAML assertion
+        'DISABLE_EXCEPTION_HANDLER': True,  # Whether the custom exception handler should be used
     }
 
     ```
@@ -276,6 +277,7 @@ Some of the following settings are related to how this module operates. The rest
 | **WANT\_RESPONSE\_SIGNED**                  | Set this to `False` if you don't want your provider to sign the response.                                                                                                                                                                                                                                                                                                                                                                                   | `bool`           | `True`                                                                                                                                   |                                                                                         |
 | **ACCEPTED\_TIME\_DIFF**                    | Sets the [accepted time diff](https://pysaml2.readthedocs.io/en/latest/howto/config.html#accepted-time-diff) in seconds                                                                                                                                                                                                                                                                                                                                     | `int` or `None`  | `None`                                                                                                                                   |                                                                                         |
 | **ALLOWED\_REDIRECT\_HOSTS**                | Allowed hosts to redirect to using the `?next=` parameter                                                                                                                                                                                                                                                                                                                                                                                                   | `list`           | `[]`                                                                                                                                     | `['https://app.example.com', 'https://api.exmaple.com']`                                |
+| **DISABLE\_EXCEPTION\_HANDLER**             | Set this to `True` if you want to disable the exception handler. Make sure to handle the `SAMLAuthError`s and other exceptions.                                                                                                                                                                                                                                                                                                                             | `bool`           | `False`                                                                                                                                  |                                                                                         |
 
 ### Triggers
 
@@ -352,11 +354,21 @@ def get_custom_token_query(refresh):
 
 ```
 
-## Customize Error Messages
+## Exception Handling
+This library implements an exception handler that returns an error response with a default error template. See the 
+section below if you want to implement a custom error template.
+
+If you want to disable error handling, set `DISABLE_EXCEPTION_HANDLER` to `True`. In this case the library will raise
+`SAMLAuthError` when an error happens and you might need to implement an exception handler. This might come in handy if
+you are using the library for an API.
+
+## Customize Error Messages and Templates
 
 The default permission `denied`, `error` and user `welcome` page can be overridden.
 
 To override these pages put a template named 'django\_saml2\_auth/error.html', 'django\_saml2\_auth/welcome.html' or 'django\_saml2\_auth/denied.html' in your project's template folder.
+> [!Note]  
+> If you set `DISABLE_EXCEPTION_HANDLER` to `True`, the custom error pages will not be displayed.
 
 If a 'django\_saml2\_auth/welcome.html' template exists, that page will be shown to the user upon login instead of the user being redirected to the previous visited page. This welcome page can contain some first-visit notes and welcome words. The [Django user object](https://docs.djangoproject.com/en/1.9/ref/contrib/auth/#django.contrib.auth.models.User) is available within the template as the `user` template variable.
 

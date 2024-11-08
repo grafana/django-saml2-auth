@@ -161,6 +161,9 @@ def acs(request: HttpRequest):
 
         # Use JWT auth to send token to frontend
         frontend_url = dictor(saml2_auth_settings, "FRONTEND_URL", next_url)
+        custom_frontend_url_trigger = dictor(saml2_auth_settings, "TRIGGER.GET_CUSTOM_FRONTEND_URL")
+        if custom_frontend_url_trigger:
+            frontend_url = run_hook(custom_frontend_url_trigger, relay_state)  # type: ignore
 
         return HttpResponseRedirect(frontend_url + query)
 

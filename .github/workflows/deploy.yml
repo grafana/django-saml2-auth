@@ -50,11 +50,21 @@ jobs:
       - name: Test Django ${{ matrix.versions.djangoVersion }} with coverage 🧪
         run: poetry run coverage run --source=django_saml2_auth -m pytest . && poetry run coverage lcov -o coverage.lcov
       - name: Submit coverage report to Coveralls 📈
-        if: ${{ success() }}  && ${{ matrix.versions.pythonVersion }} == '3.10' && ${{ matrix.versions.djangoVersion }} == '4.2.16'
         uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ./coverage.lcov
+          flag-name: run-${{ join(matrix.versions.*, '-') }}
+          parallel: true
+  finish:
+    needs: test
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Coveralls Finished
+        uses: coverallsapp/github-action@v2
+        with:
+          parallel-finished: true
   build:
     name: Build and Push django-saml2-auth to PyPI
     runs-on: ubuntu-latest

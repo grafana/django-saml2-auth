@@ -10,7 +10,7 @@ on:
 
 jobs:
   test:
-    name: Test and build django-saml2-auth
+    name: Test django-saml2-auth
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -55,17 +55,40 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ./coverage.lcov
+  build:
+    name: Build and Push django-saml2-auth to PyPI
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' }} && ${{ startsWith(github.ref, 'refs/tags') }}
+    needs: test
+    env:
+      python-version: "3.10"
+      poetry-version: "1.8.3"
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+      - name: Set up Python 🐍
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.python-version }}
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v3.0.0
+        with:
+          poetry-version: ${{ env.poetry-version }}
+      - name: Install xmlsec1 📦
+        run: sudo apt-get install xmlsec1
+      - name: Install dependencies 📦
+        run: |
+          python -m pip install poetry
+          poetry install --with dev
+          poetry self add "poetry-dynamic-versioning[plugin]"
       - name: Generate CycloneDX SBOM artifacts 📃
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && ${{ matrix.versions.pythonVersion }} == '3.10' && ${{ matrix.versions.djangoVersion }} == '4.2.16'
         run: |
           poetry run cyclonedx-py poetry --all-extras --of JSON -o django-saml2-auth-${{ github.ref_name }}.cyclonedx.json
       - name: Build and publish package to PyPI 🎉
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && ${{ matrix.versions.pythonVersion }} == '3.10' && ${{ matrix.versions.djangoVersion }} == '4.2.16'
         run: |
           poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
           poetry publish --build --skip-existing
       - name: Create release and add artifacts 🚀
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && ${{ matrix.versions.pythonVersion }} == '3.10' && ${{ matrix.versions.djangoVersion }} == '4.2.16'
         uses: softprops/action-gh-release@v2
         with:
           files: |

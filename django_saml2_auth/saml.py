@@ -156,9 +156,9 @@ def get_metadata(
             )
 
 
-def get_custom_acs_url() -> Optional[str]:
+def get_custom_acs_url(tenant_id: Optional[str] = None) -> Optional[str]:
     get_custom_acs_url_hook = dictor(settings.SAML2_AUTH, "TRIGGER.GET_CUSTOM_ASSERTION_URL")
-    return run_hook(get_custom_acs_url_hook) if get_custom_acs_url_hook else None
+    return run_hook(get_custom_acs_url_hook, tenant_id=tenant_id) if get_custom_acs_url_hook else None
 
 
 def get_saml_client(
@@ -166,6 +166,7 @@ def get_saml_client(
     acs: Callable[..., HttpResponse],
     user_id: Optional[str] = None,
     saml_response: Optional[str] = None,
+    tenant_id: Optional[str] = None,
 ) -> Optional[Saml2Client]:
     """Create a new Saml2Config object with the given config and return an initialized Saml2Client
     using the config object. The settings are read from django settings key: SAML2_AUTH.
@@ -178,6 +179,7 @@ def get_saml_client(
             to the given user identifier, either email or username. Defaults to None.
         user_id (str or None): User identifier: username or email. Defaults to None.
         saml_response (str or None): decoded XML SAML response.
+        tenant_id (typing.Optional[str], optional): Tenant ID used for the custom ACS and Entity ID hooks. Defaults to None.
 
     Raises:
         SAMLAuthError: Re-raise any exception raised by Saml2Config or Saml2Client
@@ -206,7 +208,7 @@ def get_saml_client(
             },
         )
 
-    acs_url = get_custom_acs_url()
+    acs_url = get_custom_acs_url(tenant_id)
     if not acs_url:
         # get_reverse raises an exception if the view is not found, so we can safely ignore type errors
         acs_url = domain + get_reverse([acs, "acs", "django_saml2_auth:acs"])  # type: ignore
@@ -245,6 +247,11 @@ def get_saml_client(
     entity_id = saml2_auth_settings.get("ENTITY_ID")
     if entity_id:
         saml_settings["entityid"] = entity_id
+
+    get_custom_entity_id_hook = dictor(settings.SAML2_AUTH, "TRIGGER.GET_CUSTOM_ENTITY_ID")
+
+    if get_custom_entity_id_hook:
+        saml_settings["entityid"] = run_hook(get_custom_entity_id_hook, tenant_id=tenant_id)
 
     name_id_format = saml2_auth_settings.get("NAME_ID_FORMAT")
     if name_id_format:
@@ -298,7 +305,7 @@ def get_saml_client(
 
 
 def decode_saml_response(
-    request: HttpRequest, acs: Callable[..., HttpResponse]
+    request: HttpRequest, acs: Callable[..., HttpResponse], tenant_id: Optional[str] = None
 ) -> Union[HttpResponseRedirect, Optional[AuthnResponse], None]:
     """Given a request, the authentication response inside the SAML response body is parsed,
     decoded and returned. If there are any issues parsing the request, the identity or the issuer,
@@ -307,6 +314,7 @@ def decode_saml_response(
     Args:
         request (HttpRequest): Django request object from identity provider (IdP)
         acs (Callable[..., HttpResponse]): The acs endpoint
+        tenant_id (typing.Optional[str], optional): Tenant ID used for the custom ACS and Entity ID hooks. Defaults to None.
 
     Raises:
         SAMLAuthError: There was no response from SAML client.
@@ -335,7 +343,7 @@ def decode_saml_response(
         saml_response = base64.b64decode(response).decode("UTF-8")
     except Exception:
         saml_response = None
-    saml_client = get_saml_client(get_assertion_url(request), acs, saml_response=saml_response)
+    saml_client = get_saml_client(get_assertion_url(request), acs, saml_response=saml_response, tenant_id=tenant_id)
     if not saml_client:
         raise SAMLAuthError(
             "There was an error creating the SAML client.",

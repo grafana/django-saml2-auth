@@ -118,9 +118,15 @@ def get_metadata_auto_conf_urls(
 def get_custom_assertion_url():
     return "https://example.com/custom-tenant/acs"
 
+def get_custom_assertion_url_with_param(tenant_id: str):
+    return f"https://example.com/{tenant_id}/acs"
+
+def get_custom_entity_id_url(tenant_id: str):
+    return f"https://example.com/sso/{tenant_id}"
 
 GET_CUSTOM_ASSERTION_URL = "django_saml2_auth.tests.test_saml.get_custom_assertion_url"
-
+GET_CUSTOM_ASSERTION_URL_WITH_PARAM = "django_saml2_auth.tests.test_saml.get_custom_assertion_url_with_param"
+GET_CUSTOM_ENTITY_ID = "django_saml2_auth.tests.test_saml.get_custom_entity_id_url"
 
 def mock_extract_user_identity(
     user: Dict[str, Optional[Any]], authn_response: AuthnResponse
@@ -478,6 +484,30 @@ def test_get_saml_client_success_with_custom_assertion_url_hook(settings: Settin
         BINDING_HTTP_POST,
         "sp",
     )
+
+def test_get_saml_client_success_with_custom_assertion_url_and_param_hook(settings: SettingsWrapper):
+    settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "django_saml2_auth/tests/metadata.xml"
+
+    settings.SAML2_AUTH["TRIGGER"]["GET_CUSTOM_ASSERTION_URL"] = GET_CUSTOM_ASSERTION_URL_WITH_PARAM
+
+    result = get_saml_client("example.com", acs, "test@example.com", tenant_id="custom-tenant")
+    assert result is not None
+    assert "https://example.com/custom-tenant/acs" in result.config.endpoint(
+        "assertion_consumer_service",
+        BINDING_HTTP_POST,
+        "sp",
+    )
+
+
+def test_get_saml_client_success_with_custom_entity_id_hook(settings: SettingsWrapper):
+    settings.SAML2_AUTH["METADATA_LOCAL_FILE_PATH"] = "django_saml2_auth/tests/metadata.xml"
+
+    settings.SAML2_AUTH["TRIGGER"]["GET_CUSTOM_ENTITY_ID"] = GET_CUSTOM_ENTITY_ID
+
+    result = get_saml_client("example.com", acs, "test@example.com", tenant_id="custom-tenant")
+    assert result is not None
+    assert "https://example.com/sso/custom-tenant" == result.config.entityid
+
 
 @responses.activate
 def test_decode_saml_response_success(

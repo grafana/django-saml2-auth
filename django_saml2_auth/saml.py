@@ -158,7 +158,7 @@ def get_metadata(
 
 def get_custom_acs_url(tenant_id: Optional[str] = None) -> Optional[str]:
     get_custom_acs_url_hook = dictor(settings.SAML2_AUTH, "TRIGGER.GET_CUSTOM_ASSERTION_URL")
-    return run_hook(get_custom_acs_url_hook, tenant_id=tenant_id) if get_custom_acs_url_hook else None
+    return run_hook(get_custom_acs_url_hook, tenant_id=tenant_id) if get_custom_acs_url_hook else None # type: ignore
 
 
 def get_saml_client(
@@ -251,7 +251,7 @@ def get_saml_client(
     get_custom_entity_id_hook = dictor(settings.SAML2_AUTH, "TRIGGER.GET_CUSTOM_ENTITY_ID")
 
     if get_custom_entity_id_hook:
-        saml_settings["entityid"] = run_hook(get_custom_entity_id_hook, tenant_id=tenant_id)
+        saml_settings["entityid"] = run_hook(get_custom_entity_id_hook, tenant_id=tenant_id) # type: ignore
 
     name_id_format = saml2_auth_settings.get("NAME_ID_FORMAT")
     if name_id_format:

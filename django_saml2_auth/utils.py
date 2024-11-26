@@ -91,7 +91,13 @@ def run_hook(
                 },
             )
     try:
-        result = getattr(cls, path[-1])(*args, **kwargs)
+        func: Callable = getattr(cls, path[-1])
+
+        if func.__code__.co_argcount > 0: # backwards compatibility with existing hooks with no parameters
+            result = func(*args, **kwargs)
+        else:
+            result = func()
+
     except SAMLAuthError as exc:
         # Re-raise the exception
         raise exc
@@ -196,18 +202,21 @@ def exception_handler(
         return render(request, "django_saml2_auth/error.html", context=context, status=status)
 
     @wraps(function)
-    def wrapper(request: HttpRequest) -> HttpResponse:
+    def wrapper(request: HttpRequest, **kwargs: Optional[Mapping[str, Any]]) -> HttpResponse:
         """Decorated function is wrapped and called here
 
         Args:
             request ([type]): [description]
+
+        Keyword Args:
+            **kwargs: Additional keyword arguments
 
         Returns:
             HttpResponse: Either a redirect or a response with error details
         """
         result = None
         try:
-            result = function(request)
+            result = function(request, **kwargs)
         except (SAMLAuthError, Exception) as exc:
             result = handle_exception(exc, request)
         return result

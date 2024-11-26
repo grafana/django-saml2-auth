@@ -85,7 +85,7 @@ def denied(request: HttpRequest) -> HttpResponse:
 
 @csrf_exempt
 @exception_handler
-def acs(request: HttpRequest):
+def acs(request: HttpRequest, tenant_id: Optional[str] = None):
     """Assertion Consumer Service is SAML terminology for the location at a ServiceProvider that
     accepts <samlp:Response> messages (or SAML artifacts) for the purpose of establishing a session
     based on an assertion. Assertion is a signed authentication request from identity provider (IdP)
@@ -93,7 +93,7 @@ def acs(request: HttpRequest):
 
     Args:
         request (HttpRequest): Incoming request from identity provider (IdP) for authentication
-
+        tenant_id (typing.Optional[str], optional): Tenant ID used for the custom ACS and Entity ID hooks. Defaults to None.
     Exceptions:
         SAMLAuthError: The target user is inactive.
 
@@ -106,7 +106,7 @@ def acs(request: HttpRequest):
     """
     saml2_auth_settings = settings.SAML2_AUTH
 
-    authn_response = decode_saml_response(request, acs)
+    authn_response = decode_saml_response(request, acs, tenant_id=tenant_id)
     # decode_saml_response() will raise SAMLAuthError if the response is invalid,
     # so we can safely ignore the type check here.
     user = extract_user_identity(authn_response)  # type: ignore
@@ -263,12 +263,13 @@ def sp_initiated_login(request: HttpRequest) -> HttpResponseRedirect:
 
 
 @exception_handler
-def signin(request: HttpRequest) -> HttpResponseRedirect:
+def signin(request: HttpRequest, tenant_id: Optional[str] = None) -> HttpResponseRedirect:
     """Custom sign-in view for SP-initiated SSO. This will be deprecated in the future
     in favor of sp_initiated_login.
 
     Args:
         request (HttpRequest): Incoming request from service provider (SP) for authentication.
+        tenant_id (typing.Optional[str], optional): Tenant ID used for the custom ACS and Entity ID hooks. Defaults to None.
 
     Raises:
         SAMLAuthError: The next URL is invalid.
@@ -306,7 +307,7 @@ def signin(request: HttpRequest) -> HttpResponseRedirect:
 
     request.session["login_next_url"] = next_url
 
-    saml_client = get_saml_client(get_assertion_url(request), acs)
+    saml_client = get_saml_client(get_assertion_url(request), acs, tenant_id=tenant_id)
     _, info = saml_client.prepare_for_authenticate(relay_state=next_url)  # type: ignore
 
     redirect_url = dict(info["headers"]).get("Location", "")

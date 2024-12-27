@@ -10,20 +10,20 @@ packages = [{ include = "django_saml2_auth", from = "." }]
 [tool.poetry.dependencies]
 python = "^3.10"
 dictor = "0.1.12"
-PyJWT = "2.9.0"
+PyJWT = "2.10.1"
 pysaml2 = "7.5.0"
 
 [tool.poetry.group.dev.dependencies]
-coverage = "7.5.0"
-cyclonedx-bom = "4.5.0"
-django-stubs = "5.1.0"
+coverage = "7.6.10"
+cyclonedx-bom = "5.1.1"
+django-stubs = "5.1.1"
 interrogate = "1.7.0"
-mypy = "1.4.1"
-pytest = "8.3.2"
-pytest-django = "4.5.2"
-responses = "0.25.0"
-ruff = "^0.6.9"
-types-setuptools = "75.1.0.20240917"
+mypy = "1.14.0"
+pytest = "8.3.4"
+pytest-django = "4.9.0"
+responses = "0.25.3"
+ruff = "^0.8.4"
+types-setuptools = "75.6.0.20241223"
 types-pysaml2 = "1.0.1"
 
 [tool.ruff]

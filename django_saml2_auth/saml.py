@@ -238,6 +238,7 @@ def get_saml_client(
                 "want_response_signed": dictor(
                     saml2_auth_settings, "WANT_RESPONSE_SIGNED", default=True
                 ),
+                "force_authn": dictor(saml2_auth_settings, "FORCE_AUTHN", default=False),
             },
         },
     }

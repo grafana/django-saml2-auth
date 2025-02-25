@@ -13,6 +13,7 @@ from django.test.client import RequestFactory
 from django.urls import NoReverseMatch
 from saml2 import BINDING_HTTP_POST
 
+from django_saml2_auth.errors import INACTIVE_USER
 from django_saml2_auth.exceptions import SAMLAuthError
 from django_saml2_auth.saml import (
     decode_saml_response,
@@ -771,3 +772,81 @@ def test_get_metadata_success_with_custom_trigger(settings: SettingsWrapper):
         get_metadata(domain="not-mapped-example.com")
 
     assert str(exc_info.value) == "Domain not-mapped-example.com not mapped!"
+
+
+@pytest.mark.django_db
+@responses.activate
+def test_acs_view_when_use_jwt_set_redirects_user(
+        settings: SettingsWrapper,
+        monkeypatch: "MonkeyPatch",  # type: ignore # noqa: F821
+):
+    """Test Acs view when USE_JWT is set that the user is correctly redirected"""
+    responses.add(responses.GET, METADATA_URL1, body=METADATA1)
+    settings.SAML2_AUTH = {
+        "DEFAULT_NEXT_URL": "default_next_url",
+        "USE_JWT": True,
+        "JWT_SECRET": "JWT_SECRET",
+        "JWT_ALGORITHM": "HS256",
+        "FRONTEND_URL": "https://app.example.com/account/login/saml",
+        "TRIGGER": {
+            "BEFORE_LOGIN": None,
+            "AFTER_LOGIN": None,
+            "GET_METADATA_AUTO_CONF_URLS": GET_METADATA_AUTO_CONF_URLS,
+        },
+    }
+    post_request = RequestFactory().post(METADATA_URL1, {"SAMLResponse": "SAML RESPONSE"})
+    monkeypatch.setattr(
+        Saml2Client, "parse_authn_request_response", mock_parse_authn_request_response
+    )
+    created, mock_user = user.get_or_create_user(
+        {"username": "test@example.com", "first_name": "John", "last_name": "Doe"}
+    )
+    monkeypatch.setattr(user, "get_or_create_user", (created, mock_user))
+
+    middleware = SessionMiddleware(MagicMock())
+    middleware.process_request(post_request)
+    post_request.session.save()
+
+    result = acs(post_request)
+    assert result.status_code == 302
+    assert "https://app.example.com/account/login/saml?token=eyJ" in result.url
+
+
+@pytest.mark.django_db
+@responses.activate
+def test_acs_view_use_jwt_set_inactive_user(
+        settings: SettingsWrapper,
+        monkeypatch: "MonkeyPatch",  # type: ignore # noqa: F821
+):
+    """Test Acs view when USE_JWT is set that inactive users can not log in"""
+    responses.add(responses.GET, METADATA_URL1, body=METADATA1)
+    settings.SAML2_AUTH = {
+        "DEFAULT_NEXT_URL": "default_next_url",
+        "USE_JWT": True,
+        "JWT_SECRET": "JWT_SECRET",
+        "JWT_ALGORITHM": "HS256",
+        "FRONTEND_URL": "https://app.example.com/account/login/saml",
+        "TRIGGER": {
+            "BEFORE_LOGIN": None,
+            "AFTER_LOGIN": None,
+            "GET_METADATA_AUTO_CONF_URLS": GET_METADATA_AUTO_CONF_URLS,
+        },
+    }
+    post_request = RequestFactory().post(METADATA_URL1, {"SAMLResponse": "SAML RESPONSE"})
+    monkeypatch.setattr(
+        Saml2Client, "parse_authn_request_response", mock_parse_authn_request_response
+    )
+    created, mock_user = user.get_or_create_user(
+        {"username": "test@example.com", "first_name": "John", "last_name": "Doe"}
+    )
+    mock_user.is_active = False
+    mock_user.save()
+    monkeypatch.setattr(user, "get_or_create_user", (created, mock_user))
+
+    middleware = SessionMiddleware(MagicMock())
+    middleware.process_request(post_request)
+    post_request.session.save()
+
+    result = acs(post_request)
+    assert result.status_code == 500
+    assert f"Error code: {INACTIVE_USER}" in result.content.decode()

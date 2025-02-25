@@ -149,24 +149,6 @@ def acs(request: HttpRequest):
 
     request.session.flush()
 
-    use_jwt = dictor(saml2_auth_settings, "USE_JWT", False)
-    if use_jwt and target_user.is_active:
-        # Create a new JWT token for IdP-initiated login (acs)
-        jwt_token = create_custom_or_default_jwt(target_user)
-        custom_token_query_trigger = dictor(saml2_auth_settings, "TRIGGER.CUSTOM_TOKEN_QUERY")
-        if custom_token_query_trigger:
-            query = run_hook(custom_token_query_trigger, jwt_token)
-        else:
-            query = f"?token={jwt_token}"
-
-        # Use JWT auth to send token to frontend
-        frontend_url = dictor(saml2_auth_settings, "FRONTEND_URL", next_url)
-        custom_frontend_url_trigger = dictor(saml2_auth_settings, "TRIGGER.GET_CUSTOM_FRONTEND_URL")
-        if custom_frontend_url_trigger:
-            frontend_url = run_hook(custom_frontend_url_trigger, relay_state)  # type: ignore
-
-        return HttpResponseRedirect(frontend_url + query)
-
     if target_user.is_active:
         # Try to load from the `AUTHENTICATION_BACKENDS` setting in settings.py
         if hasattr(settings, "AUTHENTICATION_BACKENDS") and settings.AUTHENTICATION_BACKENDS:
@@ -189,6 +171,25 @@ def acs(request: HttpRequest):
                 "status_code": 500,
             },
         )
+
+    use_jwt = dictor(saml2_auth_settings, "USE_JWT", False)
+    if use_jwt:
+        # Create a new JWT token for IdP-initiated login (acs)
+        jwt_token = create_custom_or_default_jwt(target_user)
+        custom_token_query_trigger = dictor(saml2_auth_settings, "TRIGGER.CUSTOM_TOKEN_QUERY")
+        if custom_token_query_trigger:
+            query = run_hook(custom_token_query_trigger, jwt_token)
+        else:
+            query = f"?token={jwt_token}"
+
+        # Use JWT auth to send token to frontend
+        frontend_url = dictor(saml2_auth_settings, "FRONTEND_URL", next_url)
+        custom_frontend_url_trigger = dictor(saml2_auth_settings, "TRIGGER.GET_CUSTOM_FRONTEND_URL")
+        if custom_frontend_url_trigger:
+            frontend_url = run_hook(custom_frontend_url_trigger, relay_state)  # type: ignore
+
+        return HttpResponseRedirect(frontend_url + query)
+
 
     def redirect(redirect_url: Optional[str] = None) -> HttpResponseRedirect:
         """Redirect to the redirect_url or the root page.

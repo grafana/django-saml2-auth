@@ -9,7 +9,7 @@ import responses
 from django.contrib.sessions.middleware import SessionMiddleware
 from unittest.mock import MagicMock
 from django.http import HttpRequest
-from django.test.client import RequestFactory
+from django.test.client import RequestFactory, Client
 from django.urls import NoReverseMatch
 from saml2 import BINDING_HTTP_POST
 
@@ -776,11 +776,11 @@ def test_get_metadata_success_with_custom_trigger(settings: SettingsWrapper):
 
 @pytest.mark.django_db
 @responses.activate
-def test_acs_view_when_use_jwt_set_redirects_user(
-        settings: SettingsWrapper,
-        monkeypatch: "MonkeyPatch",  # type: ignore # noqa: F821
+def test_acs_view_with_use_jwt_both_redirects_user_and_sets_cookies(
+    settings: SettingsWrapper,
+    monkeypatch: "MonkeyPatch",  # type: ignore # noqa: F821
 ):
-    """Test Acs view when USE_JWT is set that the user is correctly redirected"""
+    """Test Acs view when USE_JWT is set, the user is redirected and cookies are set"""
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)
     settings.SAML2_AUTH = {
         "DEFAULT_NEXT_URL": "default_next_url",
@@ -794,29 +794,24 @@ def test_acs_view_when_use_jwt_set_redirects_user(
             "GET_METADATA_AUTO_CONF_URLS": GET_METADATA_AUTO_CONF_URLS,
         },
     }
-    post_request = RequestFactory().post(METADATA_URL1, {"SAMLResponse": "SAML RESPONSE"})
     monkeypatch.setattr(
         Saml2Client, "parse_authn_request_response", mock_parse_authn_request_response
     )
-    created, mock_user = user.get_or_create_user(
-        {"username": "test@example.com", "first_name": "John", "last_name": "Doe"}
-    )
-    monkeypatch.setattr(user, "get_or_create_user", (created, mock_user))
+    client = Client()
+    response = client.post("/acs/", {"SAMLResponse": "SAML RESPONSE", "RelayState": "/"})
 
-    middleware = SessionMiddleware(MagicMock())
-    middleware.process_request(post_request)
-    post_request.session.save()
-
-    result = acs(post_request)
-    assert result.status_code == 302
-    assert "https://app.example.com/account/login/saml?token=eyJ" in result.url
+    # Response includes a redirect to the single page app, with the JWT in the query string.
+    assert response.status_code == 302
+    assert "https://app.example.com/account/login/saml?token=eyJ" in getattr(response, "url")
+    # Response includes a session id cookie (i.e. the user is logged in to the django admin console)
+    assert response.cookies.get("sessionid")
 
 
 @pytest.mark.django_db
 @responses.activate
 def test_acs_view_use_jwt_set_inactive_user(
-        settings: SettingsWrapper,
-        monkeypatch: "MonkeyPatch",  # type: ignore # noqa: F821
+    settings: SettingsWrapper,
+    monkeypatch: "MonkeyPatch",  # type: ignore # noqa: F821
 ):
     """Test Acs view when USE_JWT is set that inactive users can not log in"""
     responses.add(responses.GET, METADATA_URL1, body=METADATA1)

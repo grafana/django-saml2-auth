@@ -18,9 +18,9 @@ jobs:
           - { "djangoVersion": "4.2.20", "pythonVersion": "3.10" }
           - { "djangoVersion": "4.2.20", "pythonVersion": "3.11" }
           - { "djangoVersion": "4.2.20", "pythonVersion": "3.12" }
-          - { "djangoVersion": "5.0.14", "pythonVersion": "3.10" }
-          - { "djangoVersion": "5.0.14", "pythonVersion": "3.11" }
-          - { "djangoVersion": "5.0.14", "pythonVersion": "3.12" }
+          - { "djangoVersion": "5.0.13", "pythonVersion": "3.10" }
+          - { "djangoVersion": "5.0.13", "pythonVersion": "3.11" }
+          - { "djangoVersion": "5.0.13", "pythonVersion": "3.12" }
         poetry-version: ["2.1.2"]
     steps:
       - name: Checkout 🛎️

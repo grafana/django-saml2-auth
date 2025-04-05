@@ -1,3 +1,10 @@
 """
 django-saml2-auth is a Django app that provides a SAML2 authentication backend.
 """
+
+import importlib.metadata
+
+try:
+    __version__ = importlib.metadata.version(__name__)
+except importlib.metadata.PackageNotFoundError:
+    __version__ = "0.0.0"

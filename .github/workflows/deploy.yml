@@ -83,7 +83,7 @@ jobs:
           uv pip install build cyclonedx-bom twine
       - name: Generate CycloneDX SBOM artifacts 📃
         run: |
-          cyclonedx-py env --pyproject pyproject.toml --of JSON -o django-saml2-auth-${{ github.ref_name }}.cyclonedx.json
+          uv run python -m cyclonedx_py env --pyproject pyproject.toml --of JSON -o django-saml2-auth-${{ github.ref_name }}.cyclonedx.json
       - name: Build package 🏗️
         run: |
           uv run python -m build

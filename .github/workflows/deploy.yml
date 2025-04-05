@@ -86,7 +86,7 @@ jobs:
           cyclonedx-py env --pyproject pyproject.toml --of JSON -o django-saml2-auth-${{ github.ref_name }}.cyclonedx.json
       - name: Build package 🏗️
         run: |
-          build
+          uv run python -m build
       - name: Publish to PyPI 📦
         run: |
           uv run python -m twine upload --username __token__ --password ${{ secrets.PYPI_API_TOKEN }} dist/*

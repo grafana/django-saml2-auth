@@ -1,5 +1,6 @@
 [project]
 name = "grafana-django-saml2-auth"
+readme = "README.md"
 dynamic = ["version"]
 description = "Django SAML2 Authentication Made Easy."
 authors = [{ name = "Mostafa Moradian", email = "mostafa@grafana.com" }]

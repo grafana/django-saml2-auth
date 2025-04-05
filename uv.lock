@@ -352,7 +352,6 @@ wheels = [
 
 [[package]]
 name = "django-saml2-auth"
-version = "0.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "dictor" },

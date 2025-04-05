@@ -80,16 +80,16 @@ jobs:
       - name: Install dependencies 📦
         run: |
           uv sync
-          uv pip install cyclonedx-bom twine
+          uv pip install build cyclonedx-bom twine
       - name: Generate CycloneDX SBOM artifacts 📃
         run: |
           uv run python -m cyclonedx_py env --pyproject pyproject.toml --of JSON -o django-saml2-auth-${{ github.ref_name }}.cyclonedx.json
       - name: Build package 🏗️
         run: |
-          uv build
+          uv run python -m build
       - name: Publish to PyPI 📦
         run: |
-          uv publish --username __token__ --password ${{ secrets.PYPI_API_TOKEN }} dist/*
+          uv run python -m twine upload --username __token__ --password ${{ secrets.PYPI_API_TOKEN }} dist/*
       - name: Create release and add artifacts 🚀
         uses: softprops/action-gh-release@v2
         with:

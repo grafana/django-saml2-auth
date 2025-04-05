@@ -1,5 +1,5 @@
 [project]
-name = "django-saml2-auth"
+name = "grafana-django-saml2-auth"
 dynamic = ["version"]
 description = "Django SAML2 Authentication Made Easy."
 authors = [{ name = "Mostafa Moradian", email = "mostafa@grafana.com" }]

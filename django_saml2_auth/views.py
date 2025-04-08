@@ -188,6 +188,11 @@ def acs(request: HttpRequest):
         if custom_frontend_url_trigger:
             frontend_url = run_hook(custom_frontend_url_trigger, relay_state)  # type: ignore
 
+        if "?" in frontend_url and not custom_token_query_trigger:
+            # There is already query params, so we need to include the token as an argument
+            # We also did not use a custom trigger.
+            query = f"&token={jwt_token}"
+
         return HttpResponseRedirect(frontend_url + query)
 
 

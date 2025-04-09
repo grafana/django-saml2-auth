@@ -848,7 +848,7 @@ def test_acs_view_use_jwt_set_inactive_user(
 
 @pytest.mark.django_db
 @responses.activate
-def test_acs_view_when_next_url_has_query_parameters(
+def test_acs_view_when_use_jwt_next_url_has_query_parameters(
     settings: SettingsWrapper,
     monkeypatch: "MonkeyPatch",  # type: ignore # noqa: F821
 ):
@@ -857,7 +857,9 @@ def test_acs_view_when_next_url_has_query_parameters(
     settings.SAML2_AUTH = {
         "ASSERTION_URL": "https://api.example.com",
         "DEFAULT_NEXT_URL": "default_next_url",
-        "USE_JWT": False,
+        "USE_JWT": True,
+        "JWT_SECRET": "JWT_SECRET",
+        "JWT_ALGORITHM": "HS256",
         "TRIGGER": {
             "BEFORE_LOGIN": None,
             "AFTER_LOGIN": None,

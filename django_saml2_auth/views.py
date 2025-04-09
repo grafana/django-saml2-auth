@@ -179,8 +179,6 @@ def acs(request: HttpRequest):
         custom_token_query_trigger = dictor(saml2_auth_settings, "TRIGGER.CUSTOM_TOKEN_QUERY")
         if custom_token_query_trigger:
             query = run_hook(custom_token_query_trigger, jwt_token)
-        else:
-            query = f"?token={jwt_token}"
 
         # Use JWT auth to send token to frontend
         frontend_url = dictor(saml2_auth_settings, "FRONTEND_URL", next_url)
@@ -188,10 +186,20 @@ def acs(request: HttpRequest):
         if custom_frontend_url_trigger:
             frontend_url = run_hook(custom_frontend_url_trigger, relay_state)  # type: ignore
 
-        if "?" in frontend_url and not custom_token_query_trigger:
-            # There is already query params, so we need to include the token as an argument
-            # We also did not use a custom trigger.
-            query = f"&token={jwt_token}"
+        parsed_url = urlparse.urlparse(frontend_url)
+        new_parse = list(parsed_url) # urlparse.urlparse returns a read-only tuple
+        if not custom_token_query_trigger:
+            # We run it here in order to make sure that if a custom token trigger function does exist,
+            # it runs before the custom frontend url trigger function.
+            existing_query = urlparse.parse_qs(parsed_url.query)
+            existing_query.setdefault("token", []).append(jwt_token)
+            query = urlparse.urlencode(existing_query)
+            new_parse[4] = query # The query field is the 5th item or 4th index
+            # We put this here because if people were returning weird strings for the query,
+            # they might no longer work when using urlunparse
+            destination_url = urlparse.urlunpa
+        else:
+
 
         return HttpResponseRedirect(frontend_url + query)
 

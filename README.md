@@ -17,10 +17,11 @@ For IdP-initiated SSO, the user will be created if it doesn't exist. Still, for 
 - Maintainer: Mostafa Moradian ([@mostafa](https://github.com/mostafa))
 - Version support matrix:
 
-    | **Python**             | **Django** | **django-saml2-auth** | **End of extended support<br/>(Django)** |
-    | ---------------------- | ---------- | --------------------- | ---------------------------------------- |
-    | 3.10.x, 3.11.x, 3.12.x | 4.2.x      | >=3.4.0               | April 2026                               |
-    | 3.10.x, 3.11.x, 3.12.x | 5.0.x      | >3.12.0               | April 2026                               |
+    | **Python**                     | **Django** | **django-saml2-auth** | **End of extended support<br/>(Django)** |
+    | ------------------------------ | ---------- | --------------------- | ---------------------------------------- |
+    | 3.10.x, 3.11.x, 3.12.x         | 4.2.x      | >=3.4.0               | April 2026                               |
+    | 3.10.x, 3.11.x, 3.12.x, 3.13.x | 5.1.x      | >3.12.0               | December 2025                            |
+    | 3.10.x, 3.11.x, 3.12.x, 3.13.x | 5.2.x      | >3.12.0               | April 2028                               |
 
 - Release logs are available [here](https://github.com/grafana/django-saml2-auth/releases).
 
@@ -237,7 +238,7 @@ Some of the following settings are related to how this module operates. The rest
     <summary>Click to see the module settings</summary>
 
 | **Field name**                              | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                             | **Data type(s)** | **Default value(s)**                                                                                                                     | **Example**                                                                             |
-|---------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| ---------------- |------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | **METADATA\_AUTO\_CONF\_URL**               | Auto SAML2 metadata configuration URL                                                                                                                                                                                                                                                                                                                                                                                                                       | `str`            | `None`                                                                                                                                   | `https://ORG.okta.com/app/APP-ID/sso/saml/metadata`                                     |
 | **METADATA\_LOCAL\_FILE\_PATH**             | SAML2 metadata configuration file path                                                                                                                                                                                                                                                                                                                                                                                                                      | `str`            | `None`                                                                                                                                   | `/path/to/the/metadata.xml`                                                             |
 | **KEY_FILE**                                | SAML2 private key file path.  Required for AUTHN\_REQUESTS\_SIGNED                                                                                                                                                                                                                                                                                                                                                                                          | `str`            | `None`                                                                                                                                   | `/path/to/the/key.pem`                                                                  |
@@ -360,7 +361,8 @@ def get_custom_token_query(refresh):
 ```
 
 ## Exception Handling
-This library implements an exception handler that returns an error response with a default error template. See the 
+
+This library implements an exception handler that returns an error response with a default error template. See the
 section below if you want to implement a custom error template.
 
 If you want to disable error handling, set `DISABLE_EXCEPTION_HANDLER` to `True`. In this case the library will raise

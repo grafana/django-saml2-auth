@@ -8,6 +8,8 @@ on:
       - v*
   pull_request:
 
+permissions: {}
+
 jobs:
   test:
     name: Test django-saml2-auth
@@ -26,15 +28,22 @@ jobs:
           - { "djangoVersion": "5.2.6", "pythonVersion": "3.11" }
           - { "djangoVersion": "5.2.6", "pythonVersion": "3.12" }
           - { "djangoVersion": "5.2.6", "pythonVersion": "3.13" }
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout 🛎️
-        uses: actions/checkout@v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Set up Python 🐍
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
           python-version: ${{ matrix.versions.pythonVersion }}
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          enable-cache: false
       - name: Install xmlsec1 📦
         run: sudo apt-get install xmlsec1
       - name: Install dependencies 📦
@@ -49,7 +58,7 @@ jobs:
         run: |
           uv run coverage run --source=django_saml2_auth -m pytest . && uv run coverage lcov -o coverage.lcov
       - name: Submit coverage report to Coveralls 📈
-        uses: coverallsapp/github-action@v2
+        uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ./coverage.lcov
@@ -59,9 +68,11 @@ jobs:
     needs: test
     if: ${{ always() }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Coveralls Finished
-        uses: coverallsapp/github-action@v2
+        uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
         with:
           parallel-finished: true
   build:
@@ -71,15 +82,22 @@ jobs:
     needs: test
     env:
       python-version: "3.10"
+    permissions:
+      contents: write
+      id-token: write
     steps:
       - name: Checkout 🛎️
-        uses: actions/checkout@v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Set up Python 🐍
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
           python-version: ${{ env.python-version }}
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          enable-cache: false
       - name: Install xmlsec1 📦
         run: sudo apt-get install xmlsec1
       - name: Install dependencies 📦
@@ -88,7 +106,7 @@ jobs:
           uv pip install build cyclonedx-bom twine
       - name: Generate CycloneDX SBOM artifacts 📃
         run: |
-          uv run python -m cyclonedx_py env --pyproject pyproject.toml --of JSON -o django-saml2-auth-${{ github.ref_name }}.cyclonedx.json
+          uv run python -m cyclonedx_py env --pyproject pyproject.toml --of JSON -o django-saml2-auth-${GITHUB_REF_NAME}.cyclonedx.json
       - name: Build package 🏗️
         run: |
           uv run python -m build
@@ -96,7 +114,7 @@ jobs:
         run: |
           uv run python -m twine upload --username __token__ --password ${{ secrets.PYPI_API_TOKEN }} dist/*
       - name: Create release and add artifacts 🚀
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
         with:
           files: |
             dist/*.tar.gz

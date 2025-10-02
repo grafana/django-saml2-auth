@@ -186,23 +186,30 @@ def acs(request: HttpRequest):
         if custom_frontend_url_trigger:
             frontend_url = run_hook(custom_frontend_url_trigger, relay_state)  # type: ignore
 
-        parsed_url = urlparse.urlparse(frontend_url)
-        new_parse = list(parsed_url) # urlparse.urlparse returns a read-only tuple
-        if not custom_token_query_trigger:
-            # We run it here in order to make sure that if a custom token trigger function does exist,
-            # it runs before the custom frontend url trigger function.
-            existing_query = urlparse.parse_qs(parsed_url.query)
-            existing_query.setdefault("token", []).append(jwt_token)
-            query = urlparse.urlencode(existing_query)
-            new_parse[4] = query # The query field is the 5th item or 4th index
-            # We put this here because if people were returning weird strings for the query,
-            # they might no longer work when using urlunparse
-            destination_url = urlparse.urlunpa
-        else:
+        # Parse the frontend URL to handle query parameters properly
+        try:
+            parsed_url = urlparse.urlparse(frontend_url)
+            if not custom_token_query_trigger:
+                # Default behavior: add JWT token to existing query parameters
+                existing_query = urlparse.parse_qs(parsed_url.query)
+                existing_query.setdefault("token", []).append(jwt_token)
+                query_string = urlparse.urlencode(existing_query, doseq=True)
+                new_parse = parsed_url._replace(query=query_string)
+                destination_url = urlparse.urlunparse(new_parse)
+            else:
+                # Custom: merge custom query with existing query parameters
+                existing_query = urlparse.parse_qs(parsed_url.query)
+                custom_query = urlparse.parse_qs(query.lstrip("?"))
+                existing_query.update(custom_query)
+                query_string = urlparse.urlencode(existing_query, doseq=True)
+                new_parse = parsed_url._replace(query=query_string)
+                destination_url = urlparse.urlunparse(new_parse)
+        except (ValueError, TypeError):
+            # If URL parsing fails, fall back to simple string concatenation to
+            # maintain backward compatibility with the old behavior
+            destination_url = frontend_url + query
 
-
-        return HttpResponseRedirect(frontend_url + query)
-
+        return HttpResponseRedirect(destination_url)
 
     def redirect(redirect_url: Optional[str] = None) -> HttpResponseRedirect:
         """Redirect to the redirect_url or the root page.

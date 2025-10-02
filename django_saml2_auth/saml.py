@@ -255,6 +255,10 @@ def get_saml_client(
     if accepted_time_diff:
         saml_settings["accepted_time_diff"] = accepted_time_diff
 
+    force_authn = saml2_auth_settings.get("FORCE_AUTHN", None)
+    if force_authn is not None:
+        saml_settings["service"]["sp"]["force_authn"] = bool(force_authn)
+
     # Enable logging with a custom logger. See below for more details:
     # https://pysaml2.readthedocs.io/en/latest/howto/config.html?highlight=debug#logging
     logging = saml2_auth_settings.get("LOGGING")

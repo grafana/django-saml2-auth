@@ -177,10 +177,10 @@ def acs(request: HttpRequest):
         # Create a new JWT token for IdP-initiated login (acs)
         jwt_token = create_custom_or_default_jwt(target_user)
         custom_token_query_trigger = dictor(saml2_auth_settings, "TRIGGER.CUSTOM_TOKEN_QUERY")
+        query = ""  # Initialize query variable
         if custom_token_query_trigger:
-            query = run_hook(custom_token_query_trigger, jwt_token)
-        else:
-            query = f"?token={jwt_token}"
+            query_result = run_hook(custom_token_query_trigger, jwt_token)
+            query = query_result if query_result is not None else ""
 
         # Use JWT auth to send token to frontend
         frontend_url = dictor(saml2_auth_settings, "FRONTEND_URL", next_url)
@@ -188,8 +188,30 @@ def acs(request: HttpRequest):
         if custom_frontend_url_trigger:
             frontend_url = run_hook(custom_frontend_url_trigger, relay_state)  # type: ignore
 
-        return HttpResponseRedirect(frontend_url + query)
+        # Parse the frontend URL to handle query parameters properly
+        try:
+            parsed_url = urlparse.urlparse(frontend_url)
+            if not custom_token_query_trigger:
+                # Default behavior: add JWT token to existing query parameters
+                existing_query = urlparse.parse_qs(parsed_url.query)
+                existing_query.setdefault("token", []).append(jwt_token)
+                query_string = urlparse.urlencode(existing_query, doseq=True)
+                new_parse = parsed_url._replace(query=query_string)
+                destination_url = urlparse.urlunparse(new_parse)
+            else:
+                # Custom: merge custom query with existing query parameters
+                existing_query = urlparse.parse_qs(parsed_url.query)
+                custom_query = urlparse.parse_qs(query.lstrip("?"))
+                existing_query.update(custom_query)
+                query_string = urlparse.urlencode(existing_query, doseq=True)
+                new_parse = parsed_url._replace(query=query_string)
+                destination_url = urlparse.urlunparse(new_parse)
+        except (ValueError, TypeError):
+            # If URL parsing fails, fall back to simple string concatenation to
+            # maintain backward compatibility with the old behavior
+            destination_url = frontend_url + query
 
+        return HttpResponseRedirect(destination_url)
 
     def redirect(redirect_url: Optional[str] = None) -> HttpResponseRedirect:
         """Redirect to the redirect_url or the root page.

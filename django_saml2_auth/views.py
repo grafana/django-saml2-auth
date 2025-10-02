@@ -177,8 +177,10 @@ def acs(request: HttpRequest):
         # Create a new JWT token for IdP-initiated login (acs)
         jwt_token = create_custom_or_default_jwt(target_user)
         custom_token_query_trigger = dictor(saml2_auth_settings, "TRIGGER.CUSTOM_TOKEN_QUERY")
+        query = ""  # Initialize query variable
         if custom_token_query_trigger:
-            query = run_hook(custom_token_query_trigger, jwt_token)
+            query_result = run_hook(custom_token_query_trigger, jwt_token)
+            query = query_result if query_result is not None else ""
 
         # Use JWT auth to send token to frontend
         frontend_url = dictor(saml2_auth_settings, "FRONTEND_URL", next_url)

@@ -256,7 +256,7 @@ def get_saml_client(
         saml_settings["accepted_time_diff"] = accepted_time_diff
 
     force_authn = saml2_auth_settings.get("FORCE_AUTHN", None)
-    if force_authn is not None:
+    if not force_authn:
         saml_settings["service"]["sp"]["force_authn"] = bool(force_authn)
 
     # Enable logging with a custom logger. See below for more details:

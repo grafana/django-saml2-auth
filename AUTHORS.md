@@ -63,3 +63,4 @@ an issue.
 - [Henry Harutyunyan](https://github.com/henryh9n) (Revolut)
 - [Noppanut Ploywong](https://github.com/noppanut15)
 - [Mohammed Almeshal](https://github.com/MohammedAlmeshal)
+- [Gonzalo Adrio Bernárdez](https://github.com/GadrioKaleido)

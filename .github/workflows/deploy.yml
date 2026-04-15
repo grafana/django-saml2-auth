@@ -114,7 +114,7 @@ jobs:
         run: |
           uv run python -m twine upload --username __token__ --password ${{ secrets.PYPI_API_TOKEN }} dist/*
       - name: Create release and add artifacts 🚀
-        uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           files: |
             dist/*.tar.gz
